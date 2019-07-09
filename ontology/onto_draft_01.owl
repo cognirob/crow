@@ -1,0 +1,868 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#"
+     xml:base="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3">
+        <rdfs:comment>Testing ontology</rdfs:comment>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#aboveOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#aboveOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation"/>
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#belowOf"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#behindOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#behindOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation"/>
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#inFrontOf"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#belowOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#belowOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedTo">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToPrismatically -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToPrismatically">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedTo"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToRigidly -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToRigidly">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedTo"/>
+        <owl:propertyDisjointWith rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToWeakly"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToRotationally -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToRotationally">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedTo"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToWeakly -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedToWeakly">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#connectedTo"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#contains-topo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#contains-topo">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#covers-topo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#covers-topo">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#disjoint-topo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#disjoint-topo">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#hasColor -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#hasColor"/>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#inCenterOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#inCenterOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#inFrontOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#inFrontOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#insideOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#insideOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#leftOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#leftOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation"/>
+        <owl:inverseOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#rightOf"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#nextTo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#nextTo">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#outsideOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#outsideOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#overlap-topo -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#overlap-topo">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#rightOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#rightOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#directionalRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#touchingOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#touchingOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#topologicalRelations"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#visibleFrom -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#visibleFrom">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#withinReachOf -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#withinReachOf">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#spatialRelation"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Action -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Action">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Agent -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Agent">
+        <rdfs:comment>A thing capable of acting</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Algorithm -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Algorithm">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ComputationalThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#AngularDistance -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#AngularDistance">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Area -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Area">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Black -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Black">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Blue -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Blue">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CartesianCoordinateSystem -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CartesianCoordinateSystem">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CoordinateSystem"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Color -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Color">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PersistentProperty"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ColoredObject -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ColoredObject">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Object"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ComputationalThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ComputationalThing"/>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Concept -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Concept">
+        <rdfs:comment>Could be physical or abstract &quot;object&quot;.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CoordinateSystem -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CoordinateSystem">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#FrameOfReference"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CovarianceMatrix -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#CovarianceMatrix">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Matrix"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Cyan -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Cyan">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Dirtiness -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Dirtiness">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NonNumericQuantitySlot"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance-Absolute -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance-Absolute">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#EmbodiedAgent -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#EmbodiedAgent">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Agent"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Object"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#EnduringEvent -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#EnduringEvent">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Event"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Event -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Event">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalThing"/>
+        <rdfs:comment>A &quot;temporal object&quot; or a thing that can be localized in time.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#FrameOfReference -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#FrameOfReference">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Green -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Green">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Height -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Height">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#HeightAboveGround -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#HeightAboveGround">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#HexColor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#HexColor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Color"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Human -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Human">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#EmbodiedAgent"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#LocalizedThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#LocalizedThing">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Location -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Location">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalProperty"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Magenta -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Magenta">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Mass -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Mass">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MassOrSpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MassOrSpatialQuantity -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MassOrSpatialQuantity">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MeasurableQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalOrdering -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalOrdering">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RelationalStructure"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalThing">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ComputationalThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Matrix -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Matrix">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MeasurableQuantity -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MeasurableQuantity">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Color"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NonNumericQuantitySlot -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NonNumericQuantitySlot">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Quantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Object -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Object">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Concept"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#LocalizedThing"/>
+        <rdfs:comment>Physical object realized in the real world</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectProperty -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectProperty"/>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectRecognitionAlgorithm -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectRecognitionAlgorithm">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Algorithm"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation2D -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation2D">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation3D -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation3D">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Orientation"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PartialOrdering -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PartialOrdering">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalOrdering"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PartialOrdering-Strict -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PartialOrdering-Strict">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalOrdering"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PersistentProperty -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PersistentProperty">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectProperty"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PhysicalSensor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#PhysicalSensor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Object"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Sensor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Pose -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Pose">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Location"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Quantity -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Quantity">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ScalarInterval"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Quaternion -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Quaternion">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Red -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Red">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RelationalStructure -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RelationalStructure">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Robot -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Robot">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#EmbodiedAgent"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Matrix"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix2D -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix2D">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix3D -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix3D">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#RotationMatrix"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ScalarInterval -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ScalarInterval">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ScalarOrVectorInterval"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ScalarOrVectorInterval -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ScalarOrVectorInterval">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TupleOfIntervals"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Sensor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Sensor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Concept"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MassOrSpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalProperty -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalProperty">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectProperty"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalThing"/>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Tuple -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Tuple">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TupleOfIntervals -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TupleOfIntervals">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Tuple"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Vector -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Vector">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#MathematicalObject"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Volume -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Volume">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialQuantity"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#White -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#White">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Width -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Width">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Distance"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Yellow -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Yellow">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#NamedColor"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // General axioms
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <rdf:Description>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Agent"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Concept"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#ObjectProperty"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#SpatialThing"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#TemporalThing"/>
+        </owl:members>
+    </rdf:Description>
+    <rdf:Description>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Black"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Blue"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Cyan"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Green"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Magenta"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Red"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#White"/>
+            <rdf:Description rdf:about="http://www.semanticweb.org/admin/ontologies/2019/6/untitled-ontology-3#Yellow"/>
+        </owl:members>
+    </rdf:Description>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+
