@@ -5,8 +5,22 @@
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:ontodebug="http://ainf.aau.at/ontodebug#">
     <owl:Ontology rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01">
+        <owl:versionIRI rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01/0.0.1"/>
+        <ontodebug:testCase>
+            <rdf:Description>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
+                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+            </rdf:Description>
+        </ontodebug:testCase>
+        <ontodebug:testCase>
+            <rdf:Description>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
+                <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+            </rdf:Description>
+        </ontodebug:testCase>
         <rdfs:comment>Testing ontology</rdfs:comment>
     </owl:Ontology>
     
@@ -15,7 +29,7 @@
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
-    // Datatypes
+    // Annotation properties
     //
     ///////////////////////////////////////////////////////////////////////////////////////
      -->
@@ -23,11 +37,25 @@
     
 
 
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hex -->
+    <!-- http://ainf.aau.at/ontodebug#axiom -->
 
-    <rdfs:Datatype rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hex">
-        <owl:equivalentClass rdf:resource="http://www.w3.org/2001/XMLSchema#unsignedInt"/>
-    </rdfs:Datatype>
+    <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#axiom">
+        <rdfs:subPropertyOf rdf:resource="http://ainf.aau.at/ontodebug#testCase"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://ainf.aau.at/ontodebug#testCase -->
+
+    <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#testCase"/>
+    
+
+
+    <!-- http://ainf.aau.at/ontodebug#type -->
+
+    <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#type">
+        <rdfs:subPropertyOf rdf:resource="http://ainf.aau.at/ontodebug#testCase"/>
+    </owl:AnnotationProperty>
     
 
 
@@ -47,6 +75,7 @@
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#aboveOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation"/>
         <owl:inverseOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#belowOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
     </owl:ObjectProperty>
     
 
@@ -68,6 +97,7 @@
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#behindOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation"/>
         <owl:inverseOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#inFrontOf"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
     </owl:ObjectProperty>
     
 
@@ -76,14 +106,7 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#belowOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#causalRelation -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#causalRelation">
-        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
     </owl:ObjectProperty>
     
 
@@ -112,6 +135,7 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedToPrismatically">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedTo"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
     </owl:ObjectProperty>
     
@@ -121,6 +145,8 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedToRigidly">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedTo"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
         <owl:propertyDisjointWith rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedToWeakly"/>
     </owl:ObjectProperty>
     
@@ -130,6 +156,8 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedToRotationally">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedTo"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
     </owl:ObjectProperty>
     
 
@@ -138,6 +166,8 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedToWeakly">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#connectedTo"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
     </owl:ObjectProperty>
     
 
@@ -164,6 +194,8 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
     </owl:ObjectProperty>
     
 
@@ -196,6 +228,16 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasLocation -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasLocation">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Location"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasPose -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasPose">
@@ -218,6 +260,7 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#inFrontOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
     </owl:ObjectProperty>
     
 
@@ -226,7 +269,6 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#insideOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#topologicalRelations"/>
-        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
     </owl:ObjectProperty>
     
@@ -237,16 +279,7 @@
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#leftOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation"/>
         <owl:inverseOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#rightOf"/>
-    </owl:ObjectProperty>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#locatedAt -->
-
-    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#locatedAt">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialRelation"/>
-        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Location"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
     </owl:ObjectProperty>
     
 
@@ -254,7 +287,7 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#nextPoint -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#nextPoint">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#causalRelation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialCausalRelation"/>
         <owl:inverseOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#prevPoint"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#InverseFunctionalProperty"/>
@@ -269,6 +302,28 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#nextTo">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#occursAfter -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#occursAfter">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalCausalRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TemporalThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TemporalThing"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#occursBefore -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#occursBefore">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalCausalRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TemporalThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TemporalThing"/>
     </owl:ObjectProperty>
     
 
@@ -294,7 +349,7 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#prevPoint -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#prevPoint">
-        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#causalRelation"/>
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialCausalRelation"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#InverseFunctionalProperty"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
@@ -308,6 +363,17 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#rightOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#directionalRelation"/>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialCausalRelation -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialCausalRelation">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SpatialThing"/>
     </owl:ObjectProperty>
     
 
@@ -329,6 +395,14 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TemporalThing"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TimePoint"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalCausalRelation -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalCausalRelation">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalRelation"/>
     </owl:ObjectProperty>
     
 
@@ -370,6 +444,8 @@
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#withinReachOf">
         <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
     </owl:ObjectProperty>
     
 
@@ -417,6 +493,56 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#pointCoordinates -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#pointCoordinates">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qu -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qu">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#quaternionComponent"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#quaternionComponent -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#quaternionComponent">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Quaternion"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qx -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qx">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#quaternionComponent"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qy -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qy">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#quaternionComponent"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qz -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#qz">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#quaternionComponent"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#secs -->
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#secs">
@@ -432,6 +558,30 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalProperty -->
 
     <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#temporalProperty"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#x -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#x">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#pointCoordinates"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#y -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#y">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#pointCoordinates"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#z -->
+
+    <owl:DatatypeProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#z">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#pointCoordinates"/>
+    </owl:DatatypeProperty>
     
 
 
@@ -699,26 +849,10 @@
     
 
 
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Black -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Black">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Block -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Block">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ConvexVolume"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Blue -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Blue">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
     </owl:Class>
     
 
@@ -957,14 +1091,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cyan -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cyan">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cylinder -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cylinder">
@@ -1003,14 +1129,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Dimensionless_Unit">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Unit"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Dirtiness -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Dirtiness">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NonNumericQuantitySlot"/>
     </owl:Class>
     
 
@@ -1188,8 +1306,7 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#GeometricObject"/>
-        <owl:disjointWith rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#GeometricObject"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
     </owl:Class>
     
 
@@ -1360,14 +1477,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Gravitational_Attraction_Unit">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Mechanics_Unit"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Green -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Green">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
     </owl:Class>
     
 
@@ -1679,14 +1788,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Magenta -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Magenta">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Magnetic_Field_Strength_Unit -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Magnetic_Field_Strength_Unit">
@@ -1906,15 +2007,21 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor">
+        <owl:equivalentClass>
+            <owl:Class>
+                <owl:oneOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLACK"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLUE"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_CYAN"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_GREEN"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_MAGENTA"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_RED"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_WHITE"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_YELLOW"/>
+                </owl:oneOf>
+            </owl:Class>
+        </owl:equivalentClass>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Color"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NonNumericQuantitySlot -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NonNumericQuantitySlot">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Quantity"/>
     </owl:Class>
     
 
@@ -2044,7 +2151,6 @@
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PathPoint2D">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PathPoint"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Point2D"/>
-        <owl:disjointWith rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PathPoint3D"/>
     </owl:Class>
     
 
@@ -2171,6 +2277,42 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose4DoF -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose4DoF">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose"/>
+        <rdfs:comment>Pose in a 3D space with 1 additional degree of freedom - pitch angle. That is, the object can rotate on a plane within the space.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose5DoF -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose5DoF">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose4DoF"/>
+        <rdfs:comment>Pose in a 3D space with 2 additional degrees of freedom - pitch and yaw angle. That is, the object can rotate on 2 planes within the space.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose6DoF -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose6DoF">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose5DoF"/>
+        <rdfs:comment>Full pose within a 3D space.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PosePlanar -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PosePlanar">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pose"/>
+        <rdfs:comment>Planar pose, i.e. pose on a 2D plane with rotation.</rdfs:comment>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PowerTool -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PowerTool">
@@ -2215,14 +2357,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Pressure_or_stress_rate">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Mechanics_Unit"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Quantity -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Quantity">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScalarInterval"/>
     </owl:Class>
     
 
@@ -2279,14 +2413,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Rate_Of_Return_Unit">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Financial_Unit"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Red -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Red">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
     </owl:Class>
     
 
@@ -2384,14 +2510,6 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScalarInterval -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScalarInterval">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScalarOrVectorInterval"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScalarOrVectorInterval -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScalarOrVectorInterval">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#TupleOfIntervals"/>
     </owl:Class>
     
@@ -2843,14 +2961,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#White -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#White">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Width -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Width">
@@ -2871,14 +2981,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Wrench">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nutdriver"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Yellow -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Yellow">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
     </owl:Class>
     
 
@@ -2934,6 +3036,78 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLACK -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLACK">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLUE -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLUE">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_CYAN -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_CYAN">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_GREEN -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_GREEN">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_MAGENTA -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_MAGENTA">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_RED -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_RED">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_WHITE -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_WHITE">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_YELLOW -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_YELLOW">
+        <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
+    </owl:NamedIndividual>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -2949,35 +3123,6 @@
             <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Path"/>
             <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Point"/>
             <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Volume"/>
-        </owl:members>
-    </rdf:Description>
-    <rdf:Description>
-        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
-        <owl:members rdf:parseType="Collection">
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Black"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Blue"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cyan"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Green"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Magenta"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Red"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#White"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Yellow"/>
-        </owl:members>
-    </rdf:Description>
-    <rdf:Description>
-        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
-        <owl:members rdf:parseType="Collection">
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#GeometricObject"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#VisibleThing"/>
-        </owl:members>
-    </rdf:Description>
-    <rdf:Description>
-        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
-        <owl:members rdf:parseType="Collection">
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PathPoint"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Point2D"/>
-            <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Point3D"/>
         </owl:members>
     </rdf:Description>
 </rdf:RDF>
