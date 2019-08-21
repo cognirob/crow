@@ -11,13 +11,13 @@
         <owl:versionIRI rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01/0.0.1"/>
         <ontodebug:testCase>
             <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
         </ontodebug:testCase>
         <ontodebug:testCase>
             <rdf:Description>
-                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
+                <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
                 <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
             </rdf:Description>
         </ontodebug:testCase>
@@ -1058,14 +1058,6 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#CovarianceMatrix">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Matrix"/>
-    </owl:Class>
-    
-
-
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ConvexVolume"/>
     </owl:Class>
     
 
@@ -3101,10 +3093,6 @@
         <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
     </owl:NamedIndividual>
     <rdf:Description>
-        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
-        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
-    </rdf:Description>
-    <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
@@ -3114,6 +3102,18 @@
     </rdf:Description>
     <rdf:Description>
         <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</ontodebug:axiom>
+        <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
+    </rdf:Description>
+    <rdf:Description>
+        <ontodebug:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</ontodebug:axiom>
         <ontodebug:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</ontodebug:type>
     </rdf:Description>
     
