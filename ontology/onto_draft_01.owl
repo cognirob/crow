@@ -12,13 +12,13 @@
         <owl:versionIRI rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01/0.0.1"/>
         <onto:testCase>
             <rdf:Description>
-                <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+                <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
                 <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
             </rdf:Description>
         </onto:testCase>
         <onto:testCase>
             <rdf:Description>
-                <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+                <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
                 <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
             </rdf:Description>
         </onto:testCase>
@@ -594,7 +594,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">can_be_grabbed</owlr:python_name>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_can_be_grabbed</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -690,7 +690,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">is_in_workspace</owlr:python_name>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_is_in_workspace</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -701,7 +701,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
-        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">is_last_mentioned</owlr:python_name>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">_is_last_mentioned</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -3512,6 +3512,14 @@
     <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_YELLOW">
         <rdf:type rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#NamedColor"/>
     </owl:NamedIndividual>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
