@@ -1,3 +1,13 @@
+#!/usr/bin/env python
+"""
+Copyright (c) 2019 Karla Stepanova, Zdenek Kasner
+All rights reserved.
+
+This source code is licensed under the BSD-3-Clause license found in the
+LICENSE file in the root directory of this source tree.
+
+@author: Karla Stepanova, Zdenek Kasner
+"""
 from typing import ClassVar
 
 import rospy
