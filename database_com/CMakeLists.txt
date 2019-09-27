@@ -53,14 +53,16 @@ add_message_files(
 #   Message1.msg
 #   Message2.msg
 	DatabaseUpdate.msg
+	DBOperation.msg
+	MetaResponse.msg
 )
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+  FILES
+  GroundProgram.srv
+  AddObject.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
