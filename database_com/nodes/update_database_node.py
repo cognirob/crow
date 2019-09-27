@@ -36,7 +36,7 @@ with db.onto as onto:
         # listens to /averaged_markers from object_detection package and in parallel to button presses. When there is an approval
         # to collect cubes (key a -> y), robot picks up the currently detected cubes and places them to storage
         def __init__(self):
-            rospy.init_node('update_object_position_node', anonymous=False)
+            rospy.init_node('db_interface_node', anonymous=False)
 
             self._dbapi = DatabaseAPI()
 
@@ -55,7 +55,7 @@ with db.onto as onto:
             self.srv = {}
             self.srv['groundProgram'] = rospy.Service('~/groundProgram', GroundProgram, self.handle_ground_program)
 
-            self.srv['addObject'] = rospy.Service('~/addObject', AddObject, self.handle_add_object)
+            self.srv['addObject'] = rospy.Service('~addObject', AddObject, self.handle_add_object)
 
 
 
@@ -70,7 +70,12 @@ with db.onto as onto:
             res.res.msg = 'I added a {} {} with id {} at x = {} and y = {}'.format(req.color, req.obj_class, req.id, req.x, req.y)
             # TODO test whether the object arrived in the database
             res.res.success = True
+            obj = onto.search(id=req.id, _is_in_workspace=True)
+            print(obj)
+
             return res
+
+
 
         def handle_ground_program(self, req):
             # type: (GroundProgramRequest) -> GroundProgramResponse

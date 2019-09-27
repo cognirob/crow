@@ -1,0 +1,8 @@
+string obj_class
+float64 x
+float64 y
+string id
+string color
+DBOperation action
+---
+MetaResponse res
