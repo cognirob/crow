@@ -611,6 +611,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name>aruco_id</owlr:python_name>
     </owl:DatatypeProperty>
     
 
