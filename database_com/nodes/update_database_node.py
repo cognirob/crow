@@ -8,11 +8,15 @@ LICENSE file in the root directory of this source tree.
 
 @author: Karla Stepanova, Zdenek Kasner
 """
+import os
 from typing import ClassVar
 
 import rospy
-from database_com.srv import GroundProgram, GroundProgramResponse, GroundProgramRequest
+# from database_com.srv import GroundProgram, GroundProgramResponse, GroundProgramRequest
 from database_com.srv import AddObject, AddObjectResponse, AddObjectRequest
+from database_com.srv import GetDatabase, GetDatabaseResponse, GetDatabaseRequest
+
+import pickle
 
 from geometry_msgs.msg import PoseStamped
 from object_detection_aruco.msg import MarkersAvgList, MarkersAvg
@@ -26,12 +30,16 @@ from nlp_crow.database.DatabaseAPI import DatabaseAPI
 
 
 import owlready2 as ow
+import sys
+
+from nlp_crow.processing.ProgramRunner import ProgramRunner
 
 db = Database()
 
 
 
-with db.onto as onto:
+#with db.onto as onto:
+with db.onto:
     class update_object_position_node():
         # listens to /averaged_markers from object_detection package and in parallel to button presses. When there is an approval
         # to collect cubes (key a -> y), robot picks up the currently detected cubes and places them to storage
@@ -53,34 +61,77 @@ with db.onto as onto:
             self.pub = rospy.Publisher('/database_update', DatabaseUpdate, queue_size=10)
 
             self.srv = {}
-            self.srv['groundProgram'] = rospy.Service('~/groundProgram', GroundProgram, self.handle_ground_program)
+            # self.srv['groundProgram'] = rospy.Service('~groundProgram', GroundProgram, self.handle_ground_program)
 
             self.srv['addObject'] = rospy.Service('~addObject', AddObject, self.handle_add_object)
+            self.srv['getDatabase'] = rospy.Service('~getDatabase', GetDatabase, self.handle_get_database_request)
 
 
 
           #  rospy.on_shutdown(self.shutdown_hook)
 
         def handle_add_object(self, req):
+            """
+            Updates the position of the existing object or adds the object if it does not exist yet.
+
+            Parameters
+            ----------
+            id  the identifier of the object, e.g. ArUco id
+            x   the position of the object: x coordinate
+            y   the position of the object: y coordinate
+            """
             assert isinstance(req, AddObjectRequest)
-
-            self._dbapi.add_object(Class=onto.Cube, x=req.x, y=req.y, id=req.id, color=req.color)
-
             res = AddObjectResponse()
-            res.res.msg = 'I added a {} {} with id {} at x = {} and y = {}'.format(req.color, req.obj_class, req.id, req.x, req.y)
+            obj = db.onto.search_one(id=req.id, _is_in_workspace=True)
+            choices = {'Cube': db.onto.Cube, 'Panel': db.onto.Panel,'Glue': db.onto.Glue}
+            typeO = choices.get(req.obj_class, 'Cube')
+
+            if obj is None:
+                self._dbapi.add_object(Class=typeO, x=req.x, y=req.y, id=req.id, color=req.color)
+                res.res.msg = 'I added a {} {} with id {} at x = {} and y = {}'.format(req.color, req.obj_class, req.id, req.x, req.y)
+                res.res.success = True
+            else: #TODO if change of position > threshold update position
+                obj.location.x = req.x
+                obj.location.y = req.y
+                res.res.msg = 'I updated the position of a {} {} with id {} from x = {}, y = {} to x = {} and y = {}'.format(req.color, req.obj_class, req.id, obj.location.x, obj.location.y, req.x, req.y)
+                res.res.success = True
+
+            #TODO update other parameters if changed...
             # TODO test whether the object arrived in the database
-            res.res.success = True
-            obj = onto.search(id=req.id, _is_in_workspace=True)
+            obj = db.onto.search(id=req.id, _is_in_workspace=True)
             print(obj)
 
             return res
 
 
 
-        def handle_ground_program(self, req):
-            # type: (GroundProgramRequest) -> GroundProgramResponse
-            res = GroundProgramResponse()
+        # def handle_ground_program(self, req):
+        #     # type: (GroundProgramRequest) -> GroundProgramResponse
+        #     res = GroundProgramResponse()
+        #     u_prog = pickle.loads(req.ungroundProgram)
+        #     assert isinstance(u_prog, db.onto.RobotProgram)
+        #
+        #     program_runner = ProgramRunner()
+        #     robot_program = program_runner.evaluate(u_prog)
+        #     res.groundedProgram = pickle.dumps(robot_program, pickle.HIGHEST_PROTOCOL)
+        #     print('Robot program grounded:')
+        #     print(robot_program)
+        #
+        #
+        #     return res
 
+        def handle_get_database_request(self, req):
+            # type: (GetDatabaseRequest) -> GetDatabaseResponse
+            path = os.path.dirname(os.path.abspath(__file__)) + '/saved_onto.owl'
+            db.onto.save(path)
+            if req.write:
+                #lock database
+                print('write')
+            else:
+                #do not lock and continue happily writing to it
+                print('read')
+            res = GetDatabaseResponse()
+            res.path = path
 
             return res
 
@@ -110,7 +161,7 @@ with db.onto as onto:
                     id = data.markers[i].id
 
                     #obj = onto.search(aruco_id=1,_is_in_workspace=True)
-                    obj = onto.search(type=onto.Cube)
+                    obj = db.onto.search(type=db.onto.Cube)
                     addObj = True
                     for i in range(0,len(obj)):
                         if (obj[i].aruco_id == id) and (obj[i]._is_in_workspace == True):
@@ -122,8 +173,8 @@ with db.onto as onto:
                     if addObj:
                         # creates a new cube
                         # TODO make it work with any object
-                        self.add_object(onto.Cube, x=pose.position.x, y=pose.position.y, id=id)
-                        print(onto.search(type=onto.Cube, _is_in_workspace=True))
+                        self.add_object(db.onto.Cube, x=pose.position.x, y=pose.position.y, id=id)
+                        print(db.onto.search(type=db.onto.Cube, _is_in_workspace=True))
                         msg.id.append(id)
                         msg.update_id.append(1)
                     elif changed_position and not addObj :
@@ -156,10 +207,10 @@ with db.onto as onto:
                 obj.aruco_id = id
 
             if color:
-                color = onto.NamedColor(color)
+                color = db.onto.NamedColor(color)
                 obj.color.append(color)
 
-            point = onto.Point2D(x=x, y=y)
+            point = db.onto.Point2D(x=x, y=y)
             obj.location = point
 
             # TODO without this, some objects may be involuntarily destroyed by a garbage collector

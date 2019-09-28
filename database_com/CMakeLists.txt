@@ -62,6 +62,7 @@ add_service_files(
   FILES
   GroundProgram.srv
   AddObject.srv
+  GetDatabase.srv
 )
 
 ## Generate actions in the 'action' folder
