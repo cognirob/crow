@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+"""
+Copyright (c) 2019 CIIRC CTU in Prague
+All rights reserved.
+
+This source code is licensed under the BSD-3-Clause license found in the
+LICENSE file in the root directory of this source tree.
+
+@author: Karla Stepanova, Jan Behrens
+@mail: karla.steapanova@cvut.cz
+"""
 import pickle
 import sys
 import unittest
@@ -69,6 +79,9 @@ class TestDBNode(unittest.TestCase):
         db.change_onto(res.path)
         obj = db.onto.search(id = '25')
         print(obj)
+
+#    def test_send_database(self):
+
 
 if __name__ == '__main__':
     import rostest
