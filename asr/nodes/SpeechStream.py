@@ -29,7 +29,6 @@ def asr_server():
     s = rospy.Service('asr', SpeechReco, speech_reco)
     print("ASR service ready")
     asr_publisher()
-
     # spin() keeps Python from exiting until node is shutdown
     rospy.spin()
 

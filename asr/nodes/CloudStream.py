@@ -96,48 +96,58 @@ class SpeechPipe:
         rospy.spin()
 
     def service_callback(self, req):
-        time = req.time
-        lang = req.lang
-
-        resp = SpeechRecoResponse()
-        return resp
-
-    def publisher_continuous(self):
-        pub = rospy.Publisher('/asr_output', asr_output, queue_size=10)
-        print("Publisher and service ready \nRunning speech recognition...")
         with MicrophoneStream(RATE, CHUNK) as stream:
             audio_generator = stream.generator()
             requests = (types.StreamingRecognizeRequest(audio_content=content)
                         for content in audio_generator)
-    
             responses = self.client.streaming_recognize(self.streaming_config, requests)
-            num_chars_printed = 0
-            for response in responses:
-                if not response.results:
-                    continue
-                result = response.results[0]
-                if not result.alternatives:
-                    continue
-                transcript = result.alternatives[0].transcript
-                overwrite_chars = ' ' * (num_chars_printed - len(transcript))
+            text = self.process_response(responses)
+            print("ASR service response: {}".format(text))
+            resp = SpeechRecoResponse()
+            resp.str = text
+            return resp
 
-                if not result.is_final:
-                    sys.stdout.write(transcript + overwrite_chars + '\r')
-                    sys.stdout.flush()
-                    num_chars_printed = len(transcript)
-                else:
-                    # Exit recognition if any of the transcribed phrases could be one of keywords.
-                    if re.search(r'\b(quit speech)\b', transcript, re.I):
-                        print('Detected the \'quit speech\' command. Exiting..')
-                        rospy.signal_shutdown("Detected the \'exit now\' keyword")
-                        break
-                    print("Heard: {}".format(transcript + overwrite_chars))
-                    text = str(transcript)
-                    msg = asr_output()
-                    msg.header.stamp = rospy.Time.now()
-                    msg.data = text.strip()
-                    pub.publish(msg)
-                    num_chars_printed = 0
+    def publisher_continuous(self):
+        pub = rospy.Publisher('/asr_output', asr_output, queue_size=10)
+        print("Publisher and service ready \nRunning speech recognition...")
+        while True:
+            with MicrophoneStream(RATE, CHUNK) as stream:
+                audio_generator = stream.generator()
+                requests = (types.StreamingRecognizeRequest(audio_content=content)
+                            for content in audio_generator)
+
+                responses = self.client.streaming_recognize(self.streaming_config, requests)
+                text = self.process_response(responses)
+                print("Continuous recognition: {}".format(text))
+                msg = asr_output()
+                msg.header.stamp = rospy.Time.now()
+                msg.data = text.strip()
+                pub.publish(msg)
+
+    def process_response(self, responses):
+        num_chars_printed = 0
+        for response in responses:
+            if not response.results:
+                continue
+            result = response.results[0]
+            if not result.alternatives:
+                continue
+            transcript = result.alternatives[0].transcript
+            overwrite_chars = ' ' * (num_chars_printed - len(transcript))
+
+            if not result.is_final:
+                sys.stdout.write(transcript + overwrite_chars + '\r')
+                sys.stdout.flush()
+                num_chars_printed = len(transcript)
+            else:
+                # Exit recognition if any of the transcribed phrases could be one of keywords.
+                if re.search(r'\b(quit speech)\b', transcript, re.I):
+                    print('Detected the \'quit speech\' command. Exiting..')
+                    rospy.signal_shutdown("Detected the quit keyword")
+                    break
+                num_chars_printed = 0
+                text = str(transcript)
+                return text
 
 
 if __name__ == "__main__":
