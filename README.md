@@ -14,5 +14,5 @@ Collaborative Robotic Workplace of the Future
 `export GOOGLE_APPLICATION_CREDENTIALS="crow/data/MyFirstProject.json"`
 3) run node for continuous recognition (/asr_node): <p>
 `python3 asr/nodes/CloudStream.py`
-4) in second terminal, run nl_input_node: <p>
+4) in second terminal, run nl_input_node from [crow_nlp](https://gitlab.ciirc.cvut.cz/imitrob/crow_nlp): <p>
 `python3 /crow_nlp/scripts/nl_input_node_asr.py`
