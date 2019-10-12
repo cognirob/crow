@@ -940,6 +940,14 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Actor -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Actor">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Agent"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive">
@@ -1286,14 +1294,6 @@
     
 
 
-    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Concept -->
-
-    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Concept">
-        <rdfs:comment>Could be physical or abstract &quot;object&quot;.</rdfs:comment>
-    </owl:Class>
-    
-
-
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Conductance_Unit -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Conductance_Unit">
@@ -1590,7 +1590,7 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EmbodiedAgent -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EmbodiedAgent">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Agent"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Actor"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
     </owl:Class>
     
@@ -2041,6 +2041,24 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedEvent -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedEvent">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Event"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedSituation -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedSituation">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Situation"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing">
@@ -2387,7 +2405,6 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Concept"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing"/>
         <rdfs:comment>Physical object realized in the real world</rdfs:comment>
     </owl:Class>
@@ -2948,7 +2965,7 @@
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Sensor -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Sensor">
-        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Concept"/>
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Agent"/>
     </owl:Class>
     
 
