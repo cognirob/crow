@@ -95,13 +95,14 @@ class update_object_position_node():
         self.db.onto.__enter__()
 
         if obj is None:
-            self._dbapi.add_object(Class=typeO, x=req.x, y=req.y, id=req.id, color=req.color)
-            res.res.msg = 'I added a {} {} with id {} at x = {} and y = {}'.format(req.color, req.obj_class, req.id, req.x, req.y)
+            self._dbapi.add_object(Class=typeO, x=req.x, y=req.y, z=req.z, id=req.id, color=req.color)
+            res.res.msg = 'I added a {} {} with id {} at x = {}, y = {} and z = {}'.format(req.color, req.obj_class, req.id, req.x, req.y, req.z)
             res.res.success = True
         else: #TODO if change of position > threshold update position
             obj.location.x = req.x
             obj.location.y = req.y
-            res.res.msg = 'I updated the position of a {} {} with id {} from x = {}, y = {} to x = {} and y = {}'.format(req.color, req.obj_class, req.id, obj.location.x, obj.location.y, req.x, req.y)
+            obj.location.z = req.z
+            res.res.msg = 'I updated the position of a {} {} with id {} from x = {}, y = {}, z = {} to x = {}, y = {} and z = {}'.format(req.color, req.obj_class, req.id, obj.location.x, obj.location.y, req.x, req.y, req.z)
             res.res.success = True
 
         #TODO update other parameters if changed...
