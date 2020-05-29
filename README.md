@@ -9,7 +9,10 @@ Collaborative Robotic Workplace of the Future
 ### Running Speech Recognition Nodes
 
 1) install requirements: <p>
-`pip3 install pyyaml rospkg pyaudio google-cloud-speech`
+`python3 -m pip install -r requirements.txt`
+
+> Note: `pyaudio` sometimes fails to build on Ubuntu18.04, so you may need to `apt install libportaudio-ocaml-dev`
+
 2) in one terminal/PyCharm, export path to your google cloud account credentials (or ask Gabina for her file - temporary solution): <p>
 `export GOOGLE_APPLICATION_CREDENTIALS="crow/data/MyFirstProject.json"`
 3) run node for continuous recognition (/asr_node): <p>
