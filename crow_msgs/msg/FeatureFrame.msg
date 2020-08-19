@@ -1,12 +1,12 @@
-string errorMessage
+string error_message
 Detection[] objects
 
-SixDof cameraPose
-float32 camIntr_hFov
-float32 camIntr_vFov
+SixDof camera_pose
+float32 camintr_hfov
+float32 camintr_vfov
 
-float32[] intr_cameraMatrix
+float32[] intr_cameramatrix
 
 #can be empty
-float32[] visibilityMeshVert
-uint32[] visibilityMeshIndices
+float32[] visibility_mesh_vert
+uint32[] visibility_mesh_indices
