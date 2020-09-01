@@ -1,7 +1,7 @@
 string error_message
 Detection[] objects
 
-SixDof camera_pose
+string camera_frame_name
 float32 camintr_hfov
 float32 camintr_vfov
 
