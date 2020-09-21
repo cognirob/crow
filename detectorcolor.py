@@ -1,6 +1,6 @@
 # Distingstion to detector1try2-2.py
-#:: Trying to implement masking and np.where() to substract background anf then shadow_out for shadow(lighter ones and not the strong ones) removal
-#RESULTS: works but need improvement
+#:: PREPROCESSING in RGB COLOR by implementing masking and np.where() to substract background and then shadow_out for shadow(lighter ones and not the strong ones) removal
+#RESULTS: works but slower than expectations
 
 
 import rclpy #add to package.xml deps
