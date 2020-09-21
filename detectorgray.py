@@ -1,6 +1,6 @@
 # Distingstion to detector1try2-2.py
-#:: Checking speed in Grayscale, After implementing masking and np.where() to substract background anf then shadow_out for shadow(lighter ones and not the strong ones) removal
-#RESULTS: 3x faster, dt~(20ms-30ms)
+#:: PREPROCESSING in GRAYSCALE BY implementing masking and np.where() to substract background and then shadow_out for shadow(lighter ones and not the strong ones) removal
+#RESULTS: 3x faster than processing RBG, dt~(20ms-30ms)
 
 
 import rclpy #add to package.xml deps
