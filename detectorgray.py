@@ -1,6 +1,7 @@
 # Distingstion to detector1try2-2.py
-#:: PREPROCESSING in GRAYSCALE BY implementing masking and np.where() to substract background and then shadow_out for shadow(lighter ones and not the strong ones) removal
-#RESULTS: 3x faster than processing RBG, dt~(20ms-30ms)
+#:: PREPROCESSING in GRAYSCALE to speedup, implementing masking and np.where() to substract background and then shadow_out for shadow(lighter ones and not the strong ones) removal
+#:: Also Publishes the cropped image on a topic : 'Cropped'
+#RESULTS: 3x faster, dt~(20ms-30ms)
 
 
 import rclpy #add to package.xml deps
@@ -21,6 +22,9 @@ import time
 #import commentjson as json
 import pkg_resources
 import argparse
+
+from std_msgs.msg import String
+from sensor_msgs.msg import Image
 
 y = 0
 x = np.uint8(np.zeros((480,640)))
@@ -85,9 +89,23 @@ class CrowVision(Node):
     self.ros[camera_topic] = {} # camera_topic is used as an ID for this input, all I/O listeners,publishers will be based under that id.
     self.ros[camera_topic]["listener"] = listener
 
+    self.cvb_ = CvBridge()
+
       #TODO others publishers
 
-    self.cvb_ = CvBridge()
+    self.publisher_ = self.create_publisher(Image, 'Cropped', 10)
+    timer_period = 0.5  # seconds
+    #self.timer = self.create_timer(timer_period, self.timer_callback)
+    #self.i = 0
+
+
+
+  def timer_callbackX(self):
+      msg = string()
+      msg.data = 'Hello World: %d' % self.i
+      self.publisher_.publish(msg)
+      self.get_logger().info('Publishing: "%s"' % msg.data)       
+      self.i += 1
 
 
 
@@ -103,6 +121,7 @@ class CrowVision(Node):
 
     #Global variables
     global x, y, img_raw_sub
+
 
     self.get_logger().info("I heard: {} for topic {}".format(str(msg.height), topic))
     assert topic in self.ros, "We don't have registered listener for the topic {} !".format(topic)
@@ -258,6 +277,14 @@ class CrowVision(Node):
           cropped = Bordered_img[yy+b-yy : yy+b+h+yy , yy+a : yy+a+w]
           #cv2.imwrite('Bordered_img.jpg', Bordered_img)
 
+        #Publishing cropped image
+        pub_msg = cropped
+        #pub_msg.data = 'Cropped image: %d' % i
+        self.publisher_.publish(self.cvb_.cv2_to_imgmsg(np.array(pub_msg)))
+        self.get_logger().info('Publishing:')#"%s"' % pub_msg.data)       
+        #self.i += 1
+
+
         i = i+1
 
     #Raw image with contours drawn over
@@ -282,6 +309,7 @@ class CrowVision(Node):
     	cv2.destroyAllWindows()
 
 
+
 def main(args=None):
   rclpy.init(args=args)
   
@@ -295,4 +323,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
