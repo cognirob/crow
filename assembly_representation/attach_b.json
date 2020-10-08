@@ -5,23 +5,13 @@
 {"object_name": "loc_3", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #screw
 {"object_name": "loc_4", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #wafer2
 {"object_name": "loc_5", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #screw_thread
-{"object_name": "loc_6", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #nut
-{"object_name": "loc_7", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #screwdriver
-{"object_name": "loc_8", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #screw_head
-{"object_name": "loc_9", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #wrench
-{"object_name": "loc_10", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #nut
 
 {"ovcs": [{"name": "ovc_1", "location_names": [{"values": [["loc_2"],["loc_1"]]}],   "action_types": ["pnp"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
 {"ovcs": [{"name": "ovc_2", "location_names": [{"values": [["loc_3"],["loc_1"]]}],   "action_types": ["pnp"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
 {"ovcs": [{"name": "ovc_3", "location_names": [{"values": [["loc_4"],["loc_5"]]}],   "action_types": ["pnp"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
-{"ovcs": [{"name": "ovc_4", "location_names": [{"values": [["loc_6"],["loc_5"]]}],   "action_types": ["pnp"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
-{"ovcs": [{"name": "ovc_5", "location_names": [{"values": [["loc_7"],["loc_8"]]}],   "action_types": ["screwdriver"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
-{"ovcs": [{"name": "ovc_6", "location_names": [{"values": [["loc_9"],["loc_10"]]}],   "action_types": ["wrench"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
+{"ovcs": [{"name": "ovc_4", "location_names": [{"values": ["loc_5"]}],   "action_types": ["attach_d"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
 
 {"ct": {"ovc_name": ["ovc_1", "ovc_2"], "ovc_interval": [-1, -1], "params": [], "name": "ct_1", "ct_type": {"val": 1}}}
 {"ct": {"ovc_name": ["ovc_2", "ovc_3"], "ovc_interval": [-1, -1], "params": [], "name": "ct_2", "ct_type": {"val": 1}}}
 {"ct": {"ovc_name": ["ovc_3", "ovc_4"], "ovc_interval": [-1, -1], "params": [], "name": "ct_3", "ct_type": {"val": 1}}}
-{"ct": {"ovc_name": ["ovc_2", "ovc_5"], "ovc_interval": [-1, -1], "params": [], "name": "ct_4", "ct_type": {"val": 1}}}
-{"ct": {"ovc_name": ["ovc_4", "ovc_6"], "ovc_interval": [-1, -1], "params": [], "name": "ct_5", "ct_type": {"val": 1}}}
-{"ct": {"ovc_name": ["ovc_5", "ovc_6"], "ovc_interval": [-1, -1], "params": [], "name": "ct_6", "ct_type": {"val": 1}}}
 

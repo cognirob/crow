@@ -2,12 +2,12 @@
 
 {"object_name": "loc_1", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #table
 {"object_name": "loc_2", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #1a
-{"object_name": "loc_3", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #hole_cube_1a2a
+{"object_name": "loc_3", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #hole_cube_0a1a2a
 {"object_name": "loc_4", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #hammer
-{"object_name": "loc_5", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #cube_1a
+{"object_name": "loc_5", "pose": {"header": {"stamp": {"secs": 1527494251, "nsecs": 462414026}, "frame_id": "board", "seq": 0}, "pose": {"position": {"y": 0.0, "x": 0.0, "z": 0.0}, "orientation": {"y": 0.0, "x": 0.0, "z": 0.0, "w": 1.0}}}} #cube_0a1a
 
-{"ovcs": [{"name": "ovc_1", "location_names": [{"values": ["loc_1"]}],   "action_types": ["build_1a2a"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
-{"ovcs": [{"name": "ovc_2", "location_names": [{"values": ["loc_2"]}],   "action_types": ["build_1a"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
+{"ovcs": [{"name": "ovc_1", "location_names": [{"values": ["loc_1"]}],   "action_types": ["build_0a1a2a"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
+{"ovcs": [{"name": "ovc_2", "location_names": [{"values": ["loc_2"]}],   "action_types": ["build_0a1a"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
 {"ovcs": [{"name": "ovc_3", "location_names": [{"values": [["loc_2"],["loc_3"]]}],   "action_types": ["pnp"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
 {"ovcs": [{"name": "ovc_4", "location_names": [{"values": [["loc_4"],["loc_5"]]}],   "action_types": ["hammer"], "location_description": [], "duration_ranges": [{"max": 1000, "min": 0}], "groups": ["r1_arm", "r2_arm"], "configuration_domains": []}]}
 
