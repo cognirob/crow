@@ -1,0 +1,106 @@
+transform:
+  frame_id: "world"
+  transform:
+    translation:
+      y: 0.3
+      x: 0.6
+      z: 0.02
+    rotation:
+      y: 0.7469166744613165
+      x: -0.6646584989424609
+      z: 0.009387090228191897
+      w: -0.016013860629187193
+  child_frame_id: "board"
+
+floc_1:
+  func: object(target)
+  frame_id: "board"
+floc_2:
+  func: object("peg_thread")
+  frame_id: "board"
+floc_3:
+  func: object("wafer").part("hole").empty()
+  frame_id: "board"
+floc_4:
+  func: object("nut")
+  frame_id: "board"
+floc_5:
+  func: object("wrench_ring")
+  frame_id: "board"
+floc_6:
+  func: object("wrench_open")
+  frame_id: "board"
+
+ovc_1:
+  location_names:
+    - floc_1
+  action_types: attach_c
+  location_description: []
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
+  configuration_domains: []
+
+ovc_2:
+  location_names:
+    - floc_3
+    - floc_2
+  action_types: pnp
+  location_description: []
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
+  configuration_domains: []
+
+ovc_3:
+  location_names:
+    - difference(floc_3, from(ovc_2).result[0].parent.part("hole").empty())
+    - from(ovc_2).result[1]
+  action_types: pnp
+  location_description: []
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
+  configuration_domains: []
+
+ovc_4:
+  location_names:
+    - floc_4
+    - from(ovc_2).result[1]
+  action_types: pnp
+  location_description: []
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
+  configuration_domains: []
+
+ovc_5:
+  location_names:
+    - union(floc_5, floc_6)
+    - from(ovc_4).result[0])
+  action_types: wrench
+  location_description: []
+  duration_ranges: [{max: 1000, min: 0},{max: 5, min: 5}]
+  groups: ["h1_arm", "h2_arm"]
+  configuration_domains: []
+
+
+ct_1:
+  ovc_name: ["ovc_1", "ovc_2"]
+  ovc_interval: [-1, 1]
+  params: []
+  ct_type: 1
+
+ct_2:
+  ovc_name: ["ovc_2", "ovc_3"]
+  ovc_interval: [-1, 1]
+  params: []
+  ct_type: 1
+
+ct_3:
+  ovc_name: ["ovc_3", "ovc_4"]
+  ovc_interval: [-1, 1]
+  params: []
+  ct_type: 1
+
+ct_3:
+  ovc_name: ["ovc_4", "ovc_5"]
+  ovc_interval: [-1, 1]
+  params: []
+  ct_type: 1
