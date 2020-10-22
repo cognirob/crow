@@ -31,10 +31,16 @@ floc_6:
   func: union(object("wrench_ring"),object("wrench_open"))
   frame_id: "board"
 floc_7:
-  func: from(ovc_4).now[0] #nut
+  func: from(ovc_6).now[0] #nut
   frame_id: "board"
 floc_8:
   func: difference(floc_3, from(ovc_2).now[0].parent.part("hole").empty()) #wafer
+  frame_id: "board"
+floc_9:
+  func: difference(floc_9, from(ovc_3).now[0].parent.part("hole").empty()) #wafer
+  frame_id: "board"
+floc_10:
+  func: difference(floc_10, from(ovc_4).now[0].parent.part("hole").empty()) #wafer
   frame_id: "board"
 
 ovc_1:
@@ -68,7 +74,7 @@ ovc_3:
 
 ovc_4:
   location_names:
-    - floc_5
+    - floc_9
     - floc_4
   action_types: pnp
   location_description: []
@@ -77,6 +83,26 @@ ovc_4:
   configuration_domains: []
 
 ovc_5:
+  location_names:
+    - floc_10
+    - floc_4
+  action_types: pnp
+  location_description: []
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
+  configuration_domains: []
+
+ovc_6:
+  location_names:
+    - floc_5
+    - floc_4
+  action_types: pnp
+  location_description: []
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
+  configuration_domains: []
+
+ovc_7:
   location_names:
     - floc_6
     - floc_7
@@ -105,8 +131,20 @@ ct_3:
   params: []
   ct_type: 1
 
-ct_3:
+ct_4:
   ovc_name: ["ovc_4", "ovc_5"]
+  ovc_interval: [-1, 1]
+  params: []
+  ct_type: 1
+
+ct_5:
+  ovc_name: ["ovc_5", "ovc_6"]
+  ovc_interval: [-1, 1]
+  params: []
+  ct_type: 1
+
+ct_6:
+  ovc_name: ["ovc_6", "ovc_7"]
   ovc_interval: [-1, 1]
   params: []
   ct_type: 1

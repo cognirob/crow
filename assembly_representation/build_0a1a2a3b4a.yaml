@@ -12,26 +12,21 @@ transform:
       w: -0.016013860629187193
   child_frame_id: "board"
 
+
 floc_1:
-  func: object(target) #hole
+  func: object(target)
   frame_id: "board"
+​
 floc_2:
-  var1: object("peg")
-  func: var1.part("end").empty().opposite(var1, var1.part("end").empty()) #free peg
-  frame_id: "board"
-floc_3:
-  func: object("hammer")
-  frame_id: "board"
-floc_4:
-  func: from(ovc_1).now[0].parent.part("end").empty() #peg
+  var1: complex("build_0a1a2a3b").complex("build_0a1a2a").object("cube_holes")
+  func: var_1.part("hole").empty().perpendicular(var1, var1.part("hole").full()) #upper hands arg[1] = list
   frame_id: "board"
 
 
 ovc_1:
   location_names:
-    - floc_2
     - floc_1
-  action_types: pnh
+  action_types: build_0a1a2a3b
   location_description: []
   duration_ranges: {max: 1000, min: 0}
   groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
@@ -39,23 +34,17 @@ ovc_1:
 
 ovc_2:
   location_names:
-    - floc_3
-    - floc_4
-  action_types: hammer
+    - floc_2
+  action_types: attach_b
   location_description: []
-  duration_ranges: [{max: 1000, min: 0},{max: 3, min: 3}]
-  groups: ["h1_arm", "h2_arm"]
+  duration_ranges: {max: 1000, min: 0}
+  groups: ["r1_arm", "r2_arm", "h1_arm", "h2_arm"]
   configuration_domains: []
 
 
 ct_1:
   ovc_name: ["ovc_1", "ovc_2"]
-  ovc_interval: [1, 1]
+  ovc_interval: [-1, -1]
   params: []
   ct_type: 1
 
-ct_2:
-  ovc_name: ["ovc_2", "ovc_1"]
-  ovc_interval: [1, 1]
-  params: []
-  ct_type: 2
