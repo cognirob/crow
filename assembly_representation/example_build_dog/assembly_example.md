@@ -19,12 +19,15 @@ There are basic actions *pick'n'place, pick'n'hold* and actions representing usa
 ## Example build_dog:
 [Dog](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/build_dog.yaml) is a level-3-assembly. There is preceding 3rd level complex object [0a1a2a3a](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/build_0a1a2a3a.yaml), preceding 2nd level complex object [0a1a2a](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/build_0a1a2a.yaml) and 1st level complex object [0a1a](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/build_0a1a.yaml) consisting of 0th (crow) object cube_holes.
 
-![Build_dog action diagram](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/example_build_dog/build_dog_action_diagram.jpeg)
+![Build_dog action diagram]
+(https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/example_build_dog/build_dog_action_diagram.jpeg)
 
-![Build_dog flow](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/example_build_dog/build_dog_flow.jpeg)
+![Build_dog flow]
+(https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/example_build_dog/build_dog_flow.jpeg)
 
 ### Illustrated description
-![Build the dog](https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/example_build_dog/build.jpeg)
+![Build the dog]
+(https://gitlab.ciirc.cvut.cz/imitrob/project_crow/crow/-/blob/master/assembly_representation/example_build_dog/build.png)
 
 ### Natural language description
 - First build 0a1a2a3a (body)
