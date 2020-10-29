@@ -19,23 +19,23 @@ floc_1:
 ​
 floc_2:
   var1: complex("build_0a1a2a3a").complex("build_0a1a2a").object("cube_holes")
-  func: var_1.part("hole").empty().perpendicular(var1, var1.part("hole").full()) #front legs arg[1] = list
+  func: var1.part("hole").empty().perpendicular(var1, var1.part("hole").full()) #front legs arg[1] = list
   frame_id: "board"
 ​
 floc_3:
   var1: complex("build_0a1a2a3a").complex("build_0a1a").object("cube_holes")
   var2: complex("build_0a1a2a3a").complex("build_0a1a2a").object("peg")
-  func: var_1.part("hole").empty().perpendicular(var1, var1.part("hole").full()).perpendicular(var1, var2) #back legs
+  func: var1.part("hole").empty().perpendicular(var1, var1.part("hole").full()).perpendicular(var1, var2) #back legs
   frame_id: "board"
 ​
 floc_4:
   var1: complex("build_0a1a2a3a").complex("build_0a1a").object("cube_holes")
-  func: var_1.part("hole").empty().opposite(var1, var1.part("hole").full()) #tail
+  func: var1.part("hole").empty().opposite(var1, var1.part("hole").full()) #tail
   frame_id: "board"
 
 floc_5:
   var1: complex("build_0a1a2a3a").object("sphere_holes")
-  func: var_1.part("hole").empty().perpendicular(var1, var1.part("hole").full()) #nose
+  func: var1.part("hole").empty().perpendicular(var1, var1.part("hole").full()) #nose
   frame_id: "board"
 
 ovc_1:
