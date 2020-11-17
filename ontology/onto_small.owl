@@ -1,0 +1,447 @@
+<?xml version="1.0"?>
+<rdf:RDF xmlns="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#"
+     xml:base="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:onto="http://ainf.aau.at/ontodebug#"
+     xmlns:owlr="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+    <owl:Ontology rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01">
+        <owl:versionIRI rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01/0.0.1"/>
+        <onto:testCase>
+            <rdf:Description/>
+        </onto:testCase>
+        <onto:testCase>
+            <rdf:Description/>
+        </onto:testCase>
+        <rdfs:comment>Testing ontology</rdfs:comment>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://ainf.aau.at/ontodebug#axiom -->
+
+    <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#axiom">
+        <rdfs:subPropertyOf rdf:resource="http://ainf.aau.at/ontodebug#testCase"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://ainf.aau.at/ontodebug#testCase -->
+
+    <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#testCase"/>
+    
+
+
+    <!-- http://ainf.aau.at/ontodebug#type -->
+
+    <owl:AnnotationProperty rdf:about="http://ainf.aau.at/ontodebug#type">
+        <rdfs:subPropertyOf rdf:resource="http://ainf.aau.at/ontodebug#testCase"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#python_name -->
+
+    <owl:AnnotationProperty rdf:about="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#python_name"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Consumable"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Bolt -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Bolt">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Consumable -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Consumable">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
+        <rdfs:comment>Materials used in the assembly, usually to connect the assembled objects</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivingTool -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivingTool">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Tool"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Consumable"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#FlatScrewdriver -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#FlatScrewdriver">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screwdriver"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Glue -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Glue">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hammer -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hammer">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertingTool"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertableFastener -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertableFastener">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertingTool -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertingTool">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Tool"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing">
+        <rdfs:subClassOf rdf:resource="http://www.w3.org/2002/07/owl#Thing"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nail -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nail">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertableFastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nut -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nut">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nutdriver -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nutdriver">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivingTool"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing"/>
+        <rdfs:comment>Physical object realized in the real world</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Panel -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Panel">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Peg -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Peg">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertableFastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PhilipsScrewdriver -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PhilipsScrewdriver">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screwdriver"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screw -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screw">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screwdriver -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screwdriver">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivingTool"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Tape -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Tape">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Tool -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Tool">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Washer -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Washer">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Wrench -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Wrench">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nutdriver"/>
+    </owl:Class>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_ABORTED -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_ABORTED"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_COMPLETED -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_COMPLETED"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_ERROR -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_ERROR"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_OUT_OF_RESOURCES -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_OUT_OF_RESOURCES"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_TIMEOUT -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ACTION_TIMEOUT"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLACK -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLACK"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLUE -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_BLUE"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_CYAN -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_CYAN"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_GREEN -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_GREEN"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_MAGENTA -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_MAGENTA"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_RED -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_RED"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_WHITE -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_WHITE"/>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_YELLOW -->
+
+    <owl:NamedIndividual rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#COLOR_YELLOW"/>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+
