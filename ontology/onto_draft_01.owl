@@ -226,6 +226,14 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#consumesAssemblyAffordance -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#consumesAssemblyAffordance">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyAffordance"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#contains-topo -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#contains-topo">
@@ -273,11 +281,44 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAffordance -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAffordance">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Affordance"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyAffordance -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyAffordance">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAffordance"/>
+        <rdfs:domain>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyGraph"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyPart"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:domain>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyAffordance"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyElement -->
 
     <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyElement">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
-        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyOperation"/>
+        <rdfs:range>
+            <owl:Class>
+                <owl:unionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyGraph"/>
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyOperation"/>
+                </owl:unionOf>
+            </owl:Class>
+        </rdfs:range>
     </owl:ObjectProperty>
     
 
@@ -318,6 +359,15 @@
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#LocalizedThing"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Location"/>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">location</owlr:python_name>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart">
+        <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
+        <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ObjectPart"/>
     </owl:ObjectProperty>
     
 
@@ -500,6 +550,14 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
         <rdfs:domain rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PathPoint"/>
         <rdfs:range rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#PathPoint"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#providesAssemblyAffordance -->
+
+    <owl:ObjectProperty rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#providesAssemblyAffordance">
+        <rdfs:subPropertyOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyAffordance"/>
     </owl:ObjectProperty>
     
 
@@ -994,6 +1052,22 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAShaft -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAShaft">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyAffordance"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAThread -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAThread">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyAffordance"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Absorbed_Dose_Rate_Unit -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Absorbed_Dose_Rate_Unit">
@@ -1066,6 +1140,12 @@
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Adhesive">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Consumable"/>
     </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Affordance -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Affordance"/>
     
 
 
@@ -1223,6 +1303,14 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyAffordance -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyAffordance">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#FunctionalAffordance"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyBinaryConnection -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyBinaryConnection">
@@ -1278,6 +1366,24 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyOperation">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Assembly"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyPart -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyPart">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ObjectPart"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasAssemblyAffordance"/>
+                        <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyAffordance"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -1382,6 +1488,13 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Bolt">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Thread"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -1592,6 +1705,25 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#CubeHoles -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#CubeHoles">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Cube"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                        <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">6</owl:qualifiedCardinality>
+                        <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -2010,6 +2142,14 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#FunctionalAffordance -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#FunctionalAffordance">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Affordance"/>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#GeometricObject -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#GeometricObject">
@@ -2120,6 +2260,24 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#HexScrewdriver">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screwdriver"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyPart"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#consumesAssemblyAffordance"/>
+                        <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAShaft"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -2648,6 +2806,13 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nail">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertableFastener"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Shaft"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -2694,6 +2859,13 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Nut">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ThreadedHole"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -2711,6 +2883,14 @@
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#EnduringLocalizedThing"/>
         <rdfs:comment>Physical object realized in the real world</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ObjectPart -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ObjectPart">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Object"/>
     </owl:Class>
     
 
@@ -2877,6 +3057,13 @@
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Peg">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#InsertableFastener"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">2</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Thread"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3329,6 +3516,28 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screw">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#DrivableFastener"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Thread"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScrewLong -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ScrewLong">
+        <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Screw"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Shaft"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3361,6 +3570,24 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Serum_Or_Plasma_Level_Unit">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Biomedical_Unit"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Shaft -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Shaft">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyPart"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#providesAssemblyAffordance"/>
+                        <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAShaft"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3483,6 +3710,25 @@
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Sphere">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ConvexVolume"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SphereHoles -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#SphereHoles">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Sphere"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                        <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">6</owl:qualifiedCardinality>
+                        <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3640,12 +3886,48 @@
     
 
 
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Thread -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Thread">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Shaft"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#providesAssemblyAffordance"/>
+                        <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAThread"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
     <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ThreadedConnection -->
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ThreadedConnection">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AssemblyBinaryConnection"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#MechanicalConnection"/>
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ToolAsistedAssemblyOperation"/>
+    </owl:Class>
+    
+
+
+    <!-- http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ThreadedHole -->
+
+    <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#ThreadedHole">
+        <rdfs:subClassOf>
+            <owl:Class>
+                <owl:intersectionOf rdf:parseType="Collection">
+                    <rdf:Description rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole"/>
+                    <owl:Restriction>
+                        <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#consumesAssemblyAffordance"/>
+                        <owl:someValuesFrom rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#AAThread"/>
+                    </owl:Restriction>
+                </owl:intersectionOf>
+            </owl:Class>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3853,6 +4135,13 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Wafer">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">2</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3861,6 +4150,13 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Washer">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Fastener"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
@@ -3877,6 +4173,13 @@
 
     <owl:Class rdf:about="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Wheel">
         <rdfs:subClassOf rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Workpiece"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#hasObjectPart"/>
+                <owl:qualifiedCardinality rdf:datatype="http://www.w3.org/2001/XMLSchema#nonNegativeInteger">1</owl:qualifiedCardinality>
+                <owl:onClass rdf:resource="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#Hole"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
     </owl:Class>
     
 
