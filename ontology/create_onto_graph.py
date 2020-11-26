@@ -20,6 +20,8 @@ import os
 import argparse
 from owlrl import DeductiveClosure, OWLRL_Semantics
 import re
+import numpy as np
+import hashlib
 
 
 # %%ArgParser
@@ -27,8 +29,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("build_name")
 parser.add_argument("--onto_file", "-o", default="onto_draft_01.owl")
 # args = parser.parse_args(["build_dog.yaml"])
-# args = parser.parse_args(["sub_build_dog.yaml"])
-args = parser.parse_args()
+args = parser.parse_args(["sub_build_dog.yaml", "-o", "../onto_draft_01.owl"])
+# os.chdir(r".\code\crow\ontology\assembly")
+os.chdir(r".\assembly")
+# args = parser.parse_args()
 
 # %%Initialization
 # build_name = "build_dog.yaml"
@@ -48,6 +52,7 @@ onto = rdflib.Graph()
 onto.load(onto_file)
 onto.bind("crow", CROW)
 
+
 # %%Functions
 def getBaseNameAndNS(obj_name, build_name=None):
     if "." in obj_name or build_name is None:
@@ -55,15 +60,17 @@ def getBaseNameAndNS(obj_name, build_name=None):
         *nspaces, obj_name = split_name_re.findall(obj_name)
     else:
         nspaces = []
-        
+
     NS = Namespace(URIRef(ONTO_IRI) + ("/" + build_name if build_name is not None else "") + (("/" + "/".join(nspaces)) if len(nspaces) > 0 else "") + "#")
     return obj_name, NS
 
 # def getUnqualifiedName
 
+
 def getQualifiedName(obj_name, build_name=None):
     obj_name, BUILD = getBaseNameAndNS(obj_name, build_name)
     return BUILD[obj_name]
+
 
 def checkIValidType(onto_type):
     try:
@@ -72,6 +79,7 @@ def checkIValidType(onto_type):
         return False
     else:
         return True
+
 
 def checkConnectionObject(conn_name, obj_name, build_name):
     obj_name, BUILD = getBaseNameAndNS(obj_name, build_name)
@@ -88,6 +96,7 @@ def checkConnectionObject(conn_name, obj_name, build_name):
         else:
             return True
 
+
 def checkRelationOperation(rel_type, op_name, build_name):
     op_name, BUILD = getBaseNameAndNS(op_name, build_name)
     try:
@@ -102,6 +111,7 @@ def checkRelationOperation(rel_type, op_name, build_name):
             return False
         else:
             return True
+
 
 def checkOrderOperation(order_type, op_name, build_name):
     op_name, BUILD = getBaseNameAndNS(op_name, build_name)
@@ -118,6 +128,7 @@ def checkOrderOperation(order_type, op_name, build_name):
         else:
             return True
 
+
 def checkReference(rel_type, ref_name, build_name):
     ref_name, BUILD = getBaseNameAndNS(ref_name, build_name)
     try:
@@ -133,6 +144,20 @@ def checkReference(rel_type, ref_name, build_name):
         else:
             return True
 
+
+def sub_clusterize(in_g, out_g, top_name):
+    for cf in in_g.subgraphs():
+        nodes = [f"{top_name}.{n}" for n in cf.nodes()]
+        d = out_g.add_subgraph(nodes, name=cf.name)
+        sub_clusterize(cf, d, top_name)
+        for k, v in cf.node_attr.items():
+            d.node_attr[k] = v
+        for k, v in cf.edge_attr.items():
+            d.edge_attr[k] = v
+        for k, v in cf.graph_attr.items():
+            d.graph_attr[k] = v
+
+
 # %%Build graph
 def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
     # %%Load YAML
@@ -143,14 +168,16 @@ def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
         recipe = yaml.safe_load(f)
 
     # initialize graph
-    graph = pgv.AGraph(strict=False)
-    graph.node_attr['style']='filled'
-
+    graph = pgv.AGraph(strict=False,
+                       splines="ortho", ranksep=0.6)
+    graph.node_attr['style'] = 'filled'
+    
     # add recipe name
+    assembly_name = recipe["assembly_name"]
     if isBaseBuild is None:
         isBaseBuild = recipe_name is None
     if recipe_name is None:
-        recipe_name = recipe["assembly_name"]
+        recipe_name = assembly_name
     BUILD = Namespace(f"{ONTO_IRI}/{recipe_name}#")
     onto.bind(recipe_name.replace("/", "_"), BUILD)
     recipe_onto_name = BUILD[recipe_name]
@@ -160,19 +187,36 @@ def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
     # Add objects
     if "imports" in recipe:
         for sub_build, import_path in recipe["imports"].items():
-            g, g_name, _ = buildGraph(import_path, onto, recipe_name + "/" + sub_build)
-            sub_name = g_name[g_name.find("/")+ 1:].replace('/', '.')
+            g, g_name, a_name, _ = buildGraph(import_path, onto, recipe_name + "/" + sub_build)
+            sub_name = g_name[g_name.find("/") + 1:].replace('/', '.')
+            c = graph.add_subgraph(g, name=f'cluster_{sub_build}')
+            for k, v in g.node_attr.items():
+                c.node_attr[k] = v
+            for k, v in g.edge_attr.items():
+                c.edge_attr[k] = v
+            for k, v in g.graph_attr.items():
+                c.graph_attr[k] = v
+            h = hashlib.new("shake_256")
+            h.update(a_name.encode())
+            np.random.seed(int(h.hexdigest(4), 16))
+            # color = "#" + h.hexdigest(3) + "33"
+            color = hex(np.sum([x << (i * 8) for i, x in enumerate(np.random.randint(0, 255, (3, )))])).replace("0x", "#") + "22"
+            c.graph_attr.update(style='filled', color=color)
+            c.graph_attr.update(label=f'{sub_build} ({a_name})')
+
             for n in g.nodes():
-                if str(n) != g_name:
-                    new_nodename = f"{sub_build}.{n}"
-                    graph.add_node(new_nodename, **n.attr)
-                    n = graph.get_node(new_nodename)
-                    n.attr["label"] = f"{sub_build}.{n.attr['label']}"
+                if str(n) == g_name:
+                    continue
+                new_nodename = f"{sub_build}.{n}"
+                c.add_node(new_nodename, **n.attr)
+                n = c.get_node(new_nodename)
+                # n.attr["label"] = f"{sub_build}.{n.attr['label']}"
             for e in g.edges():
                 u, v = [f"{sub_build}.{w}" for w in tuple(e)]
-                graph.add_edge(u, v, **e.attr)
+                c.add_edge(u, v, **e.attr)
             for triple in onto.triples((getQualifiedName(g_name.replace("/", ".") + f".{g_name}"), None, None)):
                 onto.add((recipe_onto_name, triple[1], triple[2]))
+            sub_clusterize(g, c, sub_build)
 
     print(f"Parsing build {recipe_name}")
     # Add objects
@@ -283,7 +327,7 @@ def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
                             graph.add_edge(first, uname, color="darkgreen", fillcolor="honeydew", arrowhead=arrowHead, dir="forward")
                             graph.add_edge(uname, then, color="darkgreen", fillcolor="honeydew", arrowhead=arrowHead, dir="forward")
                             onto.add((onto_name, CROW.firstOp, getQualifiedName(first, recipe_name)))
-                            onto.add((onto_name, CROW.thenOp,getQualifiedName(then, recipe_name)))
+                            onto.add((onto_name, CROW.thenOp, getQualifiedName(then, recipe_name)))
                     else:  # assumes parallel or selection order
                         operations = props["operations"]
                         if all([checkOrderOperation(node_type, op, recipe_name) for op in operations]):
@@ -307,17 +351,20 @@ def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
     graph.layout(prog='dot')
     graph.draw(image_file, prog="dot")
 
-    return graph, recipe_name, base_filename
+    return graph, recipe_name, assembly_name, base_filename
+
 
 # %% Do
-g, g_name, base_filename = buildGraph(build_name, onto)
+g, g_name, assembly_name, base_filename = buildGraph(build_name, onto)
 
 # %% Draw
 image_file = base_filename + ".png"
 outonto_file = base_filename + ".owl"
 image = cv2.imread(image_file)
-cv2.imshow(image_file, image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
-
+# cv2.imshow(image_file, image)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+with open(f"{base_filename}_graph.txt", "w") as f:
+    f.write(str(g))
+    
 onto.serialize(outonto_file)
