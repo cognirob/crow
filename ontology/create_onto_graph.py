@@ -26,8 +26,9 @@ import re
 parser = argparse.ArgumentParser()
 parser.add_argument("build_name")
 parser.add_argument("--onto_file", "-o", default="onto_draft_01.owl")
-args = parser.parse_args(["build_dog.yaml"])
+# args = parser.parse_args(["build_dog.yaml"])
 # args = parser.parse_args(["sub_build_dog.yaml"])
+args = parser.parse_args()
 
 # %%Initialization
 # build_name = "build_dog.yaml"
@@ -35,7 +36,8 @@ build_name = args.build_name
 # onto_file = "onto_draft_01.owl"
 # onto_file = "dog_build.owl"
 onto_file = args.onto_file
-split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
+split_name_re = re.compile(r"([\w\/]+)\.?")
+# split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
 
 # %%Load onto
 ONTO_IRI = "http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01"
@@ -46,20 +48,19 @@ onto.load("onto_draft_01.owl")
 onto.bind("crow", CROW)
 
 # %%Functions
-def getBaseNameAndNS(obj_name, build_name):
-    if "." in obj_name:
-        if obj_name.count(".") > 1:
-            nspace, obj_name = split_name_re.search(obj_name)
-        else:
-            idot = obj_name.find(".")
-            nspace = base = obj_name[:idot]
-            obj_name = obj_name[idot + 1:]
-        NS = Namespace(URIRef(ONTO_IRI) + "/" + nspace + "#")
+def getBaseNameAndNS(obj_name, build_name=None):
+    if "." in obj_name or build_name is None:
+        # if obj_name.count(".") > 1:
+        *nspaces, obj_name = split_name_re.findall(obj_name)
     else:
-        NS = Namespace(URIRef(ONTO_IRI) + "/" + build_name + "#")
+        nspaces = []
+        
+    NS = Namespace(URIRef(ONTO_IRI) + ("/" + build_name if build_name is not None else "") + (("/" + "/".join(nspaces)) if len(nspaces) > 0 else "") + "#")
     return obj_name, NS
 
-def getQualifiedName(obj_name, build_name):
+# def getUnqualifiedName
+
+def getQualifiedName(obj_name, build_name=None):
     obj_name, BUILD = getBaseNameAndNS(obj_name, build_name)
     return BUILD[obj_name]
 
@@ -76,12 +77,12 @@ def checkConnectionObject(conn_name, obj_name, build_name):
     try:
         obj_onto_name, _, obj_type = next(onto.triples((BUILD[obj_name], RDF.type, None)))
     except StopIteration as e:
-        warn(f"Object {obj_name} used in connection {conn_name} does not exist! Maybe you forgot to define it in 'objects' section?")
+        warn(f"Object {obj_name} used in operation {conn_name} does not exist! Maybe you forgot to define it in 'objects' section?")
         return False
     else:
         superClasses = list(onto.transitive_objects(obj_type, RDFS.subClassOf))
         if not((CROW.WorkMaterial in superClasses) or (CROW.AssemblyGraph in superClasses)):
-            warn(f"Object {obj_name} used in connection {conn_name} is not a sub-class of WorkMaterial or AssemblyGraph!")
+            warn(f"Object {obj_name} used in operation {conn_name} is not a sub-class of WorkMaterial or AssemblyGraph!")
             return False
         else:
             return True
@@ -132,7 +133,7 @@ def checkReference(rel_type, ref_name, build_name):
             return True
 
 # %%Build graph
-def buildGraph(build_name, onto, recipe_name=None):
+def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
     # %%Load YAML
     base_filename, _ = os.path.splitext(build_name)
     _, base_name = os.path.split(base_filename)
@@ -140,16 +141,17 @@ def buildGraph(build_name, onto, recipe_name=None):
     with open(build_name, "r") as f:
         recipe = yaml.safe_load(f)
 
-
     # initialize graph
     graph = pgv.AGraph(strict=False)
     graph.node_attr['style']='filled'
 
     # add recipe name
+    if isBaseBuild is None:
+        isBaseBuild = recipe_name is None
     if recipe_name is None:
         recipe_name = recipe["assembly_name"]
     BUILD = Namespace(f"{ONTO_IRI}/{recipe_name}#")
-    onto.bind(base_name, BUILD)
+    onto.bind(recipe_name.replace("/", "_"), BUILD)
     recipe_onto_name = BUILD[recipe_name]
     graph.add_node(recipe_name, shape="note", fillcolor="white")
     onto.add((recipe_onto_name, RDF.type, CROW.AssemblyGraph))
@@ -157,19 +159,21 @@ def buildGraph(build_name, onto, recipe_name=None):
     # Add objects
     if "imports" in recipe:
         for sub_build, import_path in recipe["imports"].items():
-            g, g_name, _ = buildGraph(import_path, onto, sub_build)
+            g, g_name, _ = buildGraph(import_path, onto, recipe_name + "/" + sub_build)
+            sub_name = g_name[g_name.find("/")+ 1:].replace('/', '.')
             for n in g.nodes():
                 if str(n) != g_name:
-                    new_nodename = f"{g_name}.{n}"
+                    new_nodename = f"{sub_build}.{n}"
                     graph.add_node(new_nodename, **n.attr)
                     n = graph.get_node(new_nodename)
-                    n.attr["label"] = f"{g_name}.{n.attr['label']}"
+                    n.attr["label"] = f"{sub_build}.{n.attr['label']}"
             for e in g.edges():
-                u, v = tuple(e)
-                graph.add_edge(f"{g_name}.{u}", f"{g_name}.{v}", **e.attr)
-            for triple in onto.triples((getQualifiedName(g_name, g_name), None, None)):
+                u, v = [f"{sub_build}.{w}" for w in tuple(e)]
+                graph.add_edge(u, v, **e.attr)
+            for triple in onto.triples((getQualifiedName(g_name.replace("/", ".") + f".{g_name}"), None, None)):
                 onto.add((recipe_onto_name, triple[1], triple[2]))
 
+    print(f"Parsing build {recipe_name}")
     # Add objects
     if "objects" in recipe:
         for entity, props in recipe["objects"].items():
