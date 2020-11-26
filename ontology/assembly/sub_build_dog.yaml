@@ -1,13 +1,9 @@
 assembly_name: dog_sub
 imports:
-  body_0a1a: build_0a1a.yaml
-  hns_0a1a: build_0a1a2a.yaml
+  upper_body: build_0a1a2a3a.yaml
 
 # Object definitions
 objects:
-  sphere_head:
-    type: Sphere
-
   peg_nose:
     type: Peg
 
@@ -43,17 +39,12 @@ operations:
   nose:
     type: InsertFixedConnection
     shaft: peg_nose
-    hole: hns_0a1a.sphere
+    hole: upper_body.hns.sphere
 
   tail:
     type: InsertFixedConnection
     shaft: peg_tail
-    hole: body_0a1a.cube
-
-  body1:
-    type: InsertFixedConnection
-    shaft: body_0a1a.peg
-    hole: hns_0a1a.neck_0a1a.cube
+    hole: upper_body.body.cube
 
   front1:
     type: InsertLooseConnection
@@ -65,7 +56,7 @@ operations:
   front2:
     type: InsertLooseConnection
     shaft: screw_front
-    hole: hns_0a1a.neck_0a1a.cube
+    hole: upper_body.hns.neck.cube
     uses: Thread
     length: 50
 
@@ -91,7 +82,7 @@ operations:
   back2:
     type: InsertLooseConnection
     shaft: screw_back
-    hole: body_0a1a.cube
+    hole: upper_body.body.cube
     uses: Thread
     length: 50
 
@@ -110,32 +101,32 @@ operations:
 # Relation definitions
 relations:
   - type: PerpendicularRelation
-    operations: [nose, hns_0a1a.neck]
-    reference: hns_0a1a.sphere
+    operations: [nose, upper_body.hns.neck_conn]
+    reference: upper_body.hns.sphere
 
   - type: PerpendicularRelation
-    operations: [hns_0a1a.neck_0a1a.conn, body1]
-    reference: hns_0a1a.neck_0a1a.cube
+    operations: [upper_body.hns.neck.conn, upper_body.body1]
+    reference: upper_body.hns.neck.cube
 
   - type: PerpendicularRelation
-    operations: [front2, body1]
-    reference: hns_0a1a.neck_0a1a.cube
+    operations: [front2, upper_body.body1]
+    reference: upper_body.hns.neck.cube
 
   - type: PerpendicularRelation
-    operations: [front2, hns_0a1a.neck_0a1a.conn]
-    reference: hns_0a1a.neck_0a1a.cube
+    operations: [front2, upper_body.hns.neck_conn]
+    reference: upper_body.hns.neck.cube
 
   - type: PerpendicularRelation
-    operations: [back2, body_0a1a.conn]
-    reference: body_0a1a.cube
+    operations: [back2, upper_body.body.conn]
+    reference: upper_body.body.cube
 
   - type: PerpendicularRelation
-    operations: [front2, hns_0a1a.neck_0a1a.conn]
-    reference: body_0a1a.cube
+    operations: [front2, upper_body.hns.neck_conn]
+    reference: upper_body.body.cube
 
   - type: OppositeRelation
-    operations: [tail, body_0a1a.conn]
-    reference: body_0a1a.cube
+    operations: [tail, upper_body.body.conn]
+    reference: upper_body.body.cube
 
 # Order definitions
 order_hints:
@@ -168,4 +159,4 @@ order_hints:
     then: back1
 
   - type: AnyOrder
-    operations: [body1, body_0a1a.conn]
+    operations: [upper_body.body1, upper_body.body.conn]

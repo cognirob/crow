@@ -1,0 +1,10 @@
+assembly_name: 0a1a2a3a
+imports:
+  body: build_0a1a.yaml
+  hns: build_0a1a2a.yaml
+
+operations:
+  body1:
+    type: InsertFixedConnection
+    shaft: body.peg
+    hole: hns.neck.cube
