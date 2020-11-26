@@ -1,0 +1,15 @@
+assembly_name: 0a1a
+# Object definitions
+objects:
+  cube:
+    type: Cube
+
+  peg:
+    type: Peg
+
+# Connection definitions
+operations:
+  conn:
+    type: InsertFixedConnection
+    shaft: peg
+    hole: cube

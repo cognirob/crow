@@ -36,6 +36,7 @@ build_name = args.build_name
 # onto_file = "onto_draft_01.owl"
 # onto_file = "dog_build.owl"
 onto_file = args.onto_file
+print(onto_file)
 split_name_re = re.compile(r"([\w\/]+)\.?")
 # split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
 
@@ -44,7 +45,7 @@ ONTO_IRI = "http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01"
 CROW = Namespace(f"{ONTO_IRI}#")
 
 onto = rdflib.Graph()
-onto.load("onto_draft_01.owl")
+onto.load(onto_file)
 onto.bind("crow", CROW)
 
 # %%Functions

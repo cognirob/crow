@@ -1,0 +1,197 @@
+assembly_name: Dog
+# Object definitions
+objects:
+  cube_front:
+    type: Cube
+
+  cube_back:
+    type: Cube
+
+  sphere_head:
+    type: Sphere
+
+  peg_nose:
+    type: Peg
+
+  peg_tail:
+    type: Peg
+
+  peg_neck:
+    type: Peg
+
+  peg_body:
+    type: Peg
+
+  screw_front:
+    type: Screw
+
+  screw_back:
+    type: Screw
+
+  nut_front:
+    type: Nut
+
+  nut_back:
+    type: Nut
+
+  wafer_front1:
+    type: Wafer
+
+  wafer_front2:
+    type: Wafer
+
+  wafer_back1:
+    type: Wafer
+
+  wafer_back2:
+    type: Wafer
+
+# Connection definitions
+operations:
+  nose:
+    type: InsertFixedConnection
+    shaft: peg_nose
+    hole: sphere_head
+
+  tail:
+    type: InsertFixedConnection
+    shaft: peg_tail
+    hole: cube_back
+
+  neck1:
+    type: InsertFixedConnection
+    shaft: peg_neck
+    hole: cube_front
+
+  neck2:
+    type: InsertFixedConnection
+    shaft: peg_neck
+    hole: sphere_head
+
+  body1:
+    type: InsertFixedConnection
+    shaft: peg_body
+    hole: cube_front
+
+  body2:
+    type: InsertFixedConnection
+    shaft: peg_body
+    hole: cube_back
+
+  front1:
+    type: InsertLooseConnection
+    shaft: screw_front
+    hole: wafer_front1
+    uses: Thread
+    length: 5
+
+  front2:
+    type: InsertLooseConnection
+    shaft: screw_front
+    hole: cube_front
+    uses: Thread
+    length: 50
+
+  front3:
+    type: InsertLooseConnection
+    shaft: screw_front
+    hole: wafer_front2
+    uses: Thread
+    length: 5
+
+  thread_front:
+    type: ThreadedConnection
+    provider: screw_front
+    consumer: nut_front
+
+  back1:
+    type: InsertLooseConnection
+    shaft: screw_back
+    hole: wafer_back1
+    uses: Thread
+    length: 5
+
+  back2:
+    type: InsertLooseConnection
+    shaft: screw_back
+    hole: cube_back
+    uses: Thread
+    length: 50
+
+  back3:
+    type: InsertLooseConnection
+    shaft: screw_back
+    hole: wafer_back2
+    uses: Thread
+    length: 5
+
+  thread_back:
+    type: ThreadedConnection
+    provider: screw_back
+    consumer: nut_back
+
+# Relation definitions
+relations:
+  - type: PerpendicularRelation
+    operations: [nose, neck2]
+    reference: sphere_head
+
+  - type: PerpendicularRelation
+    operations: [neck1, body1]
+    reference: cube_front
+
+  - type: PerpendicularRelation
+    operations: [front2, body1]
+    reference: cube_front
+
+  - type: PerpendicularRelation
+    operations: [front2, neck1]
+    reference: cube_front
+
+  - type: PerpendicularRelation
+    operations: [back2, body2]
+    reference: cube_back
+
+  - type: PerpendicularRelation
+    operations: [front2, neck1]
+    reference: cube_back
+
+  - type: OppositeRelation
+    operations: [tail, body2]
+    reference: cube_back
+
+# Order definitions
+order_hints:
+  - type: RequiredOrder
+    first: front1
+    then: front2
+
+  - type: RequiredOrder
+    first: front2
+    then: front3
+
+  - type: RequiredOrder
+    first: front3
+    then: thread_front
+
+  - type: RequiredOrder
+    first: back1
+    then: back2
+
+  - type: RequiredOrder
+    first: back2
+    then: back3
+
+  - type: RequiredOrder
+    first: back3
+    then: thread_back
+
+  - type: RequiredOrder
+    first: front1
+    then: back1
+
+  - type: AnyOrder
+    operations: [body1, body2]
+
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]

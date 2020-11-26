@@ -1,0 +1,16 @@
+assembly_name: 0a1a2a
+imports:
+  neck_0a1a: build_0a1a.yaml
+
+objects:
+  sphere:
+    type: Sphere
+
+operations:
+  neck:
+    type: InsertFixedConnection
+    shaft: neck_0a1a.peg
+    hole: sphere
+
+
+
