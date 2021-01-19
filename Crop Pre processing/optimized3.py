@@ -213,7 +213,7 @@ class CrowVision(Node):
 
  
   @staticmethod
-  @jit#(nopython=True, parallel=False)
+  #@jit#(nopython=True, parallel=False)
   def numm(img_raw_Color):
     th = np.full((1080,1920), 38)
     img_raw = cv2.cvtColor(img_raw_Color, cv2.COLOR_BGR2GRAY)
@@ -256,6 +256,7 @@ class CrowVision(Node):
     #x = np.int16(np.zeros((1080,1920)))
     #y = 0
     n = n+1
+    #white = np.uint8(np.full((1080,1920), 255)
 
     #img_raw_sub = np.uint8(np.zeros((1080,1920)))
     cropped = np.uint8(np.zeros((1,1)))
@@ -264,7 +265,7 @@ class CrowVision(Node):
     #Assigning values to the variables based on the Slie bar's position
     #BLUR = 3
     #BLUR2 = 3
-    #mThres = 38
+    mThres = 38
 
     #e_low = 76
     #e_high = 255
@@ -273,36 +274,37 @@ class CrowVision(Node):
 
     #dil = 11
     #bg_blur = 3
-    #th = np.full((1080,1920), mThres)
+    th = np.full((1080,1920), mThres)
 
 
-    #img_raw = cv2.cvtColor(img_raw_Color, cv2.COLOR_BGR2GRAY)
+    img_raw = cv2.cvtColor(img_raw_Color, cv2.COLOR_BGR2GRAY)
 
 
-    ##Initial blurring for smoothening
-    #img_raw = cv2.medianBlur(img_raw, 3)
+    ## Initial blurring for smoothening
+    img_raw = cv2.medianBlur(img_raw, 3)
 
-    ##img2 is x2 is defined and set to int16 format to be able to be utilized for subtraction in the integer number line    global x, y, t1, t2 , n
-    #img2 = np.int16(img_raw)
+    ## img2 is x2 is defined and set to int16 format to be able to be utilized for subtraction in the integer number line    global x, y, t1, t2 , n
+    img2 = np.int16(img_raw)
 
 
-    ##Substraction for initial background substraction and increasing contrast of the substracted img
-    #img_sub = cv2.absdiff(img2, x)
+    ## Substraction for initial background substraction and increasing contrast of the substracted img
+    img_sub = cv2.absdiff(img2, x)
     #img_sub = cntrst*cv2.absdiff(img2, x)
     #img_sub = np.uint8((cntrst*cv2.absdiff(img2, x))
     ##cv2.imwrite('img_sub.jpg', img_sub)
 
-    bg_sub1, summ, img2 = CrowVision.numm(img_raw_Color)
+    ## numm function trail:
+    #bg_sub1, summ, img2 = CrowVision.numm(img_raw_Color)
     #bg_sub1, summ, img2 = numm(img_raw_Color)
     #bg_sub1 = img_sub
 
-    ##Masking out the object
-    #bg_sub1= np.where(img_sub>th, img_raw, 0)
+    ## Masking out the object
+    bg_sub1= np.where(img_sub>th, img_raw, 0)
     #bg_sub1 = cv2.medianBlur(bg_sub1, BLUR)
     cv2.imshow('Background sub mask', bg_sub1)
     ##cv2.imwrite('bg_sub1_NP.jpg', bg_sub1)
 
-    #not using white masking anymore
+    # not using white masking anymore
     #mask = np.where(img_sub>th, white, 0) 
     #mask = cv2.medianBlur(mask, BLUR2)
 
@@ -313,7 +315,7 @@ class CrowVision(Node):
       #cv2.imwrite('BG.jpg', x)
 
     #summ = numm(bg_sub1)
-    #summ = np.sum(np.sum(bg_sub1,axis = 0))
+    summ = np.sum(np.sum(bg_sub1,axis = 0))
     print('summ', summ)
  
     if summ < 30000:
