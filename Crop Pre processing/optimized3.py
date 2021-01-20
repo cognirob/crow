@@ -1,13 +1,16 @@
 # x saves the background image of the frame(the 10th frame from the beginning), whish is used to for image substraction with the current image to find the newly introdues objects in the field of view
 
-#img_raw_color is the color image stream form the ros realsense node
+# img_raw_color is the color image stream form the ros realsense node
 
-#img_raw is the grayscale of the img_raw_color for faster processing
+# img_raw is the grayscale of the img_raw_color for faster processing
 
-#img2 is the int16 concersion of the img_raw
+# img2 is the int16 concersion of the img_raw
 
-#th is the threshold matrix with same size as of the img_raw used for comparison with the np.where() to find out the parts of the images with pixels crossing the set thresold values providing a smoother image with just black(background) and relevant parts(new object) of the image so that findcountours runs easier an faster.
+# th is the threshold matrix with same size as of the img_raw used for comparison with the np.where() to find out the parts of the images with pixels crossing the set thresold values providing a smoother image with just black(background) and relevant parts(new object) of the image so that findcountours runs easier an faster.
 
+# Def Crop: Function permorfing the cropping the img_raw_color based on the the parameters from the contorurs
+
+# def mainfunn(img_raw_Color): main function with the pre processing code.
 
 import rclpy #add to package.xml deps
 from rclpy.node import Node
