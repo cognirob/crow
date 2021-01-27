@@ -30,6 +30,9 @@ import cProfile
 import io
 import pstats
 
+import keyboard
+import os
+
 def profile(func):
     def wrapper(*args, **kwargs):
         pr = cProfile.Profile()
@@ -52,7 +55,7 @@ import argparse
 
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
-from custom_batch.msg import Batch
+#from custom_batch.msg import Batch
 
 
 #z = np.uint8(np.full((1080,1920), 255))
@@ -71,7 +74,7 @@ x = np.int16(np.zeros((size[0],size[1],3)))
 y = 0
 t1=t2=0
 n = 0
-
+k = 0
 
 
 
@@ -105,7 +108,7 @@ class CrowVision(Node):
       #TODO others publishers
 
     #self.publisher_ = self.create_publisher(Image, 'Cropped', 10)
-    self.publisher_ = self.create_publisher(Batch, 'Cropped', 10) #### change here
+    #self.publisher_ = self.create_publisher(Batch, 'Cropped', 10) #### change here
     timer_period = 0.5  # seconds
     #self.timer = self.create_timer(timer_period, self.timer_callback)
     #self.i = 0
@@ -127,39 +130,33 @@ class CrowVision(Node):
   
             try:
               cropped = img[b : b+h+2*gp , a: a+w+2*xx]
+              print('aspect ratio: ', abs(b - (b+h+2*gp))/(a- (a+w+2*xx)))
 
             except :
               cropped = img[b-gp : b+h+gp , a-xx : a+w+xx]
+              print('aspect ratio: ', abs((b-gp) - (b+h+gp))/((a-xx)- (a+w+xx)))
   
           else :
             yy = int((((w + 2*gp) * r) - h )/ 2)
   
             try :
               cropped = img[b : b+h+2*yy , a : a+w+2*gp]
+              print('aspect ratio: ', abs(b - (b+h+2*yy))/(a- (a+w+2*gp)))
 
             except :
               cropped = img[b-yy : b+h+yy , a-gp : a+w+gp]
+              print('aspect ratio: ', abs((b-yy) - (b+h+yy))/((a-gp)- (a+w+gp)))
 
           return cropped
 
-  #@staticmethod
-  #@jit(nopython=True, parallel=False)
-  def numm(img_raw_Color):
-    size = (480, 640)
-    img_raw = cv2.resize(img_raw_Color, (size[1],size[0]), interpolation = cv2.INTER_AREA)
-    return img_raw
 
-  @profile
+  #@profile
   #@staticmethod
   #@jit(nopython=True, parallel=False)
   def mainfunn(img_raw_Color):
 
     #Global variables
     global n, x, y, t1, t2 , size
-
-    lists = []
-
-    n = n+1
 
     #cropped = np.uint8(np.zeros((1,1,3)))
 
@@ -223,18 +220,19 @@ class CrowVision(Node):
 
     # Extracting contours out from the background substracted image
     contours = cv2.findContours(bg_sub1, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-    # Extracting contours out of the Edged image
-    # contours = cv2.findContours(edged1,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
 
-    i = 0
+    i = 1
 
     for contour in contours:
         area = cv2.contourArea(contour)
         #print('area', area)
 
-        if area>800:
-          print('detection: ', i+1 , 'area:', area)
+        if area>800: 
+          # n counts the increament in the arrangements 
+          n = n+1
+
+          print('detection: ', i , 'area:', area)
           a,b,w,h = cv2.boundingRect(contour)
           # x coord=a, y coord=b
           
@@ -254,28 +252,33 @@ class CrowVision(Node):
 
 
           # fixed ratio: H/W = r
-          # r = 1 # we can change as per requirements; r=H/W
+          # r = 4/3 # we can change as per requirements; r=H/W
           # gap=10
-          cropped= CrowVision.cropp(img_raw_Color, int(a*ww), int(b*hh), int(w*ww), int(h*hh), 1, 10)
+          cropped= CrowVision.cropp(img_raw_Color, int(a*ww), int(b*hh), int(w*ww), int(h*hh), 4/3, 10)
 
-          #### custom message
-          my_msg = Batch()
-          my_msg.data[i] = self.bridge.cv2_to_imgmsg(np.array(cropped))
+          where = os.getcwd()
+          path = "Sample_" + str(n)
+          name = "Sample_img" + str(i) + ".jpg"
 
+          #os.mkdir("Sample_" + str(i))
+          #cv2.imwrite(name, cropped)
+
+          os.mkdir("Sample_" + str(i))
+          os.chdir(path)
+          cv2.imwrite(name, cropped)
+          os.chdir(where)
+
+          print ("Successfully created the directory %s ")
 
           #print("showing cropped image", i)
           cv2.imshow('Cropped image', cropped)
+
           i = i+1
 
-    try:
-      self.publisher_.publish(my_msg) ## custom message
-      self.get_logger().info('Publishing a batch of images')
-    except:
-      print('Could not publish data')
 
     print("Total objects found", i)
 
-    if i>0:
+    if i>1:
       print("coordinate: ",coord.dtype, coord.shape, coord)
 
 
@@ -292,7 +295,7 @@ class CrowVision(Node):
     @param topic - str, from camera/input on given topic.
     @return nothing, but send new message(s) via output Publishers.
     """
-    global t1, t2 , n, x
+    global t1, t2 , n, x, k
     #t1 is the initial runtime for finding Execution time of this section
     t1=time.time()
 
@@ -303,28 +306,31 @@ class CrowVision(Node):
     #Image data from the realsense camera is translated into Numpy array format using CvBridge()
     img_raw_Color = self.cvb_.imgmsg_to_cv2(msg)
 
+    #event = keyboard.record('enter')
+    print('yes')
+    if keyboard.is_pressed('p'):# and k<5:
 
-    crop = np.array(CrowVision.mainfunn(img_raw_Color))
-    #print('contour lenght:', len(contours))
-    #l=len(contours)
+      CrowVision.mainfunn(img_raw_Color)
 
-    #Publishing
-    #pub_msg = crop
+      #t2 is the final runtime for finding Execution time of this section
+      t2=time.time()
+      print('dT=',t2-t1)
+      
+      k=k+1
 
+      if k==4: 
+        k=0
+
+    key = cv2.waitKey(1)
+    # Press esc or 'q' to close the image window
+    if key & 0xFF == ord('q') or key == 27:
+      cv2.destroyAllWindows()
 
     # Publishing:
     #self.publisher_.publish(pub_msg)
     #self.publisher_.publish(self.cvb_.cv2_to_imgmsg(np.array(pub_msg)))
     #self.get_logger().info('Publishing:')#"%s"' % pub_msg.data)       
 
-    key = cv2.waitKey(1)
-    # Press esc or 'q' to close the image window
-    if key & 0xFF == ord('q') or key == 27:
-    	cv2.destroyAllWindows()
-
-    #t2 is the final runtime for finding Execution time of this section
-    t2=time.time()
-    print('dT=',t2-t1)
 
 
 
