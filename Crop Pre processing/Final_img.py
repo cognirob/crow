@@ -8,6 +8,7 @@
 
 #th is the threshold matrix with same size as of the img_raw used for comparison with the np.where() to find out the parts of the images with pixels crossing the set thresold values providing a smoother image with just black(background) and relevant parts(new object) of the image so that findcountours runs easier an faster.
 
+# sudo -s for switching to root user
 
 import rclpy #add to package.xml deps
 from rclpy.node import Node
@@ -69,12 +70,26 @@ def nothing(x):
 
 #Resized resolution:
 size = (480, 640)
+min_size = (120,160)
 #BG image variable:
 x = np.int16(np.zeros((size[0],size[1],3)))
 y = 0
 t1=t2=0
-n = 0
-k = 0
+n = 1
+k = 1
+
+pp=0
+#os.mkdir(pp)
+#os.chdir(pp)
+
+zz=0
+while zz==0:
+  try: 
+    os.mkdir(str(pp))
+    os.chdir(str(pp))
+    zz=1
+  except:
+    pp=pp+1
 
 
 
@@ -105,13 +120,8 @@ class CrowVision(Node):
 
     self.cvb_ = CvBridge()
 
-      #TODO others publishers
-
-    #self.publisher_ = self.create_publisher(Image, 'Cropped', 10)
-    #self.publisher_ = self.create_publisher(Batch, 'Cropped', 10) #### change here
     timer_period = 0.5  # seconds
-    #self.timer = self.create_timer(timer_period, self.timer_callback)
-    #self.i = 0
+
 
 
   #@profile
@@ -123,31 +133,67 @@ class CrowVision(Node):
       self.i += 1
 
 
-  #@profile
-  def cropp(img, a, b, w, h, r, gp):
-          if h>w:
-            xx = int((((h + 2*gp) / r) - w )/ 2)
-  
-            try:
-              cropped = img[b : b+h+2*gp , a: a+w+2*xx]
-              print('aspect ratio: ', abs(b - (b+h+2*gp))/(a- (a+w+2*xx)))
+  def cropp(img, a, b, w, h, xx, yy, gp, r):
+      #r= 3/4
+      #xx = abs(int((1/2)*(((h+2*gp)/r)-(-w-2*gp))))
+      #yy = abs(int((1/2)*((r*(w+2*gp)-h-2*gp))))
+      m = yy+gp
+      n = xx+gp
+      try:
+        h<w
+        if h>=w: 
+          print('h>=w')
+          raise Exception('next loop')
+        try:
+          #cv2.rectangle(img, (a-gp, b-yy-gp), (a+w+gp, b+h+gp+yy), (255, 0, 0), 20) 
+          cropped = img[b-yy-gp : b+h+gp+yy , a-gp: a+w+gp]
+          ar = 1.0 * (cropped.shape[1]/cropped.shape[0]) 
+          abs(ar-1.33)<0.03
+          if abs(ar-1.33)>0.03: 
+            raise Exception('next loop')
+          #cv2.imshow('Cropped image 1a', cropped)
 
-            except :
-              cropped = img[b-gp : b+h+gp , a-xx : a+w+xx]
-              print('aspect ratio: ', abs((b-gp) - (b+h+gp))/((a-xx)- (a+w+xx)))
-  
-          else :
-            yy = int((((w + 2*gp) * r) - h )/ 2)
-  
-            try :
-              cropped = img[b : b+h+2*yy , a : a+w+2*gp]
-              print('aspect ratio: ', abs(b - (b+h+2*yy))/(a- (a+w+2*gp)))
+        except:
+          ww = np.full(((2*m +1080), (2*m+1920),3), 0, dtype = np.uint8)
+          ww[m:-m,m:-m] = img
+          #cv2.rectangle(ww, (a-gp+m, b-yy-gp+m), (a+w+gp+m+m, b+h+gp+yy+m+m), (0, 255, 0), 20)
+          cropped = ww[b-yy-gp+m : b+h+gp+yy+m , a-gp+m: a+w+gp+m]
+          ar = 1.0 * (cropped.shape[1]/cropped.shape[0]) 
+          abs(ar-1.33)<0.03
+          if abs(ar-1.33)>0.03: 
+            raise Exception('next loop')
+          #cv2.imshow('Cropped image 1b', cropped)
 
-            except :
-              cropped = img[b-yy : b+h+yy , a-gp : a+w+gp]
-              print('aspect ratio: ', abs((b-yy) - (b+h+yy))/((a-gp)- (a+w+gp)))
 
-          return cropped
+      except:
+
+        try:
+          #cv2.rectangle(img, (a-xx-gp, b-gp), (a+w+xx+gp, b+h+gp), (0, 0, 255), 20)
+          cropped = img[b-gp : b+h+gp , a-xx-gp: a+w+xx+gp]
+          ar = 1.0 * (cropped.shape[1]/cropped.shape[0]) 
+          abs(ar-1.33)<0.03
+          if abs(ar-1.33)>0.08:
+            raise Exception('next loop')
+          cv2.imshow('Cropped image 2a', cropped)
+        except:
+          ww = np.full(((2*n +1080), (2*n +1920),3), 0, dtype = np.uint8)
+          ww[n:-n,n:-n] = img
+          #cv2.rectangle(ww, (a-xx-gp+n, b-gp+n), (a+w+xx+gp+n+n, b+h+gp+n), (255,255, 0), 10)
+          cropped = ww[b-gp+n : b+h+gp+n , a-xx-gp+n: a+w+xx+gp+n]
+          ar = 1.0 * (cropped.shape[1]/cropped.shape[0]) 
+          #cv2.imshow('Cropped image 2b', cropped)
+
+      if cropped.shape[1]<160 or cropped.shape[0]<120:
+        #new frame size= 135X180 so that boundary cases are covered likr((119,161) or (121,159)
+        frame = np.full(((135), (180),3), 0, dtype = np.uint8)
+        frame[0:cropped.shape[0],0:cropped.shape[1]] = cropped
+        return frame
+
+      else:
+        return cropped
+
+
+
 
 
   #@profile
@@ -155,8 +201,8 @@ class CrowVision(Node):
   #@jit(nopython=True, parallel=False)
   def mainfunn(img_raw_Color):
 
-    #Global variables
-    global n, x, y, t1, t2 , size
+    #Global variablesis affected
+    global n, x, y, t1, t2 , size, k
 
     #cropped = np.uint8(np.zeros((1,1,3)))
 
@@ -164,11 +210,6 @@ class CrowVision(Node):
     th = np.full((size[0], size[1], 3), 30)
 
     img_raw = cv2.resize(img_raw_Color, (size[1],size[0]), interpolation = cv2.INTER_AREA)
-    #print('resized: ', img_raw.dtype, img_raw)
-    #img_raw = np.uint8(np.resize(img_raw_Color, (480, 640,3)))
-    #print('resized: ', img_raw.dtype, img_raw)
-    #cv2.imshow('img_raw', img_raw)
-    #img_raw = CrowVision.numm(img_raw_Color)
 
 
     ## img2 is x2 is defined and set to int16 format to be able to be utilized for subtraction in the integer number line    global x, y, t1, t2 , n
@@ -182,27 +223,18 @@ class CrowVision(Node):
     bg_sub1 = img_sub>th#[..., 1:]
     bg_sub1 = np.logical_or(np.logical_or(bg_sub1[..., 0], bg_sub1[..., 1]), bg_sub1[..., 2])
     bg_sub1 = np.dstack((bg_sub1, bg_sub1, bg_sub1))
-    #bg_sub1 = bg_sub1.astype(np.uint8) * white
     bg_sub1 = bg_sub1.astype(np.uint8) * img_raw
     bg_sub1 = cv2.cvtColor(bg_sub1, cv2.COLOR_BGR2GRAY)
 
     bg_sub1 = cv2.medianBlur(bg_sub1, 3)
-    cv2.imshow('Background sub mask', bg_sub1)
+    #cv2.imshow('Background sub mask', bg_sub1)
 
     #saving background image in X
-    if y < 11:
+    if y < 5:
       x = img2
       y=y+1
+      n=0
       return 0
-    #else:
-      #xy = (img_sub<th)
-      #xy = np.logical_or(np.logical_or(xy[..., 0], xy[..., 1]), xy[..., 2])
-      #xy = np.dstack((xy, xy, xy))
-      #yy = ((np.add(img2,x))* 0.5).astype(np.int16)
-      #x= np.where(xy, yy, x)
-      #x = xy * img2
-      #y=y+1  
-    #cv2.imshow('X', np.uint8(x))
 
 
     #summ = numm(bg_sub1)
@@ -210,6 +242,7 @@ class CrowVision(Node):
     print('summ', summ)
  
     if summ < 1000:
+      n=n-1
       t2=time.time()
       print('Breaking loop due to no significat detection, dT=',t2-t1)
       key = cv2.waitKey(1)
@@ -223,58 +256,78 @@ class CrowVision(Node):
     contours = imutils.grab_contours(contours)
 
     i = 1
+    home = os.getcwd()
+    try: 
+      dirr = "Dataset" + str(n)
+      os.mkdir(dirr)
+      os.chdir(dirr)
+      #dirr = "Dataset" + str(n) + "/Capture" + str(k) 
+      #path = os.path.join(home, dirr)
+      path = "Capture" + str(k) 
+      os.mkdir(path)
+      os.chdir(path)
+    except:
+      dirr = "Dataset" + str(n)
+      os.chdir(os.path.join(home, dirr)) 
+      path = "Capture" + str(k) 
+      os.mkdir(path)
+      os.chdir(path)
+
+    name1 = str(n) + "HDinput.jpg"
+    cv2.imwrite(name1, img_raw_Color)
+
+    name2 = str(n) + "Resized_toVGA.jpg"
+    cv2.imwrite(name2, img_raw)
+
+    Coordinate = str(n) + "coordinates.txt" 
 
     for contour in contours:
         area = cv2.contourArea(contour)
         #print('area', area)
 
         if area>800: 
-          # n counts the increament in the arrangements 
-          n = n+1
+
 
           print('detection: ', i , 'area:', area)
           a,b,w,h = cv2.boundingRect(contour)
           # x coord=a, y coord=b
           
           print(img_raw_Color.shape,x.shape)
-          ww= (img_raw_Color.shape[1]/x.shape[1])
-          hh= (img_raw_Color.shape[0]/x.shape[0])
+          wo= (img_raw_Color.shape[1]/x.shape[1])
+          ho= (img_raw_Color.shape[0]/x.shape[0])
 
-          #xcood= int(a*ww)
-          #ycood= int(b*hh)
-          #width= int(w*ww)
-          #height= int(h*hh)
-
-          try:
-            coord= np.append(coord, [[int(a*ww),int(b*hh),int(w*ww),int(h*hh)]], axis=0)
-          except:
-            coord= np.array([[int(a*ww),int(b*hh),int(w*ww),int(h*hh)]])
-
+          xcood= (a*wo)
+          ycood= (b*ho)
+          width= (w*wo)
+          height= (h*ho)
 
           # fixed ratio: H/W = r
-          # r = 4/3 # we can change as per requirements; r=H/W
           # gap=10
-          cropped= CrowVision.cropp(img_raw_Color, int(a*ww), int(b*hh), int(w*ww), int(h*hh), 4/3, 10)
+          r= 3/4
+          gp = 40
+          xx = abs(int((1/2)*(((height+2*gp)/r)-(width+2*gp))))
+          yy = abs(int((1/2)*((r*(width+2*gp)-(height+2*gp)))))
+          cropped= CrowVision.cropp(img_raw_Color, int(xcood), int(ycood), int(width), int(height), xx, yy, gp, r)
 
-          where = os.getcwd()
-          path = "Sample_" + str(n)
-          name = "Sample_img" + str(i) + ".jpg"
+          coord= np.array([[int(a*wo),int(b*ho),int(w*wo),int(h*ho)]])
+ 
+          IMGname = str(n) + "shot" + str(k)+ "cropImg" + str(i) + ".jpg"
+          cv2.imwrite(IMGname, cropped)
 
-          #os.mkdir("Sample_" + str(i))
-          #cv2.imwrite(name, cropped)
-
-          os.mkdir("Sample_" + str(i))
-          os.chdir(path)
-          cv2.imwrite(name, cropped)
-          os.chdir(where)
-
-          print ("Successfully created the directory %s ")
+          print ("Successfully created the directory %s")
 
           #print("showing cropped image", i)
           cv2.imshow('Cropped image', cropped)
 
+          # n counts the increament in the arrangements 
+
+          write_coord= str(i) + '. ' + str(coord) + '\n'
+          txtfile = open(Coordinate,"a+") 
+          txtfile.write(write_coord)
+
           i = i+1
 
+    os.chdir(home)
 
     print("Total objects found", i)
 
@@ -306,10 +359,21 @@ class CrowVision(Node):
     #Image data from the realsense camera is translated into Numpy array format using CvBridge()
     img_raw_Color = self.cvb_.imgmsg_to_cv2(msg)
 
-    #event = keyboard.record('enter')
-    print('yes')
-    if keyboard.is_pressed('p'):# and k<5:
+    if keyboard.is_pressed('l'): 
+      k=1
 
+    if k==1:
+      print('Ready!!! - Press p to write data')
+    if k==6:
+      print('Stop!!!- - Press l to reset')
+    if k!=1 and k!=6:
+      print('busy')
+
+
+    #print('yes')
+    if keyboard.is_pressed('p') and k<6:
+      #if cv2.waitKey(1) & 0xFF == ord('q'):
+      t1=time.time()
       CrowVision.mainfunn(img_raw_Color)
 
       #t2 is the final runtime for finding Execution time of this section
@@ -317,20 +381,14 @@ class CrowVision(Node):
       print('dT=',t2-t1)
       
       k=k+1
+      if k==6:
+        n = n+1
 
-      if k==4: 
-        k=0
 
     key = cv2.waitKey(1)
     # Press esc or 'q' to close the image window
     if key & 0xFF == ord('q') or key == 27:
       cv2.destroyAllWindows()
-
-    # Publishing:
-    #self.publisher_.publish(pub_msg)
-    #self.publisher_.publish(self.cvb_.cv2_to_imgmsg(np.array(pub_msg)))
-    #self.get_logger().info('Publishing:')#"%s"' % pub_msg.data)       
-
 
 
 
@@ -338,7 +396,6 @@ def main(args=None):
   rclpy.init(args=args)
   
   crow_detector=CrowVision()
-  #rclpy.spin_once(crow_detector)
   rclpy.spin(crow_detector)
 
   cv2.destroyAllWindows()
