@@ -151,7 +151,7 @@ class CrowVision(Node):
           abs(ar-1.33)<0.03
           if abs(ar-1.33)>0.03: 
             raise Exception('next loop')
-          cv2.imshow('Cropped image 1a', cropped)
+          #cv2.imshow('Cropped image 1a', cropped)
 
         except:
           ww = np.full(((2*m +1080), (2*m+1920),3), 0, dtype = np.uint8)
@@ -162,7 +162,7 @@ class CrowVision(Node):
           abs(ar-1.33)<0.03
           if abs(ar-1.33)>0.03: 
             raise Exception('next loop')
-          cv2.imshow('Cropped image 1b', cropped)
+          #cv2.imshow('Cropped image 1b', cropped)
 
 
       except:
@@ -181,7 +181,7 @@ class CrowVision(Node):
           #cv2.rectangle(ww, (a-xx-gp+n, b-gp+n), (a+w+xx+gp+n+n, b+h+gp+n), (255,255, 0), 10)
           cropped = ww[b-gp+n : b+h+gp+n , a-xx-gp+n: a+w+xx+gp+n]
           ar = 1.0 * (cropped.shape[1]/cropped.shape[0]) 
-          cv2.imshow('Cropped image 2b', cropped)
+          #cv2.imshow('Cropped image 2b', cropped)
 
       if cropped.shape[1]<160 or cropped.shape[0]<120:
         #new frame size= 135X180 so that boundary cases are covered likr((119,161) or (121,159)
@@ -227,12 +227,13 @@ class CrowVision(Node):
     bg_sub1 = cv2.cvtColor(bg_sub1, cv2.COLOR_BGR2GRAY)
 
     bg_sub1 = cv2.medianBlur(bg_sub1, 3)
-    cv2.imshow('Background sub mask', bg_sub1)
+    #cv2.imshow('Background sub mask', bg_sub1)
 
     #saving background image in X
     if y < 5:
       x = img2
       y=y+1
+      n=0
       return 0
 
 
@@ -241,6 +242,7 @@ class CrowVision(Node):
     print('summ', summ)
  
     if summ < 1000:
+      n=n-1
       t2=time.time()
       print('Breaking loop due to no significat detection, dT=',t2-t1)
       key = cv2.waitKey(1)
@@ -255,9 +257,21 @@ class CrowVision(Node):
 
     i = 1
     home = os.getcwd()
-    path = str(n) + "Data" + str(k+1)
-    os.mkdir(path)
-    os.chdir(path)
+    try: 
+      dirr = "Dataset" + str(n)
+      os.mkdir(dirr)
+      os.chdir(dirr)
+      #dirr = "Dataset" + str(n) + "/Capture" + str(k) 
+      #path = os.path.join(home, dirr)
+      path = "Capture" + str(k) 
+      os.mkdir(path)
+      os.chdir(path)
+    except:
+      dirr = "Dataset" + str(n)
+      os.chdir(os.path.join(home, dirr)) 
+      path = "Capture" + str(k) 
+      os.mkdir(path)
+      os.chdir(path)
 
     name1 = str(n) + "HDinput.jpg"
     cv2.imwrite(name1, img_raw_Color)
@@ -297,10 +311,10 @@ class CrowVision(Node):
 
           coord= np.array([[int(a*wo),int(b*ho),int(w*wo),int(h*ho)]])
  
-          IMGname = str(n) + "Sample_img" + str(i) + ".jpg"
+          IMGname = str(n) + "shot" + str(k)+ "cropImg" + str(i) + ".jpg"
           cv2.imwrite(IMGname, cropped)
 
-          print ("Successfully created the directory %s"%path)
+          print ("Successfully created the directory %s")
 
           #print("showing cropped image", i)
           cv2.imshow('Cropped image', cropped)
@@ -313,7 +327,6 @@ class CrowVision(Node):
 
           i = i+1
 
-    n = n+1
     os.chdir(home)
 
     print("Total objects found", i)
@@ -368,6 +381,8 @@ class CrowVision(Node):
       print('dT=',t2-t1)
       
       k=k+1
+      if k==6:
+        n = n+1
 
 
     key = cv2.waitKey(1)
