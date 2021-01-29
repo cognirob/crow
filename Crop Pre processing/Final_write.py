@@ -196,7 +196,7 @@ class CrowVision(Node):
 
 
 
-  #@profile
+  @profile
   #@staticmethod
   #@jit(nopython=True, parallel=False)
   def mainfunn(img_raw_Color):
@@ -233,8 +233,7 @@ class CrowVision(Node):
     if y < 5:
       x = img2
       y=y+1
-      n=0
-      return 0
+      return 9
 
 
     #summ = numm(bg_sub1)
@@ -242,14 +241,13 @@ class CrowVision(Node):
     print('summ', summ)
  
     if summ < 1000:
-      n=n-1
       t2=time.time()
       print('Breaking loop due to no significat detection, dT=',t2-t1)
       key = cv2.waitKey(1)
       #Press esc or 'q' to close the image window
       if key & 0xFF == ord('q') or key == 27:
         cv2.destroyAllWindows()
-      return 0
+      return 9
 
     # Extracting contours out from the background substracted image
     contours = cv2.findContours(bg_sub1, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
@@ -259,13 +257,11 @@ class CrowVision(Node):
     home = os.getcwd()
     try: 
       dirr = "Dataset" + str(n)
-      os.mkdir(dirr)
-      os.chdir(dirr)
-      #dirr = "Dataset" + str(n) + "/Capture" + str(k) 
-      #path = os.path.join(home, dirr)
+      os.mkdir(os.path.join(home, dirr))
+      os.chdir(os.path.join(home, dirr))
       path = "Capture" + str(k) 
-      os.mkdir(path)
-      os.chdir(path)
+      os.mkdir(os.path.join(home, path))
+      os.chdir(os.path.join(home, path))
     except:
       dirr = "Dataset" + str(n)
       os.chdir(os.path.join(home, dirr)) 
@@ -327,7 +323,6 @@ class CrowVision(Node):
 
           i = i+1
 
-    os.chdir(home)
 
     print("Total objects found", i)
 
@@ -335,10 +330,8 @@ class CrowVision(Node):
       print("coordinate: ",coord.dtype, coord.shape, coord)
 
 
-    try:
-      return cropped
-    except:
-      return 0
+
+    return 0
 
 
   #@profile
@@ -350,14 +343,12 @@ class CrowVision(Node):
     """
     global t1, t2 , n, x, k
     #t1 is the initial runtime for finding Execution time of this section
-    t1=time.time()
+    #t1=time.time()
 
     self.get_logger().info("I heard: {} for topic {}".format(str(msg.height), topic))
     assert topic in self.ros, "We don't have registered listener for the topic {} !".format(topic)
     
-
-    #Image data from the realsense camera is translated into Numpy array format using CvBridge()
-    img_raw_Color = self.cvb_.imgmsg_to_cv2(msg)
+    home = os.getcwd()
 
     if keyboard.is_pressed('l'): 
       k=1
@@ -369,21 +360,32 @@ class CrowVision(Node):
     if k!=1 and k!=6:
       print('busy')
 
-
-    #print('yes')
     if keyboard.is_pressed('p') and k<6:
-      #if cv2.waitKey(1) & 0xFF == ord('q'):
-      t1=time.time()
-      CrowVision.mainfunn(img_raw_Color)
 
+      #Image data from the realsense camera is translated into Numpy array format using CvBridge()
+      img_raw_Color = self.cvb_.imgmsg_to_cv2(msg)
+      t1=time.time()
+      nn = CrowVision.mainfunn(img_raw_Color)
+
+      if n>0: 
+        try:
+          dirr = "Dataset" + str(n)
+          os.chdir(os.path.join(home, dirr)) 
+          path = "Capture" + str(k) 
+          os.chdir(path)
+        except:
+          nothing(0)
       #t2 is the final runtime for finding Execution time of this section
       t2=time.time()
-      print('dT=',t2-t1)
+      dT= 'Processing time' + str(k) +'= ' + str(t2-t1) + '\n'
+      txtfile = open('dT',"a+") 
+      txtfile.write(dT)
+      print('dT', k , '= ',t2-t1)
       
       k=k+1
-      if k==6:
+      if k==6 and nn!=9:
         n = n+1
-
+    os.chdir(home)
 
     key = cv2.waitKey(1)
     # Press esc or 'q' to close the image window
