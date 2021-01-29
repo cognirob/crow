@@ -45,6 +45,17 @@ def profile(func):
         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
         ps.print_stats()
         print(s.getvalue())
+        try:
+            dirr = "Dataset" + str(n)
+            os.chdir(os.path.join(home, dirr, path)) 
+            path = "Capture" + str(k) 
+            os.chdir(path)
+        except:
+            nothing(0)
+        #write Profiling output
+        pr.dump_stats('profile_dump')
+        with open('profile_dump.txt', 'w+') as f:
+          f.write(s.getvalue())
         return retval
 
     return wrapper
@@ -87,6 +98,7 @@ while zz==0:
   try: 
     os.mkdir(str(pp))
     os.chdir(str(pp))
+    home = os.getcwd()
     zz=1
   except:
     pp=pp+1
@@ -174,7 +186,7 @@ class CrowVision(Node):
           abs(ar-1.33)<0.03
           if abs(ar-1.33)>0.08:
             raise Exception('next loop')
-          cv2.imshow('Cropped image 2a', cropped)
+          #cv2.imshow('Cropped image 2a', cropped)
         except:
           ww = np.full(((2*n +1080), (2*n +1920),3), 0, dtype = np.uint8)
           ww[n:-n,n:-n] = img
@@ -202,7 +214,7 @@ class CrowVision(Node):
   def mainfunn(img_raw_Color):
 
     #Global variablesis affected
-    global n, x, y, t1, t2 , size, k
+    global n, x, y, t1, t2 , size, k, home
 
     #cropped = np.uint8(np.zeros((1,1,3)))
 
@@ -224,7 +236,7 @@ class CrowVision(Node):
     bg_sub1 = np.logical_or(np.logical_or(bg_sub1[..., 0], bg_sub1[..., 1]), bg_sub1[..., 2])
     bg_sub1 = np.dstack((bg_sub1, bg_sub1, bg_sub1))
     bg_sub1 = bg_sub1.astype(np.uint8) * img_raw
-    bg_sub1 = cv2.cvtColor(bg_sub1, cv2.COLOR_BGR2GRAY)
+    bg_sub1 = cv2.cvtColor(bg_sub1, cv2.COLOR_RGB2GRAY)
 
     bg_sub1 = cv2.medianBlur(bg_sub1, 3)
     #cv2.imshow('Background sub mask', bg_sub1)
@@ -240,7 +252,7 @@ class CrowVision(Node):
     summ = np.sum(np.sum(bg_sub1,axis = 0))
     print('summ', summ)
  
-    if summ < 1000:
+    if summ < 2000:
       t2=time.time()
       print('Breaking loop due to no significat detection, dT=',t2-t1)
       key = cv2.waitKey(1)
@@ -254,20 +266,19 @@ class CrowVision(Node):
     contours = imutils.grab_contours(contours)
 
     i = 1
-    home = os.getcwd()
-    try: 
-      dirr = "Dataset" + str(n)
-      os.mkdir(os.path.join(home, dirr))
-      os.chdir(os.path.join(home, dirr))
-      path = "Capture" + str(k) 
-      os.mkdir(os.path.join(home, path))
-      os.chdir(os.path.join(home, path))
-    except:
-      dirr = "Dataset" + str(n)
-      os.chdir(os.path.join(home, dirr)) 
-      path = "Capture" + str(k) 
-      os.mkdir(path)
-      os.chdir(path)
+
+    dirr = "Dataset" + str(n)
+    if i ==1:
+        try:
+         os.mkdir(os.path.join(home, dirr))
+         os.chdir(os.path.join(home, dirr))
+        except:
+         print("error file directory")
+        
+    path = "Capture" + str(k) 
+    os.mkdir(os.path.join(home,dirr, path))
+    os.chdir(os.path.join(home,dirr, path))
+
 
     name1 = str(n) + "HDinput.jpg"
     cv2.imwrite(name1, img_raw_Color)
@@ -279,9 +290,9 @@ class CrowVision(Node):
 
     for contour in contours:
         area = cv2.contourArea(contour)
-        #print('area', area)
+        print('area', area)
 
-        if area>800: 
+        if area>85: 
 
 
           print('detection: ', i , 'area:', area)
@@ -313,7 +324,7 @@ class CrowVision(Node):
           print ("Successfully created the directory %s")
 
           #print("showing cropped image", i)
-          cv2.imshow('Cropped image', cropped)
+          #cv2.imshow('Cropped image', cropped)
 
           # n counts the increament in the arrangements 
 
@@ -326,12 +337,12 @@ class CrowVision(Node):
 
     print("Total objects found", i)
 
+    
     if i>1:
-      print("coordinate: ",coord.dtype, coord.shape, coord)
-
-
-
-    return 0
+      #print("coordinate: ",coord.dtype, coord.shape, coord)
+      return 0
+    else:
+      return 9
 
 
   #@profile
@@ -341,14 +352,17 @@ class CrowVision(Node):
     @param topic - str, from camera/input on given topic.
     @return nothing, but send new message(s) via output Publishers.
     """
-    global t1, t2 , n, x, k
+    global t1, t2 , n, x, k, home
     #t1 is the initial runtime for finding Execution time of this section
     #t1=time.time()
-
+    nn=9
     self.get_logger().info("I heard: {} for topic {}".format(str(msg.height), topic))
     assert topic in self.ros, "We don't have registered listener for the topic {} !".format(topic)
     
-    home = os.getcwd()
+    #Image data from the realsense camera is translated into Numpy array format using CvBridge()
+
+    img_raw_Color = cv2.cvtColor(self.cvb_.imgmsg_to_cv2(msg), cv2.COLOR_BGR2RGB)
+    #home = os.getcwd()
 
     if keyboard.is_pressed('l'): 
       k=1
@@ -360,32 +374,30 @@ class CrowVision(Node):
     if k!=1 and k!=6:
       print('busy')
 
-    if keyboard.is_pressed('p') and k<6:
+    if keyboard.is_pressed('p'):
+      while k<6:
 
-      #Image data from the realsense camera is translated into Numpy array format using CvBridge()
-      img_raw_Color = self.cvb_.imgmsg_to_cv2(msg)
-      t1=time.time()
-      nn = CrowVision.mainfunn(img_raw_Color)
+        t1=time.time()
+        nn = CrowVision.mainfunn(img_raw_Color)
 
-      if n>0: 
-        try:
-          dirr = "Dataset" + str(n)
-          os.chdir(os.path.join(home, dirr)) 
-          path = "Capture" + str(k) 
-          os.chdir(path)
-        except:
-          nothing(0)
-      #t2 is the final runtime for finding Execution time of this section
-      t2=time.time()
-      dT= 'Processing time' + str(k) +'= ' + str(t2-t1) + '\n'
-      txtfile = open('dT',"a+") 
-      txtfile.write(dT)
-      print('dT', k , '= ',t2-t1)
-      
-      k=k+1
-      if k==6 and nn!=9:
+        if n>1: 
+          try:
+            dirr = "Dataset" + str(n)
+            os.chdir(os.path.join(home, dirr)) 
+            path = "Capture" + str(k) 
+            os.chdir(path)
+          except:
+            nothing(0)
+        #t2 is the final runtime for finding Execution time of this section
+        t2=time.time()
+        dT= 'Processing time' + str(k) +'= ' + str(t2-t1) + '\n'
+        txtfile = open('dT',"a+") 
+        txtfile.write(dT)
+        print('dT', k , '= ',t2-t1)
+        k=k+1
+        
+    if k==6 and nn==0:
         n = n+1
-    os.chdir(home)
 
     key = cv2.waitKey(1)
     # Press esc or 'q' to close the image window
@@ -406,4 +418,3 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
-
