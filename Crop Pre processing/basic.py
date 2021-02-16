@@ -142,7 +142,14 @@ class CrowVision(Node):
       cv2.createTrackbar('S_dil_Krnl','Trackbar',5,20,nothing)
       cv2.createTrackbar('S_bg_blur','Trackbar',1,20,nothing)
 
+      # create switch for ON/OFF functionality
+      switch = '0 : OFF \n1 : ON'
+      cv2.createTrackbar(switch, 'Trackbar',0,1,nothing)
+
+
     #Assigning values to the variables based on the Slie bar's position
+    s = cv2.getTrackbarPos(switch,'image')
+
     BLUR = 1 + 2*cv2.getTrackbarPos('BLUR','Trackbar')
     BLUR2 = 1 + 2*cv2.getTrackbarPos('BLUR2','Trackbar')
 
@@ -162,7 +169,7 @@ class CrowVision(Node):
     bg_blur = 1 + 2*cv2.getTrackbarPos('S_bg_blur','Trackbar')
 
     th = np.full((1080,1920), mThres)
-
+    ##########################################
     #Image data from the realsense camera is translated into Numpy array format using CvBridge()
     img_raw_Color = self.cvb_.imgmsg_to_cv2(msg)
     img_raw = cv2.cvtColor(img_raw_Color, cv2.COLOR_BGR2GRAY)
@@ -216,14 +223,16 @@ class CrowVision(Node):
       return   
 
     #Shadow removal and smoothening
-    bg_sub1 = shadow_out(bg_sub1, dil, bg_blur)
-    #bg_sub1 = cv2.medianBlur(bg_sub1, BLUR2)
-    #cv2.imshow('Background sub mask-shadowOut', bg_sub1)
-    #cv2.imwrite('bg_sub1_ShwOut.jpg', bg_sub1)
+
+    if s == 0:
+        bg_sub1 = shadow_out(bg_sub1, dil, bg_blur)
+        #bg_sub1 = cv2.medianBlur(bg_sub1, BLUR2)
+        cv2.imshow('Background sub mask-shadowOut', bg_sub1)
+        #cv2.imwrite('bg_sub1_ShwOut.jpg', bg_sub1)
 
     edged1 = edgedetect(bg_sub1, e_low, e_high,e_iter)
     #edged2 = edgedetect(bg_sub1, e_low, e_high,e_iter)
-    #cv2.imshow('edged1', edged1)
+    cv2.imshow('edged1', edged1)
     #cv2.imwrite('edged1.jpg', edged1)
 
     #Extracting contours out of the Edged image
@@ -234,7 +243,7 @@ class CrowVision(Node):
     l=len(contours)
     i = 1
     j = 0
-    for contour in contours:B
+    for contour in contours:
       area = cv2.contourArea(contour)
       print('area', area)
 
