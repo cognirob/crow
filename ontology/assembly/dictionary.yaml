@@ -1,0 +1,44 @@
+Object:
+  hasAbsoluteLocation
+  hasRelativeLocation
+  hasPart types:
+    Hole
+    Shaft
+    ThreadedHole (subclass of Hole)
+    Thread (subclass of Shaft)
+    Handle
+    Head
+  hasColor:
+    COLOR_RED
+    COLOR_LIGHT_BLUE
+    COLOR_DARK_PURPLE
+    COLOR_GREEN
+    COLOR_GOLD
+    COLOR_WHITE
+    COLOR_REDWINE
+
+Part:
+  hasAbsoluteLocation
+  hasRelativeLocation
+  hasRelativeVector (Holes, Threads, Shanks)
+  hasAbsoluteVector (Holes, Threads, Shanks)
+
+Connection:
+  disables
+  uses:
+    length
+  hasDuration
+  requiresTool:
+    hammer
+    wrench
+    pliers
+    screwdriver
+  requiresAction:
+    hammering
+    inserting
+    screwing
+    pulling
+    taking_out
+    holding
+    
+

@@ -1,0 +1,502 @@
+#Object definitions
+objects:
+  Cube:
+    hasDetectorName: cube_holes
+    hasColor: COLOR_GREEN
+    hasBoxDimensions: [50.0, 50.0, 50.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Hole
+        name: hole1
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole2
+        hasRelativeLocation: [25.0, 0.0, 0.0]
+        hasRelativeVector: [-1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole2
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole1
+        hasRelativeLocation: [-25.0, 0.0, 0.0]
+        hasRelativeVector: [1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole3
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole4
+        hasRelativeLocation: [0.0, 25.0, 0.0]
+        hasRelativeVector: [0.0, -1.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole4
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole3
+        hasRelativeLocation: [0.0, -25.0, 0.0]
+        hasRelativeVector: [0.0, 1.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole5
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole6
+        hasRelativeLocation: [0.0, 0.0, 25.0]
+        hasRelativeVector: [0.0, 0.0, -1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole6
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole5
+        hasRelativeLocation: [0.0, 0.0, -25.0]
+        hasRelativeVector: [0.0, 0.0, 1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+        
+  Sphere:
+    hasDetectorName: sphere_holes
+    hasColor: COLOR_GOLD
+    hasBoxDimensions: [50.0, 50.0, 50.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Hole
+        name: hole1
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole2
+        hasRelativeLocation: [25.0, 0.0, 0.0]
+        hasRelativeVector: [-1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole2
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole1
+        hasRelativeLocation: [-25.0, 0.0, 0.0]
+        hasRelativeVector: [1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole3
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole4
+        hasRelativeLocation: [0.0, 25.0, 0.0]
+        hasRelativeVector: [0.0, -1.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole4
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole3
+        hasRelativeLocation: [0.0, -25.0, 0.0]
+        hasRelativeVector: [0.0, 1.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole5
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole6
+        hasRelativeLocation: [0.0, 0.0, 25.0]
+        hasRelativeVector: [0.0, 0.0, -1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole6
+        hasDiameter: 12.0
+        hasLength: 19.0
+        extendsTo: hole5
+        hasRelativeLocation: [0.0, 0.0, -25.0]
+        hasRelativeVector: [0.0, 0.0, 1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+
+  Wheel:
+    hasDetectorName: wheel
+    hasColor: COLOR_REDWINE
+    hasBoxDimensions: [75.0, 20.0, 75.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Hole
+        name: hole1
+        hasDiameter: 14.5
+        hasLength: 20.0
+        hasRelativeLocation: [0.0, 10.0, 0.0]
+        hasRelativeVector: [0.0, -1.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+
+  Wafer:
+    hasDetectorName: wafer
+    hasColor: COLOR_DARK_PURPLE
+    hasBoxDimensions: [95.0, 25.0, 5.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Hole
+        name: hole1
+        hasDiameter: 14.5
+        hasLength: 5.0
+        hasRelativeLocation: [35.0, 0.0, 2.5]
+        hasRelativeVector: [0.0, 0.0, -1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Hole
+        name: hole2
+        hasDiameter: 14.5
+        hasLength: 5.0
+        hasRelativeLocation: [-35.0, 0.0, 2.5]
+        hasRelativeVector: [0.0, 0.0, -1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+
+  ExcavatorBucket:
+    hasDetectorName: ex_bucket
+    hasColor: COLOR_DARK_PURPLE
+    hasBoxDimensions: [92.0, 60.0, 52.5]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Hole
+        name: hole1
+        hasDiameter: 12.0
+        hasLength: 60.0
+        hasRelativeLocation: [15, 30, 17]
+        hasRelativeVector: [0.0, -1.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+
+  CarRoof:
+    hasDetectorName: car_roof
+    hasColor: COLOR_DARK_PURPLE
+    hasBoxDimensions: [170.0, 40.0, 85.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Hole
+        name: hole1
+        hasDiameter: 12.0
+        hasLength: 50.0
+        hasRelativeLocation: [0.0, 0.0, -36.0]
+        hasRelativeVector: [0.0, 0.0, 1.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+
+  Nut:
+    hasDetectorName: nut
+    hasColor: COLOR_LIGHT_BLUE
+    hasBoxDimensions: [10.0, 25.0, 29.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    nutSize: 25
+    hasObjectPart: 
+      - type: ThreadedHole
+        name: hole1
+        hasDiameter: 11.0
+        hasPitch: 4.0
+        hasLength: 10.0
+        hasThreadType: trapezoidal
+        hasRelativeLocation: [5.0, 0.0, 0.0]
+        hasRelativeVector: [-1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+
+  Peg:
+    hasDetectorName: peg_screw
+    hasColor: COLOR_WHITE
+    hasBoxDimensions: [60.0, 12.0, 12.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Thread
+        name: thread1
+        hasDiameter: 11.0
+        hasPitch: 4.0
+        hasLength: 15.0
+        hasDetectorName: peg_screw_thread
+        hasColor: COLOR_WHITE
+        hasThreadType: trapezoidal
+        hasBoxDimensions: [15.0, 11.0, 11.0]
+        hasRelativeLocation: [22.5, 0.0, 0.0]
+        hasRelativeVector: [1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Thread
+        name: thread2
+        hasDiameter: 11.0
+        hasPitch: 4.0
+        hasLength: 15.0
+        hasDetectorName: peg_screw_thread
+        hasColor: COLOR_WHITE
+        hasThreadType: trapezoidal
+        hasBoxDimensions: [15.0, 11.0, 11.0]
+        hasRelativeLocation: [-22.5, 0.0, 0.0]
+        hasRelativeVector: [-1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Shank
+        name: shank1
+        hasDiameter: 12.0
+        hasLength: 30.0
+        hasDetectorName: peg_screw_shank
+        hasColor: COLOR_WHITE
+        hasBoxDimensions: [30.0, 12.0, 12.0]
+        hasRelativeLocation: [0.0, 0.0, 0.0]
+        hasRelativeVector: [1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+        disables: thread1
+
+  Screw:
+    hasDetectorName: screw_round
+    hasColor: COLOR_LIGHT_BLUE
+    hasBoxDimensions: [130.0, 25.0, 25.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Thread
+        name: thread1
+        hasDiameter: 11.0
+        hasPitch: 4.0
+        hasLength: 72.0
+        hasDetectorName: screw_round_thread
+        hasColor: COLOR_LIGHT_BLUE
+        hasThreadType: trapezoidal
+        hasBoxDimensions: [120.0, 11.0, 11.0]
+        hasRelativeLocation: [23.0, 0.0, 0.0]
+        hasRelativeVector: [1.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        isEnabled: True
+      - type: Head
+        name: head1
+        hasDetectorName: screw_round_head
+        hasColor: COLOR_LIGHT_BLUE
+        headType: slot
+        hasBoxDimensions: [10.0, 25.0, 25.0]
+        hasRelativeLocation: [-42.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+
+
+  Hammer:
+    hasDetectorName: hammer
+    hasColor: COLOR_RED
+    hasBoxDimensions: [235.0, 21.0, 85.0 ]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Handle
+        name: handle1
+        hasDetectorName: hammer_handle
+        hasColor: COLOR_RED
+        hasBoxDimensions: [135.0, 20.0, 30.0]
+        hasRelativeLocation: [-68, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: holding
+      - type: Head
+        name: head1
+        hasDetectorName: hammer_head
+        hasColor: COLOR_RED
+        hasBoxDimensions: [100.0, 21.0, 85.0]
+        hasRelativeLocation: [75.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: hammering
+
+  Pliers:
+    hasDetectorName: pliers
+    hasColor: COLOR_GOLD
+    hasBoxDimensions: [50.0, 152.0, 16.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Handle
+        name: handle1
+        hasDetectorName: pliers_handle
+        hasColor: COLOR_GOLD
+        hasBoxDimensions: [50.0, 88.0, 16.0]
+        hasRelativeLocation: [0.0, -44.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: holding
+      - type: Head
+        name: head1
+        hasDetectorName: pliers_head
+        hasColor: COLOR_GOLD
+        hasBoxDimensions: [30.0, 64.0, 16.0]
+        hasRelativeLocation: [0.0, 32.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: pulling
+
+  Wrench:
+    hasDetectorName: wrench
+    hasColor: COLOR_DARK_PURPLE
+    hasBoxDimensions: [260.0, 45.0, 13.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Handle
+        name: handle1
+        hasDetectorName: wrench_handle
+        hasColor: COLOR_DARK_PURPLE
+        hasBoxDimensions: [153.0, 20.0, 10.0]
+        hasRelativeLocation: [10.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: holding
+      - type: Head
+        name: head1
+        hasDetectorName: wrench_open
+        hasColor: COLOR_DARK_PURPLE
+        hasBoxDimensions: [52.0, 41.0, 12.0]
+        hasRelativeLocation: [90.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: screwing
+        nutSize: 25
+      - type: Head
+        name: head2
+        hasDetectorName: wrench_ring
+        hasColor: COLOR_DARK_PURPLE
+        hasBoxDimensions: [55.0, 45.0, 13.0]
+        hasRelativeLocation: [-89.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: screwing
+        nutSize: 25
+
+  Screwdriver:
+    hasDetectorName: screwdriver
+    hasColor: COLOR_RED
+    hasBoxDimensions: [258.0, 30.0, 30.0]
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
+    hasObjectPart: 
+      - type: Handle
+        name: handle1
+        hasDetectorName: screwdriver_handle
+        hasColor: COLOR_RED
+        hasBoxDimensions: [150.0, 30.0, 30.0]
+        hasRelativeLocation: [-10.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: holding
+      - type: Head
+        name: head1
+        hasDetectorName: screwdriver_head
+        hasColor: COLOR_RED
+        hasBoxDimensions: [135.0, 8.0, 8.0]
+        hasRelativeLocation: [135.0, 0.0, 0.0]
+        hasAbsoluteVector:
+        hasAbsoluteLocation:
+        hasAction: screwing
+        headType: slot
+
+# #Connection definitions
+# operations:
+# InsertFixedConnection:
+#   disables: Hole
+#   uses: Shank
+#   requiresTool: hammer
+#   requiresAction: [inserting, hammering]
+#   hasLength: 
+#   hasDuration:
+
+# InsertLooseConnection:
+#   disables: Hole
+#   uses: Shaft
+#   requiresAction: inserting
+#   hasLength:
+#   hasDuration:
+
+# ThreadedConnection:
+#   disables: ThreadedHole
+#   uses: Thread
+#   requiresTool: [screwdriver, wrench]
+#   requiresAction: screwing
+#   hasLength:
+#   hasDuration:
+
+# RemoveFixedConnection:
+#   enables: Hole
+#   returns: Shank
+#   requiresTool: pliers
+#   requiresAction: pulling
+#   hasLength:
+#   hasDuration:
+
+# RemoveLooseConnection:
+#   enables: Hole
+#   returns: Shaft
+#   requiresAction: taking_out
+#   hasLength:
+#   hasDuration:
+
+# RemoveThreadedConnection:
+#   enables: ThreadedHole
+#   returns: Thread
+#   requiresTool: [screwdriver, wrench]
+#   requiresAction: screwing
+#   hasLength:
+#   hasDuration:
+
+# # Relation definitions
+# relations:
+# PerpendicularRelation:
+#   hasAbsoluteVector:
+#   hasOperations:
+#   hasReference:
+
+# # Order definitions
+# order_hints:
+# RequiredOrder:
+#   hasFirst:
+#   hasThen:
+
+# RecommendedOrder:
+#   hasFirst:
+#   hasThen:
+
+# Anyorder:
+#   hasOperations:
+
+# ExclusiveSelection:
+#   hasOperations:
