@@ -46,7 +46,7 @@ def getBaseNameAndNS(obj_name, build_name=None):
 
 # %%Add detected object
 def addDetectedObject(object_name, location):
-    # find template object
+    # Find template object
     prop_range = list(onto.objects(CROW.hasDetectorName, RDFS.range))[0]
     template = list(onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))[0]
     print(str(template))
@@ -54,15 +54,31 @@ def addDetectedObject(object_name, location):
     template_type = list(onto.objects(template, RDF.type))[0]
     num_subjects = len(list(onto.subjects(RDF.type, template_type)))
     individual_name = object_name + '_' + str(num_subjects)
+    PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
 
     # Add common object properties
     for prop in all_props:
         print(str(prop)+'\n')
-        onto.add((CROW[individual_name], prop[1], prop[2]))
-        #add idividual_name_ns#hole1 for all objectParts
+        #add idividual_name_ns#hole1 for all objectParts of template
+        if prop[1] == CROW['hasObjectPart']:
+            all_object_part_props = list(onto.triples((prop[2], None, None)))
+            prop_name = PART[str(prop[2]).split('#')[-1]]
+            onto.add((CROW[individual_name], prop[1], prop_name))
+            for object_part_prop in all_object_part_props:
+                print(str(object_part_prop)+'\n')
+                onto.add((prop_name, object_part_prop[1], object_part_prop[2]))
+        #add other properties based on template
+        else:
+            onto.add((CROW[individual_name], prop[1], prop[2]))
+    # correct references between holes in property 'extendsTo'
+    all_object_parts = list(onto.objects(CROW[individual_name], CROW['hasObjectPart']))
+    for object_part in all_object_parts:
+        extendsto_obj = list(onto.objects(object_part, CROW['extendsTo']))
+        if len(extendsto_obj) > 0:
+            correct_obj = PART[str(extendsto_obj[0]).split('#')[-1]]
+            onto.set((object_part, CROW['extendsTo'], correct_obj))
 
     # Add AbsoluteLocaton (object specific)
-    PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
     prop_name = PART['xyzAbsoluteLocation']
     prop_range = list(onto.objects(CROW.hasAbsoluteLocation, RDFS.range))[0]
     onto.add((prop_name, RDF.type, prop_range))
@@ -90,15 +106,14 @@ def addAssembledObject(object_name, location):
     changeEnabled(object_name, 'thread2', False) #acc to connection
 
 def changeEnabled(object_name, part_name, value):
-    template_type = list(onto.objects(object_name['template'], RDF.type))[0]
-    template_name, _ = getBaseNameAndNS(template_type)
-    PART = Namespace(f"{ONTO_IRI}/{template_name}#") #ns for each object (/cube_holes_1#)
-    part_name = PART[part_name]
+    PART = Namespace(f"{ONTO_IRI}/{object_name['name']}/{part_name}#") #ns for each object (/cube_holes_1#)
+    OBJ = Namespace(f"{ONTO_IRI}/{object_name['name']}#") #ns for each object (/cube_holes_1#)
+    part_name = OBJ[part_name]
     prop_name = PART['enabled']
     prop_range = list(onto.objects(CROW.isEnabled, RDFS.range))[0]
     onto.add((prop_name, RDF.type, prop_range))
     onto.add((prop_name, CROW.isBool, Literal(value, datatype=XSD.boolean)))
-    onto.set((CROW[part_name], CROW.isEnabled, prop_name))
+    onto.set((part_name, CROW.isEnabled, prop_name))
 
 # %% Add objects
 individual_names = []
@@ -108,6 +123,6 @@ individual_names.append(addDetectedObject('peg_screw', [2.0, 2.0, 3.0]))
 addAssembledObject(individual_names[1], [1.0, 0.0, 0.0])
 
 # %% Save
-outonto_file = "ontology/onto_draft_01_debug.owl"
+outonto_file = "ontology/onto_draft_01_debug2.owl"
 
 onto.serialize(outonto_file)
