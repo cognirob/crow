@@ -1,6 +1,0 @@
-"location": ["complex", "object", "part", "empty", "opposite", "perpendicular", "from", "color", "union", "difference","target","result","parent"],
-    "complex": ["build_0a1a","attach_c"],
-    "object": ["cube_holes","peg","peg_thread","peg_head","hammer_handle","..."],
-    "part": ["hole","end"],
-"action": ["pnp","pnh","hammer","wrench","screwdriver","pliers","..."],
-"ct_type": [{"StartsAfterEnd": 1},{"EndsWithEnd": 2}] #if ovc2 ends, then ovc1 end ---> ["ovc_2","ovc_1"], ct_type: 2
