@@ -21,13 +21,13 @@ class Crowtology():
     OWLR = Namespace("http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#")
 
     def __init__(self, autoMergeIfEmpty=True):
-        modulePath = find_spec("knowl").submodule_search_locations[0]
-        cfgPath = os.path.join(modulePath, "config", "db_config.yaml")
+        modulePath = find_spec("crow_ontology").submodule_search_locations[0]
+        cfgPath = os.path.join(modulePath, "..", "config", "db_config.yaml")
         self.__onto = OntologyAPI(cfgPath)
         self.__onto.bind("crow", self.CROW)
         if autoMergeIfEmpty and len(self.onto) == 0:
             # TODO: make nicer
-            ontologyTemplatePath = os.path.join(modulePath, "..", "..", "..", "ontology", "onto_draft_01.owl")
+            ontologyTemplatePath = os.path.join(modulePath, "..", "..", "ontology", "onto_draft_01.owl")
             self.onto.mergeFileIntoDB(ontologyTemplatePath)
 
     @property
