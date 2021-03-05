@@ -16,7 +16,7 @@ import re
 
 # %%ArgParser
 parser = argparse.ArgumentParser()
-parser.add_argument("--onto_file", "-o", default="ontology/onto_draft_01_debug.owl")
+parser.add_argument("--onto_file", "-o", default="ontology/onto_draft_03.owl")
 args = parser.parse_args()
 
 # %%Initialization
@@ -26,7 +26,7 @@ split_name_re = re.compile(r"([\w\/]+)\.?")
 # split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
 
 # %%Load onto
-ONTO_IRI = "http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01"
+ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 
 onto = rdflib.Graph()
@@ -118,11 +118,12 @@ def changeEnabled(object_name, part_name, value):
 # %% Add objects
 individual_names = []
 individual_names.append(addDetectedObject('cube_holes', [2.0, 2.0, 3.0]))
+individual_names.append(addDetectedObject('cube_holes', [4.0, 4.0, 3.0]))
 individual_names.append(addDetectedObject('peg_screw', [2.0, 2.0, 3.0]))
 
 addAssembledObject(individual_names[1], [1.0, 0.0, 0.0])
 
 # %% Save
-outonto_file = "ontology/onto_draft_01_debug2.owl"
+outonto_file = "ontology/onto_draft_03_debug.owl"
 
 onto.serialize(outonto_file)

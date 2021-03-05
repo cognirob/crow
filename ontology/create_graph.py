@@ -22,7 +22,7 @@ import cv2
 CROW = Namespace("http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#")
 
 onto = rdflib.Graph()
-onto.load("onto_draft_01.owl")
+onto.load("onto_draft_03.owl")
 onto.bind("crow", CROW)
 
 # %%Load YAML

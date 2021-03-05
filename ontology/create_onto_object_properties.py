@@ -18,7 +18,7 @@ import re
 # %%ArgParser
 parser = argparse.ArgumentParser()
 #parser.add_argument("properties_file")
-parser.add_argument("--onto_file", "-o", default="ontology/onto_draft_01.owl")
+parser.add_argument("--onto_file", "-o", default="ontology/onto_draft_02.owl")
 args = parser.parse_args()
 
 # %%Initialization
@@ -30,7 +30,7 @@ split_name_re = re.compile(r"([\w\/]+)\.?")
 # split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
 
 # %%Load onto
-ONTO_IRI = "http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01"
+ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 
 onto = rdflib.Graph()
@@ -90,6 +90,7 @@ def add_parsed_property(ns, onto_name, prop, value):
             else:
                 onto_base_name, _ = getBaseNameAndNS(onto_name)
                 PART = Namespace(f"{ONTO_IRI}/{onto_base_name}#") #ns for each object (/Cube#)
+                PART = Namespace(onto_name.replace('#','/')+'#')
                 prop_name = PART[prop.replace('has','xyz')]
             onto.add((prop_name, RDF.type, prop_range))
             onto.add((prop_name, CROW.x, Literal(value[0], datatype=XSD.float)))
@@ -151,98 +152,98 @@ def buildGraph(properties_file, onto, recipe_name=None):
                     else:
                         add_parsed_property([CROW], onto_name, prop, value) #add predicate to Object
 
-    # Add connections
-    if "operations" in property_defs:
-        for entity, props in property_defs["operations"].items():
-            node_type = props["type"]
-            onto_type = CROW[node_type]
-            onto_name = BUILD[entity]
-            if checkIValidType(onto_type):
-                superClasses = list(onto.transitive_objects(onto_type, RDFS.subClassOf))
-                if CROW.AssemblyOperation in superClasses:
-                    onto.add((onto_name, RDF.type, onto_type))
-                    onto.add((recipe_onto_name, CROW.hasAssemblyElement, onto_name))
-                    if CROW.AssemblyBinaryConnection in superClasses:
-                        if CROW.InsertConnection in superClasses:
-                            a = props["shaft"]
-                            b = props["hole"]
-                        else:
-                            a = props["provider"]
-                            b = props["consumer"]
+    # # Add connections
+    # if "operations" in property_defs:
+    #     for entity, props in property_defs["operations"].items():
+    #         node_type = props["type"]
+    #         onto_type = CROW[node_type]
+    #         onto_name = BUILD[entity]
+    #         if checkIValidType(onto_type):
+    #             superClasses = list(onto.transitive_objects(onto_type, RDFS.subClassOf))
+    #             if CROW.AssemblyOperation in superClasses:
+    #                 onto.add((onto_name, RDF.type, onto_type))
+    #                 onto.add((recipe_onto_name, CROW.hasAssemblyElement, onto_name))
+    #                 if CROW.AssemblyBinaryConnection in superClasses:
+    #                     if CROW.InsertConnection in superClasses:
+    #                         a = props["shaft"]
+    #                         b = props["hole"]
+    #                     else:
+    #                         a = props["provider"]
+    #                         b = props["consumer"]
 
-                        # check onto
-                        if checkConnectionObject(entity, a, recipe_name) and checkConnectionObject(entity, b, recipe_name):
-                            onto.add((onto_name, CROW.affordanceProvider, getQualifiedName(a, recipe_name)))
-                            onto.add((onto_name, CROW.affordanceConsumer, getQualifiedName(b, recipe_name)))
-                    else:
-                        warn("Cannot process other than binary connections, yet!")
-                else:
-                    warn(f"Operation type {node_type} for {entity} is not a subclass of AssemblyOperation!")
-            else:
-                warn(f"Operation type {node_type} for {entity} operation not found in Ontology!")
+    #                     # check onto
+    #                     if checkConnectionObject(entity, a, recipe_name) and checkConnectionObject(entity, b, recipe_name):
+    #                         onto.add((onto_name, CROW.affordanceProvider, getQualifiedName(a, recipe_name)))
+    #                         onto.add((onto_name, CROW.affordanceConsumer, getQualifiedName(b, recipe_name)))
+    #                 else:
+    #                     warn("Cannot process other than binary connections, yet!")
+    #             else:
+    #                 warn(f"Operation type {node_type} for {entity} is not a subclass of AssemblyOperation!")
+    #         else:
+    #             warn(f"Operation type {node_type} for {entity} operation not found in Ontology!")
 
-    # Add relations
-    if "relations" in property_defs:
-        for i, props in enumerate(property_defs["relations"]):
-            node_type = props["type"]
-            onto_type = CROW[node_type]
-            if checkIValidType(onto_type):
-                name = str(next(onto.triples((onto_type, CROW.representation, None)))[2])
-                uname = name + str(i)
-                superClasses = list(onto.transitive_objects(onto_type, RDFS.subClassOf))
-                if CROW.Relation in superClasses:
-                    onto_name = BUILD[uname]
-                    onto.add((onto_name, RDF.type, onto_type))
-                    onto.add((recipe_onto_name, CROW.definesRelation, onto_name))
+    # # Add relations
+    # if "relations" in property_defs:
+    #     for i, props in enumerate(property_defs["relations"]):
+    #         node_type = props["type"]
+    #         onto_type = CROW[node_type]
+    #         if checkIValidType(onto_type):
+    #             name = str(next(onto.triples((onto_type, CROW.representation, None)))[2])
+    #             uname = name + str(i)
+    #             superClasses = list(onto.transitive_objects(onto_type, RDFS.subClassOf))
+    #             if CROW.Relation in superClasses:
+    #                 onto_name = BUILD[uname]
+    #                 onto.add((onto_name, RDF.type, onto_type))
+    #                 onto.add((recipe_onto_name, CROW.definesRelation, onto_name))
 
-                    if CROW.UnorderedRelation in superClasses:
-                        operations = props["operations"]
-                        for op in operations:
-                            if checkRelationOperation(node_type, op, recipe_name):
-                                onto.add((onto_name, CROW.relatesOperation, getQualifiedName(op, recipe_name)))
+    #                 if CROW.UnorderedRelation in superClasses:
+    #                     operations = props["operations"]
+    #                     for op in operations:
+    #                         if checkRelationOperation(node_type, op, recipe_name):
+    #                             onto.add((onto_name, CROW.relatesOperation, getQualifiedName(op, recipe_name)))
 
-                    if CROW.RelationWithReference in superClasses:
-                        ref = props["reference"]
-                        if checkReference(node_type, ref, recipe_name):
-                            onto.add((onto_name, CROW.hasSpatialReference, getQualifiedName(ref, recipe_name)))
-                else:
-                    warn(f"Relation of type {props['type']} is not a subclass of Relation!")
-            else:
-                warn(f"Relation of type {props['type']} not found in Ontology!")
+    #                 if CROW.RelationWithReference in superClasses:
+    #                     ref = props["reference"]
+    #                     if checkReference(node_type, ref, recipe_name):
+    #                         onto.add((onto_name, CROW.hasSpatialReference, getQualifiedName(ref, recipe_name)))
+    #             else:
+    #                 warn(f"Relation of type {props['type']} is not a subclass of Relation!")
+    #         else:
+    #             warn(f"Relation of type {props['type']} not found in Ontology!")
 
-    # Add order_hints
-    if "order_hints" in property_defs:
-        for i, props in enumerate(property_defs["order_hints"]):
-            node_type = props["type"]
-            onto_type = CROW[node_type]
-            if checkIValidType(onto_type):
-                name = str(next(onto.triples((CROW[props["type"]], CROW.representation, None)))[2])
-                uname = name + str(i)
-                superClasses = list(onto.transitive_objects(CROW[props["type"]], RDFS.subClassOf))
-                if CROW.Order in superClasses:
-                    onto_name = BUILD[node_type + str(i)]
-                    onto.add((onto_name, RDF.type, onto_type))
-                    onto.add((recipe_onto_name, CROW.definesOrder, onto_name))
-                    if CROW.SequentialOrder in superClasses:
-                        first = props["first"]
-                        then = props["then"]
-                        if checkOrderOperation(node_type, first, recipe_name) and checkOrderOperation(node_type, then, recipe_name):
-                            onto.add((onto_name, CROW.firstOp, getQualifiedName(first, recipe_name)))
-                            onto.add((onto_name, CROW.thenOp,getQualifiedName(then, recipe_name)))
-                    else:  # assumes parallel or selection order
-                        operations = props["operations"]
-                        if all([checkOrderOperation(node_type, op, recipe_name) for op in operations]):
-                            if CROW.ParallelOrder in superClasses:
-                                arrowHead = "open"
-                            elif CROW.SelectionOrder in superClasses:
-                                arrowHead = "ediamond"
-                            for op in operations:
-                                onto.add((onto_name, CROW.ordersOperation, getQualifiedName(op, recipe_name)))
-                else:
-                    warn(f"Unknown order hint type: {node_type}!")
+    # # Add order_hints
+    # if "order_hints" in property_defs:
+    #     for i, props in enumerate(property_defs["order_hints"]):
+    #         node_type = props["type"]
+    #         onto_type = CROW[node_type]
+    #         if checkIValidType(onto_type):
+    #             name = str(next(onto.triples((CROW[props["type"]], CROW.representation, None)))[2])
+    #             uname = name + str(i)
+    #             superClasses = list(onto.transitive_objects(CROW[props["type"]], RDFS.subClassOf))
+    #             if CROW.Order in superClasses:
+    #                 onto_name = BUILD[node_type + str(i)]
+    #                 onto.add((onto_name, RDF.type, onto_type))
+    #                 onto.add((recipe_onto_name, CROW.definesOrder, onto_name))
+    #                 if CROW.SequentialOrder in superClasses:
+    #                     first = props["first"]
+    #                     then = props["then"]
+    #                     if checkOrderOperation(node_type, first, recipe_name) and checkOrderOperation(node_type, then, recipe_name):
+    #                         onto.add((onto_name, CROW.firstOp, getQualifiedName(first, recipe_name)))
+    #                         onto.add((onto_name, CROW.thenOp,getQualifiedName(then, recipe_name)))
+    #                 else:  # assumes parallel or selection order
+    #                     operations = props["operations"]
+    #                     if all([checkOrderOperation(node_type, op, recipe_name) for op in operations]):
+    #                         if CROW.ParallelOrder in superClasses:
+    #                             arrowHead = "open"
+    #                         elif CROW.SelectionOrder in superClasses:
+    #                             arrowHead = "ediamond"
+    #                         for op in operations:
+    #                             onto.add((onto_name, CROW.ordersOperation, getQualifiedName(op, recipe_name)))
+    #             else:
+    #                 warn(f"Unknown order hint type: {node_type}!")
 
-            else:
-                warn(f"Order hint of type {props['type']} not found in Ontology!")
+    #         else:
+    #             warn(f"Order hint of type {props['type']} not found in Ontology!")
 
     # DeductiveClosure(OWLRL_Semantics).expand(onto)
     # %%Output
@@ -251,6 +252,6 @@ def buildGraph(properties_file, onto, recipe_name=None):
 buildGraph(properties_file, onto)
 
 # %% Draw
-outonto_file = "ontology/onto_draft_01_debug.owl"
+outonto_file = "ontology/onto_draft_03.owl"
 
 onto.serialize(outonto_file)

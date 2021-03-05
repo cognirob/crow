@@ -8,7 +8,7 @@ from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 
 
-CROW = Namespace("http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#")
+CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
 
 
 class OntoTester(Node):

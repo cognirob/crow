@@ -27,9 +27,9 @@ import hashlib
 # %%ArgParser
 parser = argparse.ArgumentParser()
 parser.add_argument("build_name")
-parser.add_argument("--onto_file", "-o", default="onto_draft_01.owl")
+parser.add_argument("--onto_file", "-o", default="onto_draft_03.owl")
 # args = parser.parse_args(["build_dog.yaml"])
-args = parser.parse_args(["sub_build_dog.yaml", "-o", "../onto_draft_01.owl"])
+args = parser.parse_args(["sub_build_dog.yaml", "-o", "../onto_draft_03.owl"])
 # os.chdir(r".\code\crow\ontology\assembly")
 os.chdir(r".\assembly")
 # args = parser.parse_args()
@@ -37,7 +37,7 @@ os.chdir(r".\assembly")
 # %%Initialization
 # build_name = "build_dog.yaml"
 build_name = args.build_name
-# onto_file = "onto_draft_01.owl"
+# onto_file = "onto_draft_03.owl"
 # onto_file = "dog_build.owl"
 onto_file = args.onto_file
 print(onto_file)

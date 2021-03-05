@@ -1,24 +1,22 @@
 <?xml version="1.0"?>
-<rdf:RDF xmlns="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#"
-     xml:base="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01"
+<rdf:RDF xmlns="http://imitrob.ciirc.cvut.cz/ontologies/crow#"
+     xml:base="http://imitrob.ciirc.cvut.cz/ontologies/crow"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
-     xmlns:crow="http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#"
+     xmlns:crow="http://imitrob.ciirc.cvut.cz/ontologies/crow#"
      xmlns:onto="http://ainf.aau.at/ontodebug#"
      xmlns:owlr="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#"
-     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
-     xmlns:crow1="http://imitrob.ciirc.cvut.cz/ontologies/crow#">
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
     <owl:Ontology rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow">
-        <owl:versionIRI rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/0.0.1"/>
+        <owl:versionIRI rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/0.0.3"/>
         <onto:testCase>
             <rdf:Description/>
         </onto:testCase>
         <onto:testCase>
             <rdf:Description/>
         </onto:testCase>
-        <rdfs:comment>Testing ontology</rdfs:comment>
     </owl:Ontology>
     
 
@@ -83,9 +81,7 @@
 
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#connectionRigidity -->
 
-    <rdfs:Datatype rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectionRigidity">
-        <owl:equivalentClass rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
-    </rdfs:Datatype>
+    <rdfs:Datatype rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectionRigidity"/>
     
 
 
@@ -305,6 +301,16 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#disables -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#disables">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#disablesAA -->
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#disablesAA">
@@ -321,6 +327,16 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#enables -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#enables">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#endTime -->
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#endTime">
@@ -332,10 +348,40 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#extendsTo -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#extendsTo">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#first -->
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#first">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAbsoluteLocation -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAbsoluteLocation">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLocation"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAbsoluteVector -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAbsoluteVector">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVector"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
     </owl:ObjectProperty>
     
 
@@ -387,6 +433,16 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasBottomObject">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasBoxDimensions -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasBoxDimensions">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
     </owl:ObjectProperty>
     
 
@@ -464,6 +520,26 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRelativeLocation -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRelativeLocation">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLocation"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRelativeVector -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRelativeVector">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVector"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSpatialReference -->
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSpatialReference">
@@ -512,6 +588,16 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVector -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVector">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+    </owl:ObjectProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#inCenterOf -->
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#inCenterOf">
@@ -534,6 +620,16 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#insideOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+    </owl:ObjectProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#isEnabled -->
+
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#isEnabled">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Enabled"/>
     </owl:ObjectProperty>
     
 
@@ -895,6 +991,15 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAction -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAction">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasArucoId -->
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasArucoId">
@@ -918,6 +1023,25 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDetectorName -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDetectorName">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDiameter -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDiameter">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasId -->
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasId">
@@ -934,6 +1058,16 @@
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ParseTreeNode"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">label</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLength -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLength">
+        <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
     </owl:DatatypeProperty>
     
 
@@ -959,9 +1093,27 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPitch -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPitch">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRepresentation -->
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRepresentation">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasThreadType -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasThreadType">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:DatatypeProperty>
     
@@ -984,6 +1136,24 @@
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TaggedText"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
         <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">tokens</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#headType -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#headType">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#DrivableFastener"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#isBool -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#isBool">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
     </owl:DatatypeProperty>
     
 
@@ -1042,6 +1212,17 @@
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
         <rdfs:comment>Nanoseconds (10^-9), counted from the last whole second</rdfs:comment>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#nutSize -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#nutSize">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Nut"/>
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Nutdriver"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
     </owl:DatatypeProperty>
     
 
@@ -1277,6 +1458,14 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ObjectPart"/>
+    </owl:Class>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Agent -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Agent">
@@ -1363,7 +1552,7 @@
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#AnyOrder">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ParallelOrder"/>
         <owl:disjointWith rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SimultaneousOrder"/>
-        <crow1:representation>OR</crow1:representation>
+        <representation>OR</representation>
     </owl:Class>
     
 
@@ -1547,6 +1736,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ObjectPart"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -1908,6 +2098,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#CubeHoles -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#CubeHoles">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -2160,6 +2351,14 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Enabled -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Enabled">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ObjectProperty"/>
+    </owl:Class>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#EnduringLocalizedThing -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#EnduringLocalizedThing">
@@ -2253,7 +2452,7 @@
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ExclusiveSelection">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SelectionOrder"/>
-        <crow1:representation>XOR</crow1:representation>
+        <representation>XOR</representation>
     </owl:Class>
     
 
@@ -2404,6 +2603,22 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart"/>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Head -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart"/>
+    </owl:Class>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Heart_Rate_Unit -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Heart_Rate_Unit">
@@ -2463,6 +2678,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -3147,6 +3363,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#ObjectPart -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ObjectPart">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ColoredThing"/>
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Object"/>
     </owl:Class>
     
@@ -3253,7 +3470,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#RelationWithReference"/>
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialRelation"/>
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#UnorderedRelation"/>
-        <crow1:representation>O</crow1:representation>
+        <representation>O</representation>
     </owl:Class>
     
 
@@ -3427,7 +3644,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#RelationWithReference"/>
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialRelation"/>
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#UnorderedRelation"/>
-        <crow1:representation>P</crow1:representation>
+        <representation>P</representation>
     </owl:Class>
     
 
@@ -3666,7 +3883,7 @@
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#RecommendedOrder">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SequentialOrder"/>
         <owl:disjointWith rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#RequiredOrder"/>
-        <crow1:representation>? &gt;</crow1:representation>
+        <representation>? &gt;</representation>
     </owl:Class>
     
 
@@ -3715,7 +3932,7 @@
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#RequiredOrder">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SequentialOrder"/>
-        <crow1:representation>! &gt;</crow1:representation>
+        <representation>! &gt;</representation>
     </owl:Class>
     
 
@@ -3962,6 +4179,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Shaft -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Shaft">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -3987,6 +4205,14 @@
                 <owl:hasValue rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LOOSE_CONNECTION"/>
             </owl:Restriction>
         </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Shank -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Shank">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Shaft"/>
     </owl:Class>
     
 
@@ -4018,7 +4244,7 @@
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#SimultaneousOrder">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ParallelOrder"/>
-        <crow1:representation>AND</crow1:representation>
+        <representation>AND</representation>
     </owl:Class>
     
 
@@ -4123,6 +4349,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#SphereHoles -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#SphereHoles">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Sphere"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -4295,6 +4522,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Thread -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Thread">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Shaft"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -4323,6 +4551,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#ThreadedHole -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ThreadedHole">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
         <rdfs:subClassOf>
             <owl:Class>
                 <owl:intersectionOf rdf:parseType="Collection">
@@ -4460,7 +4689,7 @@
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#VariantSelection">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SelectionOrder"/>
-        <crow1:representation>&lt;?&gt;</crow1:representation>
+        <representation>&lt;?&gt;</representation>
     </owl:Class>
     
 
@@ -4682,6 +4911,20 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#CARROOF -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#CARROOF">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#CarRoof"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CARROOF#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof#hole1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CARROOF#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">car_roof</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_BLACK -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_BLACK">
@@ -4706,9 +4949,33 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GOLD -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GOLD">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GREEN -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GREEN">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_LIGHT_BLUE -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_LIGHT_BLUE">
         <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
     </owl:NamedIndividual>
     
@@ -4730,6 +4997,14 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_REDWINE -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_REDWINE">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_WHITE -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_WHITE">
@@ -4742,6 +5017,39 @@
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_YELLOW">
         <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#CUBE -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#CUBE">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CUBE#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GREEN"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole2"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole3"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole4"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole5"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole6"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CUBE#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cube_holes</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#EXCAVATORBUCKET -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#EXCAVATORBUCKET">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ExcavatorBucket"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/EXCAVATORBUCKET#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket#hole1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/EXCAVATORBUCKET#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ex_bucket</hasDetectorName>
     </owl:NamedIndividual>
     
 
@@ -4762,6 +5070,21 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#HAMMER -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#HAMMER">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hammer"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/HAMMER#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_RED"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#handle1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#head1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/HAMMER#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hammer</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#LOOSE_CONNECTION -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#LOOSE_CONNECTION">
@@ -4775,14 +5098,1691 @@
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#MOVABLE_CONNECTION">
         <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ConnectionStrength"/>
     </owl:NamedIndividual>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#NUT -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#NUT">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Nut"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/NUT#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_LIGHT_BLUE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut#hole1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/NUT#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">nut</hasDetectorName>
+        <nutSize rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</nutSize>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#PEG -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#PEG">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Peg"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/PEG#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_WHITE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#shank1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread2"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/PEG#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">peg_screw</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#PLIERS -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#PLIERS">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Pliers"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/PLIERS#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GOLD"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#handle1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#head1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/PLIERS#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pliers</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#SCREW -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#SCREW">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Screw"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREW#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_LIGHT_BLUE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#head1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#thread1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREW#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screw_round</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#SCREWDRIVER -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#SCREWDRIVER">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Screwdriver"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREWDRIVER#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_RED"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver#handle1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver#head1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREWDRIVER#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwdriver</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#SPHERE -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#SPHERE">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Sphere"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/SPHERE#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GOLD"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole2"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole3"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole4"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole5"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole6"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/SPHERE#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">sphere_holes</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#WAFER -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WAFER">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Wafer"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/WAFER#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer#hole1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer#hole2"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/WAFER#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wafer</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#WHEEL -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WHEEL">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Wheel"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/WHEEL#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_REDWINE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel#hole1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/WHEEL#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wheel</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#WRENCH -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WRENCH">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Wrench"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/WRENCH#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#handle1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head1"/>
+        <hasObjectPart rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head2"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/WRENCH#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wrench</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Enabled"/>
+        <isBool rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</isBool>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">None</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">None</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">None</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">None</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">None</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">None</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CARROOF#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CARROOF#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">170.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">40.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">85.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CARROOF#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CARROOF#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CUBE#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CUBE#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CUBE#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CUBE#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-36.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/CarRoof/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole2"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole2 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole2">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole2#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole2#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole3 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole3">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole4"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole3#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole3#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole4 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole4">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole3"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole4#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole4#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole5 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole5">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole6"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole5#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole5#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole6 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole6">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube#hole5"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole6#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole6#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole2#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole2#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-25.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole2#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole2#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole3#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole3#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole3#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole3#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole4#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole4#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole4#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole4#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole5#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole5#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole5#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole5#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole6#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole6#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-25.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole6#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Cube/hole6#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/EXCAVATORBUCKET#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/EXCAVATORBUCKET#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">92.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">60.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">52.5</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/EXCAVATORBUCKET#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/EXCAVATORBUCKET#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">60.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">15.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">17.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/ExcavatorBucket/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/HAMMER#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/HAMMER#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">235.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">21.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">85.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/HAMMER#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/HAMMER#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#handle1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#handle1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_RED"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">holding</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hammer_handle</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#head1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#head1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_RED"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hammering</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hammer_head</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">135.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">20.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-68.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">100.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">21.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">85.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">75.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/NUT#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/NUT#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">10.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">29.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/NUT#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/NUT#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ThreadedHole"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">10.0</hasLength>
+        <hasPitch rdf:datatype="http://www.w3.org/2001/XMLSchema#float">4.0</hasPitch>
+        <hasThreadType rdf:datatype="http://www.w3.org/2001/XMLSchema#string">trapezoidal</hasThreadType>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">5.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Nut/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/PEG#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/PEG#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">60.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/PEG#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/PEG#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/PLIERS#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/PLIERS#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">152.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">16.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/PLIERS#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/PLIERS#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#shank1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#shank1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Shank"/>
+        <disables rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread1"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_WHITE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">peg_screw_shank</hasDetectorName>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Thread"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_WHITE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">peg_screw_thread</hasDetectorName>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">15.0</hasLength>
+        <hasPitch rdf:datatype="http://www.w3.org/2001/XMLSchema#float">4.0</hasPitch>
+        <hasThreadType rdf:datatype="http://www.w3.org/2001/XMLSchema#string">trapezoidal</hasThreadType>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread2 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg#thread2">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Thread"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_WHITE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">peg_screw_thread</hasDetectorName>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">15.0</hasLength>
+        <hasPitch rdf:datatype="http://www.w3.org/2001/XMLSchema#float">4.0</hasPitch>
+        <hasThreadType rdf:datatype="http://www.w3.org/2001/XMLSchema#string">trapezoidal</hasThreadType>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/shank1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">15.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">22.5</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">15.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-22.5</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Peg/thread2#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#handle1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#handle1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GOLD"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">holding</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pliers_handle</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#head1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#head1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_GOLD"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pulling</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pliers_head</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">88.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">16.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-44.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">64.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">16.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">32.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREW#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREW#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">130.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREW#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREW#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREWDRIVER#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREWDRIVER#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">258.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREWDRIVER#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/SCREWDRIVER#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/SPHERE#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/SPHERE#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">50.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/SPHERE#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/SPHERE#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#head1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#head1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_LIGHT_BLUE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzRelativeLocation"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screw_round_head</hasDetectorName>
+        <headType rdf:datatype="http://www.w3.org/2001/XMLSchema#string">slot</headType>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#thread1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#thread1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Thread"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_LIGHT_BLUE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screw_round_thread</hasDetectorName>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">72.0</hasLength>
+        <hasPitch rdf:datatype="http://www.w3.org/2001/XMLSchema#float">4.0</hasPitch>
+        <hasThreadType rdf:datatype="http://www.w3.org/2001/XMLSchema#string">trapezoidal</hasThreadType>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">10.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-42.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">120.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">11.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">23.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver#handle1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver#handle1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/handle1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_RED"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/handle1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">holding</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwdriver_handle</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver#head1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver#head1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/head1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_RED"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/head1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwing</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwdriver_head</hasDetectorName>
+        <headType rdf:datatype="http://www.w3.org/2001/XMLSchema#string">slot</headType>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/handle1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/handle1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">150.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">30.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/handle1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/handle1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-10.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/head1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/head1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">135.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">8.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">8.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/head1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screwdriver/head1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">135.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole2"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole2 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole2">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole1"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole2#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole2#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole3 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole3">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole4"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole3#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole3#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole4 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole4">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole3"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole4#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole4#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole5 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole5">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole6"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole5#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole5#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole6 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole6">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <extendsTo rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere#hole5"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole6#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole6#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">19.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole2#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole2#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-25.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole2#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole2#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole3#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole3#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole3#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole3#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole4#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole4#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole4#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole4#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole5#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole5#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole5#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole5#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole6#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole6#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-25.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole6#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Sphere/hole6#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/WAFER#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/WAFER#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">95.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">5.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/WAFER#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/WAFER#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/WHEEL#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/WHEEL#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">75.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">20.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">75.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/WHEEL#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/WHEEL#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/WRENCH#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/WRENCH#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">260.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">45.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">13.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/WRENCH#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/WRENCH#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">14.5</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">5.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer#hole2 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer#hole2">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole2#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole2#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">14.5</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">5.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">35.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">2.5</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole2#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole2#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-35.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">2.5</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole2#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wafer/hole2#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel#hole1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel#hole1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hole"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel/hole1#xyzRelativeLocation"/>
+        <hasRelativeVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel/hole1#xyzRelativeVector"/>
+        <isEnabled rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#enabled"/>
+        <hasDiameter rdf:datatype="http://www.w3.org/2001/XMLSchema#float">14.5</hasDiameter>
+        <hasLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">20.0</hasLength>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel/hole1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel/hole1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">10.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel/hole1#xyzRelativeVector -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wheel/hole1#xyzRelativeVector">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-1.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#handle1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#handle1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">holding</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wrench_handle</hasDetectorName>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head1 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head1">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwing</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wrench_open</hasDetectorName>
+        <nutSize rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</nutSize>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head2 -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head2">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
+        <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
+        <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzBoxDimensions"/>
+        <hasColor rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE"/>
+        <hasRelativeLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzRelativeLocation"/>
+        <hasAction rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwing</hasAction>
+        <hasDetectorName rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wrench_ring</hasDetectorName>
+        <nutSize rdf:datatype="http://www.w3.org/2001/XMLSchema#float">25.0</nutSize>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">153.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">20.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">10.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">10.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">52.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">41.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">12.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">90.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzBoxDimensions -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzBoxDimensions">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">55.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">45.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">13.0</z>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzRelativeLocation -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzRelativeLocation">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <x rdf:datatype="http://www.w3.org/2001/XMLSchema#float">-89.0</x>
+        <y rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</y>
+        <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
+    </owl:NamedIndividual>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
@@ -4800,6 +6800,30 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
@@ -4813,22 +6837,6 @@
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     

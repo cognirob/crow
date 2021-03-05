@@ -14,8 +14,6 @@ objects:
         extendsTo: hole2
         hasRelativeLocation: [25.0, 0.0, 0.0]
         hasRelativeVector: [-1.0, 0.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole2
@@ -24,8 +22,6 @@ objects:
         extendsTo: hole1
         hasRelativeLocation: [-25.0, 0.0, 0.0]
         hasRelativeVector: [1.0, 0.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole3
@@ -34,8 +30,6 @@ objects:
         extendsTo: hole4
         hasRelativeLocation: [0.0, 25.0, 0.0]
         hasRelativeVector: [0.0, -1.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole4
@@ -44,8 +38,6 @@ objects:
         extendsTo: hole3
         hasRelativeLocation: [0.0, -25.0, 0.0]
         hasRelativeVector: [0.0, 1.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole5
@@ -54,8 +46,6 @@ objects:
         extendsTo: hole6
         hasRelativeLocation: [0.0, 0.0, 25.0]
         hasRelativeVector: [0.0, 0.0, -1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole6
@@ -64,8 +54,6 @@ objects:
         extendsTo: hole5
         hasRelativeLocation: [0.0, 0.0, -25.0]
         hasRelativeVector: [0.0, 0.0, 1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
         
   Sphere:
@@ -82,8 +70,6 @@ objects:
         extendsTo: hole2
         hasRelativeLocation: [25.0, 0.0, 0.0]
         hasRelativeVector: [-1.0, 0.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole2
@@ -92,8 +78,6 @@ objects:
         extendsTo: hole1
         hasRelativeLocation: [-25.0, 0.0, 0.0]
         hasRelativeVector: [1.0, 0.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole3
@@ -102,8 +86,6 @@ objects:
         extendsTo: hole4
         hasRelativeLocation: [0.0, 25.0, 0.0]
         hasRelativeVector: [0.0, -1.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole4
@@ -112,8 +94,6 @@ objects:
         extendsTo: hole3
         hasRelativeLocation: [0.0, -25.0, 0.0]
         hasRelativeVector: [0.0, 1.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole5
@@ -122,8 +102,6 @@ objects:
         extendsTo: hole6
         hasRelativeLocation: [0.0, 0.0, 25.0]
         hasRelativeVector: [0.0, 0.0, -1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole6
@@ -132,8 +110,6 @@ objects:
         extendsTo: hole5
         hasRelativeLocation: [0.0, 0.0, -25.0]
         hasRelativeVector: [0.0, 0.0, 1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
 
   Wheel:
@@ -149,8 +125,6 @@ objects:
         hasLength: 20.0
         hasRelativeLocation: [0.0, 10.0, 0.0]
         hasRelativeVector: [0.0, -1.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
 
   Wafer:
@@ -166,8 +140,6 @@ objects:
         hasLength: 5.0
         hasRelativeLocation: [35.0, 0.0, 2.5]
         hasRelativeVector: [0.0, 0.0, -1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
       - type: Hole
         name: hole2
@@ -175,8 +147,6 @@ objects:
         hasLength: 5.0
         hasRelativeLocation: [-35.0, 0.0, 2.5]
         hasRelativeVector: [0.0, 0.0, -1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
 
   ExcavatorBucket:
@@ -192,8 +162,6 @@ objects:
         hasLength: 60.0
         hasRelativeLocation: [15, 30, 17]
         hasRelativeVector: [0.0, -1.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
 
   CarRoof:
@@ -209,8 +177,6 @@ objects:
         hasLength: 50.0
         hasRelativeLocation: [0.0, 0.0, -36.0]
         hasRelativeVector: [0.0, 0.0, 1.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
 
   Nut:
@@ -229,8 +195,6 @@ objects:
         hasThreadType: trapezoidal
         hasRelativeLocation: [5.0, 0.0, 0.0]
         hasRelativeVector: [-1.0, 0.0, 0.0]
-        hasAbsoluteVector:
-        hasAbsoluteLocation:
         isEnabled: True
 
   Peg:

@@ -16,7 +16,7 @@ class Crowtology():
     """CROW Ontology class handler
     Holds an instance of an ontology API and sets the parameters to necessary to setup the CROW ontology
     """
-    crowNSString = "http://www.semanticweb.org/crow/ontologies/2019/6/onto_draft_01#"
+    crowNSString = "http://imitrob.ciirc.cvut.cz/ontologies/crow#"
     CROW = Namespace(crowNSString)
     OWLR = Namespace("http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#")
 
@@ -27,7 +27,7 @@ class Crowtology():
         self.__onto.bind("crow", self.CROW)
         if autoMergeIfEmpty and len(self.onto) == 0:
             # TODO: make nicer
-            ontologyTemplatePath = os.path.join(modulePath, "..", "..", "ontology", "onto_draft_01.owl")
+            ontologyTemplatePath = os.path.join(modulePath, "..", "..", "ontology", "onto_draft_03.owl")
             self.onto.mergeFileIntoDB(ontologyTemplatePath)
 
     @property
