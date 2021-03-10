@@ -23,7 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'tester = crow_ontology.tester:main'
+            'tester = crow_ontology.tester:main',
+            'adder = crow_ontology.add_to_database:main'
         ],
     },
 )

@@ -51,7 +51,8 @@ def addDetectedObject(object_name, location):
     template = list(onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))[0]
     print(str(template))
     all_props = list(onto.triples((template, None, None)))
-    template_type = list(onto.objects(template, RDF.type))[0]
+    template_type = list(onto.objects(template, RDF.type))
+    template_type = [x for x in template_type if ONTO_IRI in x][0]
     num_subjects = len(list(onto.subjects(RDF.type, template_type)))
     individual_name = object_name + '_' + str(num_subjects)
     PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
