@@ -3,19 +3,22 @@ from rdflib.extras.infixowl import Class
 from rdflib import BNode, URIRef, Literal
 from knowl import OntologyAPI, DBConfig
 import os
-
-import rclpy
-from rclpy.node import Node
-from threading import Thread
-from rcl_interfaces.srv import GetParameters
+from importlib.util import find_spec
 from uuid import uuid4
 import yaml
+from crow_ontology.crowracle_server import DB_PARAM_NAMES, DB_PARAM_MAP
+try:
+    import rclpy
+    from threading import Thread
+    from rcl_interfaces.srv import GetParameters
+except:  # noqa
+    pass
+
 
 ONTO_SERVER_NAME = "ontology_server"
 
 
 class CrowtologyClient():
-    DB_PARAM_NAMES = ["database_host", "database_port", "database_uri", "database_name"]
 
     def __init__(self, credential_file_path=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
@@ -33,7 +36,7 @@ class CrowtologyClient():
             for the configuration file in some default location. Defaults to None.
             local_mode (bool, optional): Whether to run in local mode. Defaults to False.
         """
-        self.__client_id = uuid4()  # id in case this client needs to be identified in ROS
+        self.__client_id = str(uuid4()).replace("-", "_")  # id in case this client needs to be identified in ROS
 
         if credential_file_path is None:
             modulePath = find_spec("crow_ontology").submodule_search_locations[0]
@@ -51,19 +54,17 @@ class CrowtologyClient():
 
             # try to get the database parameters (host, port, ...)
             self.__db_params = self.get_db_params()
+            self.__node.get_logger().info(str({DB_PARAM_MAP[k]: v for k, v in self.__db_params.items()}))
             self.__config = DBConfig(
-                host=self.__db_params["database_host"],
-                port=self.__db_params["database_port"],
-                baseURL=self.__db_params["database_uri"],
-                database=self.__db_params["database_name"],
+                {DB_PARAM_MAP[k]: v for k, v in self.__db_params.items()}
                 # namespaces=
             )
             self.__config.setCredentials(username=cfg["username"], password=cfg["password"])
             self.__onto = OntologyAPI(self.__config)
-            self.node_thread = Thread(target=lambda : rclpy.spin(self.__node), name="node_runner")
-            self.node_thread.daemon = True
+            self.__node_thread = Thread(target=lambda : rclpy.spin(self.__node), name="node_runner")
+            self.__node_thread.daemon = True
             self.__node.context.on_shutdown(self._on_shutdown)
-            self.node_thread.start()
+            self.__node_thread.start()
 
         # bind some basic namespaces?
         # self.__onto.bind("crow", self.CROW)  # this is not good, overwrites the base namespace
@@ -82,12 +83,12 @@ class CrowtologyClient():
         if not client.wait_for_service(10):
             raise Exception("Could not locate the onto server ROS node! Did you start it yet?")
 
-        request = GetParameters.Request(names=self.DB_PARAM_NAMES)
+        request = GetParameters.Request(names=DB_PARAM_NAMES)
         future = client.call_async(request)
-        rclpy.spin_until_future_complete(self.__node, future, 10)
+        rclpy.spin_until_future_complete(self.__node, future, timeout_sec=10)
         if not future.done():
             raise Exception("Could not retrieve the database parameters from the ROS server node.")
-        return {k: p.string_value for k, p in zip(self.DB_PARAM_NAMES, future.result().values)}
+        return {k: p.string_value for k, p in zip(DB_PARAM_NAMES, future.result().values)}
 
     @property
     def client_id(self):
@@ -107,6 +108,7 @@ class CrowtologyClient():
         self.onto.closelink()
         if not self.local_mode:
             rclpy.shutdown()
+            self.__node.destroy_node()
 
     def _on_shutdown(self):
         self.onto.closelink()
