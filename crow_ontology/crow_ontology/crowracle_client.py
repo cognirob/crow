@@ -20,7 +20,7 @@ ONTO_SERVER_NAME = "ontology_server"
 
 class CrowtologyClient():
 
-    def __init__(self, credential_file_path=None, local_mode=False):
+    def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
         where it retrieves connection data (DB address, etc.) from a running server node
         (this node is not running the ontology, just maintains it and stores the connection
@@ -37,6 +37,7 @@ class CrowtologyClient():
             local_mode (bool, optional): Whether to run in local mode. Defaults to False.
         """
         self.__client_id = str(uuid4()).replace("-", "_")  # id in case this client needs to be identified in ROS
+        self.__uses_external_node = False
 
         if credential_file_path is None:
             modulePath = find_spec("crow_ontology").submodule_search_locations[0]
@@ -46,8 +47,13 @@ class CrowtologyClient():
         if self.local_mode:  # LOCAL MODE
             self.__onto = OntologyAPI(credential_file_path)
         else:  # ROS MODE
-            rclpy.init()
-            self.__node = rclpy.create_node(f"onto_client_{self.client_id}")
+            if node is None:
+                if not rclpy.ok():
+                    rclpy.init()
+                self.__node = rclpy.create_node(f"onto_client_{self.client_id}")
+            else:
+                self.__uses_external_node = True
+                self.__node = node
 
             with open(credential_file_path, 'r') as file:
                 cfg = yaml.safe_load(file)
@@ -62,10 +68,12 @@ class CrowtologyClient():
             )
             self.__config.setCredentials(username=cfg["username"], password=cfg["password"])
             self.__onto = OntologyAPI(self.__config)
-            self.__node_thread = Thread(target=lambda : rclpy.spin(self.__node), name="node_runner")
-            self.__node_thread.daemon = True
+
             self.__node.context.on_shutdown(self._on_shutdown)
-            self.__node_thread.start()
+            if not self.__uses_external_node:
+                self.__node_thread = Thread(target=lambda : rclpy.spin(self.__node), name="node_runner")
+                self.__node_thread.daemon = True
+                self.__node_thread.start()
 
         # bind some basic namespaces?
         # self.__onto.bind("crow", self.CROW)  # this is not good, overwrites the base namespace

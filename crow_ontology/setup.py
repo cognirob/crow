@@ -12,7 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml'))
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'data'), glob('data/*.*'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,6 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'tester = crow_ontology.tester:main',
+            'tester2 = crow_ontology.tester2:main',
+            'server = crow_ontology.crowracle_server:main_ros',
             'adder = crow_ontology.add_to_database:main'
         ],
     },
