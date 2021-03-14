@@ -54,9 +54,10 @@ class CrowtologyClient():
 
             # try to get the database parameters (host, port, ...)
             self.__db_params = self.get_db_params()
-            self.__node.get_logger().info(str({DB_PARAM_MAP[k]: v for k, v in self.__db_params.items()}))
+            initial_config = {DB_PARAM_MAP[k]: v for k, v in self.__db_params.items()}
+            self.__node.get_logger().info(str(initial_config))
             self.__config = DBConfig(
-                {DB_PARAM_MAP[k]: v for k, v in self.__db_params.items()}
+                **initial_config
                 # namespaces=
             )
             self.__config.setCredentials(username=cfg["username"], password=cfg["password"])
