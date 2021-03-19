@@ -47,21 +47,11 @@ class OntoAdder(Node):
         #create listeners (synchronized)
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.filter_topics)):
-            # create approx syncro callbacks
-            #subMasks = message_filters.Subscriber(self, DetectionMask, maskTopic, qos_profile=qos) #listener for masks from detector node
-            #sync.registerCallback(lambda mask_msg, cam=cam: self.detection_callback(mask_msg, cam))
-            
             listener = self.create_subscription(msg_type=FilteredPose,
                                           topic=maskTopic,
                                           # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
                                           callback=lambda pose_array_msg, cam=cam: self.input_filter_callback(pose_array_msg, cam),
                                           qos_profile=qos) #the listener QoS has to be =1, "keep last only".
-
-            # listener = self.create_subscription(msg_type=DetectionMask,
-            #                               topic=maskTopic,
-            #                               # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-            #                               callback=lambda mask_msg, cam=cam: self.input_callback(mask_msg, cam),
-            #                               qos_profile=qos) #the listener QoS has to be =1, "keep last only".
 
             self.get_logger().info('Input listener created on topic: "%s"' % maskTopic)
 
@@ -78,10 +68,11 @@ class OntoAdder(Node):
             self.get_logger().info("No poses, no party. Quitting early.")
             return  # no mask detections (for some reason)
         self.get_logger().info(str(pose_array_msg.label))
+        self.get_logger().info(str(pose_array_msg.size))
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         self.get_logger().info(timestamp)
-        for class_name, pose in zip(pose_array_msg.label, pose_array_msg.poses):
-            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], timestamp)
+        for class_name, pose, size in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size):
+            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, timestamp)
 
     def input_callback(self, mask_msg, cam):
         if not mask_msg.masks:
@@ -93,7 +84,10 @@ class OntoAdder(Node):
         for class_name in mask_msg.class_names:
             self.process_detected_object(class_name, [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z')
 
-    def process_detected_object(self, object_name, location, timestamp):
+    def process_detected_object(self, object_name, location, size, timestamp):
+        if object_name == 'kuka':
+            self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
+            return None
         self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
         prop_range = list(self.onto.objects(subject=CROW.hasDetectorName, predicate=RDFS.range))[0]
         corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))
@@ -115,13 +109,17 @@ class OntoAdder(Node):
                 self.onto.set((abs_loc, CROW.x, Literal(location[0], datatype=XSD.float)))
                 self.onto.set((abs_loc, CROW.y, Literal(location[1], datatype=XSD.float)))
                 self.onto.set((abs_loc, CROW.z, Literal(location[2], datatype=XSD.float)))
+                pcl_dim = list(self.onto.objects(CROW[individual_name], CROW.hasPclDimensions))[0]
+                self.onto.set((pcl_dim, CROW.x, Literal(size[0], datatype=XSD.float)))
+                self.onto.set((pcl_dim, CROW.y, Literal(size[1], datatype=XSD.float)))
+                self.onto.set((pcl_dim, CROW.z, Literal(size[2], datatype=XSD.float)))
             else: # add new detected object
-                individual_name = self.add_detected_object(object_name, location, timestamp, corresponding_objects[0])
+                individual_name = self.add_detected_object(object_name, location, timestamp, size, corresponding_objects[0])
         else: # add new detected object
-                individual_name = self.add_detected_object(object_name, location, timestamp, corresponding_objects[0])
+                individual_name = self.add_detected_object(object_name, location, timestamp, size, corresponding_objects[0])
         return individual_name
 
-    def add_detected_object(self, object_name, location, timestamp, template):
+    def add_detected_object(self, object_name, location, size, timestamp, template):
         self.get_logger().info("Adding detected object {}, id {} at location {}.".format(object_name, 'od_'+str(self.id), location))
         # Find template object
         all_props = list(self.onto.triples((template, None, None)))
@@ -159,6 +157,15 @@ class OntoAdder(Node):
         self.onto.add((prop_name, CROW.y, Literal(location[1], datatype=XSD.float)))
         self.onto.add((prop_name, CROW.z, Literal(location[2], datatype=XSD.float)))
         self.onto.set((CROW[individual_name], CROW.hasAbsoluteLocation, prop_name))
+
+        # Add PclDimensions (object specific)
+        prop_name = PART.xyzPclDimensions
+        prop_range = list(self.onto.objects(CROW.hasPclDimensions, RDFS.range))[0]
+        self.onto.add((prop_name, RDF.type, prop_range))
+        self.onto.add((prop_name, CROW.x, Literal(size[0], datatype=XSD.float)))
+        self.onto.add((prop_name, CROW.y, Literal(size[1], datatype=XSD.float)))
+        self.onto.add((prop_name, CROW.z, Literal(size[2], datatype=XSD.float)))
+        self.onto.set((CROW[individual_name], CROW.hasPclDimensions, prop_name))
 
         # Add unique ID and timestamp
         self.onto.add((CROW[individual_name], CROW.hasId, Literal('od_'+str(self.id), datatype=XSD.string)))

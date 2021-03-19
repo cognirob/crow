@@ -18,12 +18,12 @@ import re
 # %%ArgParser
 parser = argparse.ArgumentParser()
 #parser.add_argument("properties_file")
-parser.add_argument("--onto_file", "-o", default="ontology/onto_draft_02.owl")
+parser.add_argument("--onto_file", "-o", default="onto_draft_02.owl")
 args = parser.parse_args()
 
 # %%Initialization
 #properties_file = args.properties_file
-properties_file = "ontology/assembly/properties.yaml"
+properties_file = "./assembly/properties.yaml"
 onto_file = args.onto_file
 print(onto_file)
 split_name_re = re.compile(r"([\w\/]+)\.?")
@@ -252,6 +252,6 @@ def buildGraph(properties_file, onto, recipe_name=None):
 buildGraph(properties_file, onto)
 
 # %% Draw
-outonto_file = "ontology/onto_draft_03.owl"
+outonto_file = "onto_draft_03.owl"
 
 onto.serialize(outonto_file)

@@ -4,6 +4,7 @@ objects:
     hasDetectorName: cube_holes
     hasColor: COLOR_GREEN
     hasBoxDimensions: [50.0, 50.0, 50.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -60,6 +61,7 @@ objects:
     hasDetectorName: sphere_holes
     hasColor: COLOR_GOLD
     hasBoxDimensions: [50.0, 50.0, 50.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -116,6 +118,7 @@ objects:
     hasDetectorName: wheel
     hasColor: COLOR_REDWINE
     hasBoxDimensions: [75.0, 20.0, 75.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -131,6 +134,7 @@ objects:
     hasDetectorName: wafer
     hasColor: COLOR_DARK_PURPLE
     hasBoxDimensions: [95.0, 25.0, 5.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -153,6 +157,7 @@ objects:
     hasDetectorName: ex_bucket
     hasColor: COLOR_DARK_PURPLE
     hasBoxDimensions: [92.0, 60.0, 52.5]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -168,6 +173,7 @@ objects:
     hasDetectorName: car_roof
     hasColor: COLOR_DARK_PURPLE
     hasBoxDimensions: [170.0, 40.0, 85.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -183,6 +189,7 @@ objects:
     hasDetectorName: nut
     hasColor: COLOR_LIGHT_BLUE
     hasBoxDimensions: [10.0, 25.0, 29.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     nutSize: 25
@@ -201,6 +208,7 @@ objects:
     hasDetectorName: peg_screw
     hasColor: COLOR_WHITE
     hasBoxDimensions: [60.0, 12.0, 12.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -213,6 +221,7 @@ objects:
         hasColor: COLOR_WHITE
         hasThreadType: trapezoidal
         hasBoxDimensions: [15.0, 11.0, 11.0]
+        hasPclDimensions:
         hasRelativeLocation: [22.5, 0.0, 0.0]
         hasRelativeVector: [1.0, 0.0, 0.0]
         hasAbsoluteVector:
@@ -227,6 +236,7 @@ objects:
         hasColor: COLOR_WHITE
         hasThreadType: trapezoidal
         hasBoxDimensions: [15.0, 11.0, 11.0]
+        hasPclDimensions:
         hasRelativeLocation: [-22.5, 0.0, 0.0]
         hasRelativeVector: [-1.0, 0.0, 0.0]
         hasAbsoluteVector:
@@ -239,6 +249,7 @@ objects:
         hasDetectorName: peg_screw_shank
         hasColor: COLOR_WHITE
         hasBoxDimensions: [30.0, 12.0, 12.0]
+        hasPclDimensions:
         hasRelativeLocation: [0.0, 0.0, 0.0]
         hasRelativeVector: [1.0, 0.0, 0.0]
         hasAbsoluteVector:
@@ -250,6 +261,7 @@ objects:
     hasDetectorName: screw_round
     hasColor: COLOR_LIGHT_BLUE
     hasBoxDimensions: [130.0, 25.0, 25.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -262,6 +274,7 @@ objects:
         hasColor: COLOR_LIGHT_BLUE
         hasThreadType: trapezoidal
         hasBoxDimensions: [120.0, 11.0, 11.0]
+        hasPclDimensions:
         hasRelativeLocation: [23.0, 0.0, 0.0]
         hasRelativeVector: [1.0, 0.0, 0.0]
         hasAbsoluteVector:
@@ -273,6 +286,7 @@ objects:
         hasColor: COLOR_LIGHT_BLUE
         headType: slot
         hasBoxDimensions: [10.0, 25.0, 25.0]
+        hasPclDimensions:
         hasRelativeLocation: [-42.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -282,6 +296,7 @@ objects:
     hasDetectorName: hammer
     hasColor: COLOR_RED
     hasBoxDimensions: [235.0, 21.0, 85.0 ]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -290,6 +305,7 @@ objects:
         hasDetectorName: hammer_handle
         hasColor: COLOR_RED
         hasBoxDimensions: [135.0, 20.0, 30.0]
+        hasPclDimensions:
         hasRelativeLocation: [-68, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -299,6 +315,7 @@ objects:
         hasDetectorName: hammer_head
         hasColor: COLOR_RED
         hasBoxDimensions: [100.0, 21.0, 85.0]
+        hasPclDimensions:
         hasRelativeLocation: [75.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -308,6 +325,7 @@ objects:
     hasDetectorName: pliers
     hasColor: COLOR_GOLD
     hasBoxDimensions: [50.0, 152.0, 16.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -316,6 +334,7 @@ objects:
         hasDetectorName: pliers_handle
         hasColor: COLOR_GOLD
         hasBoxDimensions: [50.0, 88.0, 16.0]
+        hasPclDimensions:
         hasRelativeLocation: [0.0, -44.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -325,6 +344,7 @@ objects:
         hasDetectorName: pliers_head
         hasColor: COLOR_GOLD
         hasBoxDimensions: [30.0, 64.0, 16.0]
+        hasPclDimensions:
         hasRelativeLocation: [0.0, 32.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -334,6 +354,7 @@ objects:
     hasDetectorName: wrench
     hasColor: COLOR_DARK_PURPLE
     hasBoxDimensions: [260.0, 45.0, 13.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -342,6 +363,7 @@ objects:
         hasDetectorName: wrench_handle
         hasColor: COLOR_DARK_PURPLE
         hasBoxDimensions: [153.0, 20.0, 10.0]
+        hasPclDimensions:
         hasRelativeLocation: [10.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -351,6 +373,7 @@ objects:
         hasDetectorName: wrench_open
         hasColor: COLOR_DARK_PURPLE
         hasBoxDimensions: [52.0, 41.0, 12.0]
+        hasPclDimensions:
         hasRelativeLocation: [90.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -361,6 +384,7 @@ objects:
         hasDetectorName: wrench_ring
         hasColor: COLOR_DARK_PURPLE
         hasBoxDimensions: [55.0, 45.0, 13.0]
+        hasPclDimensions:
         hasRelativeLocation: [-89.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -371,6 +395,7 @@ objects:
     hasDetectorName: screwdriver
     hasColor: COLOR_RED
     hasBoxDimensions: [258.0, 30.0, 30.0]
+    hasPclDimensions:
     hasRelativeLocation: [0.0, 0.0, 0.0]
     hasAbsoluteLocation:
     hasObjectPart: 
@@ -379,6 +404,7 @@ objects:
         hasDetectorName: screwdriver_handle
         hasColor: COLOR_RED
         hasBoxDimensions: [150.0, 30.0, 30.0]
+        hasPclDimensions:
         hasRelativeLocation: [-10.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
@@ -388,11 +414,19 @@ objects:
         hasDetectorName: screwdriver_head
         hasColor: COLOR_RED
         hasBoxDimensions: [135.0, 8.0, 8.0]
+        hasPclDimensions:
         hasRelativeLocation: [135.0, 0.0, 0.0]
         hasAbsoluteVector:
         hasAbsoluteLocation:
         hasAction: screwing
         headType: slot
+
+  Hand:
+    hasDetectorName: hand
+    hasBoxDimensions: [200.0, 100.0, 50.0]
+    hasPclDimensions:
+    hasRelativeLocation: [0.0, 0.0, 0.0]
+    hasAbsoluteLocation:
 
 # #Connection definitions
 # operations:

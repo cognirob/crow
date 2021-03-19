@@ -33,6 +33,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DetectionMask.msg"
   "msg/DetectionObject.msg"
   "msg/SegmentedPointcloud.msg"
+  "msg/PclDimensions.msg"
   "msg/FilteredPose.msg"
   DEPENDENCIES builtin_interfaces std_msgs sensor_msgs geometry_msgs
 )
