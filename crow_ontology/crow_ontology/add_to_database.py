@@ -1,8 +1,16 @@
 import rclpy
 from rclpy.node import Node
+from ros2param.api import call_get_parameters
+from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
+from crow_msgs.msg import DetectionMask
+import message_filters
+
 import curses
 import time
 import numpy as np
+from datetime import datetime
 from curses.textpad import Textbox, rectangle
 from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
@@ -25,7 +33,28 @@ class OntoAdder(Node):
         # self.get_logger().info(self.onto)
         self.loc_threshold = 0.05 # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
-        self.get_logger().info("There are already {} detected objects in the database.".format(self.id - 1))
+        self.get_logger().info("There are already {} detected objects in the database.".format(self.id))
+
+        self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
+        while len(self.cameras) == 0: #wait for cams to come online
+            self.get_logger().warn("No cams detected, waiting 2s.")
+            time.sleep(2)
+            self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
+        self.mask_topics = [cam + "/detections/masks" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+
+        #create listeners (synchronized)
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.mask_topics)):
+            # create approx syncro callbacks
+            #subMasks = message_filters.Subscriber(self, DetectionMask, maskTopic, qos_profile=qos) #listener for masks from detector node
+            #sync.registerCallback(lambda mask_msg, cam=cam: self.detection_callback(mask_msg, cam))
+            
+            listener = self.create_subscription(msg_type=DetectionMask,
+                                          topic=maskTopic,
+                                          # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
+                                          callback=lambda mask_msg, cam=cam: self.input_callback(mask_msg, cam),
+                                          qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+            self.get_logger().info('Input listener created on topic: "%s"' % maskTopic)
 
     def get_last_id(self):
         all_detected = list(self.onto.objects(None, CROW.hasId))
@@ -34,6 +63,16 @@ class OntoAdder(Node):
             return max(all_detected)
         else:
             return -1
+
+    def input_callback(self, mask_msg, cam):
+        if not mask_msg.masks:
+            self.get_logger().info("No masks, no party. Quitting early.")
+            return  # no mask detections (for some reason)
+        self.get_logger().info(str(mask_msg.class_names))
+        self.get_logger().info(datetime.fromtimestamp(mask_msg.header.stamp.sec+mask_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ'))
+
+        for class_name in mask_msg.class_names:
+            self.process_detected_object(class_name, [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z')
 
     def process_detected_object(self, object_name, location, timestamp):
         self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
@@ -137,19 +176,19 @@ class OntoAdder(Node):
 
 def main():
     rclpy.init()
-    time.sleep(10)
+    time.sleep(1)
     adder = OntoAdder()
     individual_names = []
     # for demo: add three objects and update location of the last one
-    individual_names.append(adder.process_detected_object('cube_holes', [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z'))
-    individual_names.append(adder.process_detected_object('cube_holes', [4.0, 4.0, 3.0], '2020-03-11T15:55:00Z'))
-    individual_names.append(adder.process_detected_object('peg_screw', [2.0, 2.0, 3.0], '2020-03-11T15:59:00Z'))
-    individual_names.append(adder.process_detected_object('peg_screw', [2.001, 2.0, 3.0], '2020-03-11T15:59:00Z'))
+    # individual_names.append(adder.process_detected_object('cube_holes', [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z'))
+    # individual_names.append(adder.process_detected_object('cube_holes', [4.0, 4.0, 3.0], '2020-03-11T15:55:00Z'))
+    # individual_names.append(adder.process_detected_object('peg_screw', [2.0, 2.0, 3.0], '2020-03-11T15:59:00Z'))
+    # individual_names.append(adder.process_detected_object('peg_screw', [2.001, 2.0, 3.0], '2020-03-11T15:59:00Z'))
 
     #adder.add_assembled_object(individual_names[2], [1.0, 0.0, 0.0]) #later change to (id, loc)
 
     rclpy.spin(adder)
-
+    adder.destroy_node()
 
 if __name__ == "__main__":
     main()
