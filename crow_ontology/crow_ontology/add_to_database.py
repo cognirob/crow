@@ -4,7 +4,8 @@ from ros2param.api import call_get_parameters
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
-from crow_msgs.msg import DetectionMask
+from crow_msgs.msg import DetectionMask, FilteredPose
+from geometry_msgs.msg import PoseArray
 import message_filters
 
 import curses
@@ -33,7 +34,7 @@ class OntoAdder(Node):
         # self.get_logger().info(self.onto)
         self.loc_threshold = 0.05 # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
-        self.get_logger().info("There are already {} detected objects in the database.".format(self.id))
+        self.get_logger().info("There are {} already detected objects in the database.".format(self.id))
 
         self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
         while len(self.cameras) == 0: #wait for cams to come online
@@ -41,19 +42,27 @@ class OntoAdder(Node):
             time.sleep(2)
             self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
         self.mask_topics = [cam + "/detections/masks" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+        self.filter_topics = ["filtered_poses"] #input masks from 2D rgb (from our detector.py)
 
         #create listeners (synchronized)
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-        for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.mask_topics)):
+        for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.filter_topics)):
             # create approx syncro callbacks
             #subMasks = message_filters.Subscriber(self, DetectionMask, maskTopic, qos_profile=qos) #listener for masks from detector node
             #sync.registerCallback(lambda mask_msg, cam=cam: self.detection_callback(mask_msg, cam))
             
-            listener = self.create_subscription(msg_type=DetectionMask,
+            listener = self.create_subscription(msg_type=FilteredPose,
                                           topic=maskTopic,
                                           # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                          callback=lambda mask_msg, cam=cam: self.input_callback(mask_msg, cam),
+                                          callback=lambda pose_array_msg, cam=cam: self.input_filter_callback(pose_array_msg, cam),
                                           qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+
+            # listener = self.create_subscription(msg_type=DetectionMask,
+            #                               topic=maskTopic,
+            #                               # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
+            #                               callback=lambda mask_msg, cam=cam: self.input_callback(mask_msg, cam),
+            #                               qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+
             self.get_logger().info('Input listener created on topic: "%s"' % maskTopic)
 
     def get_last_id(self):
@@ -63,6 +72,16 @@ class OntoAdder(Node):
             return max(all_detected)
         else:
             return -1
+
+    def input_filter_callback(self, pose_array_msg, cam):
+        if not pose_array_msg.poses:
+            self.get_logger().info("No poses, no party. Quitting early.")
+            return  # no mask detections (for some reason)
+        self.get_logger().info(str(pose_array_msg.label))
+        timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        self.get_logger().info(timestamp)
+        for class_name, pose in zip(pose_array_msg.label, pose_array_msg.poses):
+            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], timestamp)
 
     def input_callback(self, mask_msg, cam):
         if not mask_msg.masks:
