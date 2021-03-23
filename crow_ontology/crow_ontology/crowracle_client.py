@@ -1,6 +1,7 @@
 from rdflib.namespace import FOAF, RDFS, RDF, OWL, XMLNS, Namespace
 from rdflib.extras.infixowl import Class
 from rdflib import BNode, URIRef, Literal
+from rdflib.plugins.sparql import prepareQuery
 from knowl import OntologyAPI, DBConfig
 import os
 from importlib.util import find_spec
@@ -19,6 +20,23 @@ ONTO_SERVER_NAME = "ontology_server"
 
 
 class CrowtologyClient():
+
+    CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
+    _tangible_leaf_query = prepareQuery("""SELECT ?cls
+        WHERE {
+            ?cls rdf:type owl:Class .
+            ?cls rdfs:subClassOf+ crow:TangibleObject .
+            FILTER NOT EXISTS {?nan rdfs:subClassOf ?cls . }
+        }""",
+                                        initNs={"owl": OWL, "crow": CROW}
+                                        )
+    _tangible_query = prepareQuery("""SELECT ?cls
+        WHERE {
+            ?cls rdf:type owl:Class .
+            ?cls rdfs:subClassOf+ crow:TangibleObject .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW}
+                                   )
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
@@ -76,7 +94,8 @@ class CrowtologyClient():
                 self.__node_thread.start()
 
         # bind some basic namespaces?
-        # self.__onto.bind("crow", self.CROW)  # this is not good, overwrites the base namespace
+        self.__onto.bind("crow", self.CROW)  # this is not good, overwrites the base namespace
+        self.__onto.bind("owl", OWL)
 
     def get_db_params(self):
         """Tries to get the connection parameters from the server node, if run in ROS mode
@@ -98,6 +117,19 @@ class CrowtologyClient():
         if not future.done():
             raise Exception("Could not retrieve the database parameters from the ROS server node.")
         return {k: p.string_value for k, p in zip(DB_PARAM_NAMES, future.result().values)}
+
+    def getTangibleObjectClasses(self, mustBeLeaf=True):
+        """Return classes of all TangibleObjects (i.e. physical objects that can be present on the workspace)
+
+        Args:
+            mustBeLeaf (bool, optional): If True, only leaf classes are returned. That is,
+            no general classes (e.g. "Workpice", "Tool") will be returned. Defaults to True.
+
+        Returns:
+            list: List of RDFLib terms describing the classes. Use str(result[i]) to turn into string.
+        """
+        qres = self.onto.query(self._tangible_leaf_query if mustBeLeaf else self._tangible_query)
+        return list(qres)
 
     @property
     def client_id(self):

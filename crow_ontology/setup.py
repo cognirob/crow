@@ -24,8 +24,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'tester = crow_ontology.tester:main',
-            'tester2 = crow_ontology.tester2:main',
+            'tester = crow_ontology.examples.tester:main',
+            'tester2 = crow_ontology.examples.tester2:main',
+            'tester3 = crow_ontology.examples.tester3:main',
             'server = crow_ontology.crowracle_server:main_ros',
             'adder = crow_ontology.add_to_database:main'
         ],

@@ -21,6 +21,7 @@ class OntoTester(Node):
 
     def test_object(self):
         self.get_logger().info("Making an object")
+        time.sleep(7)
         o = self.onto.makeEntity(CROW.Cube, {CROW.hasColor: CROW.COLOR_GREEN, CROW.x: Literal(13)})
         self.get_logger().info(f"Object has color: {o.hasColor}")
         self.get_logger().info("Changing color to red.")
