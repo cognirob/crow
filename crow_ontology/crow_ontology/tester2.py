@@ -6,6 +6,7 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
+import time
 
 CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
 
@@ -21,15 +22,15 @@ class OntoTester(Node):
     def test_object(self):
         self.get_logger().info("Making an object")
         o = self.onto.makeEntity(CROW.Cube, {CROW.hasColor: CROW.COLOR_GREEN, CROW.x: Literal(13)})
-        self.get_logger().info(f"Object has color: {o.CROW.hasColor}")
+        self.get_logger().info(f"Object has color: {o.hasColor}")
         self.get_logger().info("Changing color to red.")
-        o.CROW.hasColor = CROW.COLOR_RED
-        self.get_logger().info(f"Object has color: {o.CROW.hasColor}")
+        o.hasColor = CROW.COLOR_RED
+        self.get_logger().info(f"Object has color: {o.hasColor}")
         self.get_logger().info("=====")
-        self.get_logger().info(f"Object has x: {o.CROW.x}")
+        self.get_logger().info(f"Object has x: {o.x}")
         self.get_logger().info("Changing x.")
-        o.CROW.x = Literal(77)
-        self.get_logger().info(f"Object has x: {o.CROW.x}")
+        o.x = Literal(77)
+        self.get_logger().info(f"Object has x: {o.x}")
 
         self.get_logger().info("=====")
         for s, p, o in o.list:
