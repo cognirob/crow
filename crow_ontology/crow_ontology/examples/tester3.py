@@ -19,9 +19,19 @@ class OntoTester(Node):
 
     def test_object(self):
         self.get_logger().info("Found these classes of tangible objects")
+        start = time.time()
         qres = self.crowracle.getTangibleObjectClasses()
         for c in qres:
             self.get_logger().info(f"{c}")
+        print(time.time() - start)
+
+        start = time.time()
+        list(self.onto.triples((None, self.crowracle.CROW.hasId, None)))
+        print(time.time() - start)
+
+        start = time.time()
+        self.get_logger().info(str(self.crowracle.getTangibleObjects()))
+        print(time.time() - start)
 
 
 def main():

@@ -131,6 +131,20 @@ class CrowtologyClient():
         qres = self.onto.query(self._tangible_leaf_query if mustBeLeaf else self._tangible_query)
         return list(qres)
 
+    def getTangibleObjects(self):
+        """Lists physical objects present on the workspace
+
+        Returns:
+            list: The objects.
+        """
+        res = self.onto.triples((None, self.CROW.hasId, None))
+        objects = []
+        for s, p, o in res:
+            clss = self.onto.transitive_objects(s, OWL.subClassOf)
+            if self.CROW.TangibleObject in clss:
+                objects.append(s)
+        return objects
+
     @property
     def client_id(self):
         return self.__client_id
