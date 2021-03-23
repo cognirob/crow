@@ -139,10 +139,12 @@ class CrowtologyClient():
         """
         res = self.onto.triples((None, self.CROW.hasId, None))
         objects = []
-        for s, p, o in res:
-            clss = self.onto.transitive_objects(s, OWL.subClassOf)
-            if self.CROW.TangibleObject in clss:
-                objects.append(s)
+        for tangible, _, id in res:
+            for _, _, tcls in self.onto.triples((tangible, RDF.type, None)):
+                cls_list = self.onto.transitive_objects(tcls, RDFS.subClassOf)
+                if self.CROW.TangibleObject in cls_list:
+                    objects.append(tangible)
+                    break
         return objects
 
     @property
