@@ -56,9 +56,17 @@
     
 
 
-    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasNlpName -->
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasNlpNameCZ -->
 
-    <owl:AnnotationProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasNlpName">
+    <owl:AnnotationProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasNlpNameCZ">
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+    </owl:AnnotationProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasNlpNameEN -->
+
+    <owl:AnnotationProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasNlpNameEN">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
     </owl:AnnotationProperty>
     
