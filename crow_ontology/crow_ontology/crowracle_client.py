@@ -24,7 +24,6 @@ class CrowtologyClient():
     CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
     _tangible_leaf_query = prepareQuery("""SELECT ?cls
         WHERE {
-            ?cls rdf:type owl:Class .
             ?cls rdfs:subClassOf+ crow:TangibleObject .
             FILTER NOT EXISTS {?nan rdfs:subClassOf ?cls . }
         }""",
@@ -32,8 +31,15 @@ class CrowtologyClient():
                                         )
     _tangible_query = prepareQuery("""SELECT ?cls
         WHERE {
-            ?cls rdf:type owl:Class .
             ?cls rdfs:subClassOf+ crow:TangibleObject .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW}
+                                   )
+    _present_query = prepareQuery("""SELECT ?obj
+        WHERE {
+            ?obj crow:hasId ?c .
+            ?obj rdf:type ?cls .
+            ?cls rdfs:subClassOf* crow:TangibleObject .
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
                                    )
@@ -137,15 +143,16 @@ class CrowtologyClient():
         Returns:
             list: The objects.
         """
-        res = self.onto.triples((None, self.CROW.hasId, None))
-        objects = []
-        for tangible, _, id in res:
-            for _, _, tcls in self.onto.triples((tangible, RDF.type, None)):
-                cls_list = self.onto.transitive_objects(tcls, RDFS.subClassOf)
-                if self.CROW.TangibleObject in cls_list:
-                    objects.append(tangible)
-                    break
-        return objects
+        # res = self.onto.triples((None, self.CROW.hasColor, None))
+        # objects = []
+        # for tangible, _, id in res:
+        #     for _, _, tcls in self.onto.triples((tangible, RDF.type, None)):
+        #         if self.CROW.TangibleObject in self.onto.transitive_objects(tcls, RDFS.subClassOf):
+        #             objects.append(tangible)
+        #             break
+        # return objects
+        res = self.onto.query(self._present_query)
+        return list(res)
 
     @property
     def client_id(self):
