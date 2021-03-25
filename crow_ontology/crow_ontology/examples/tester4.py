@@ -73,7 +73,7 @@ class OntoTester(Node):
         print(names)
 
         print('get_obj_of_color_nlp')
-        names = self.crowracle.get_obj_of_color_nlp('blue', all=True)
+        names = self.crowracle.get_obj_of_color_nlp('gold', all=False)
         print(names)
 
         print('get_location_of_obj')
@@ -81,11 +81,11 @@ class OntoTester(Node):
         print(uris)
 
         print('find_obj_nlp')
-        locations = self.crowracle.find_obj_nlp('cube', all=True)
+        locations = self.crowracle.find_obj_nlp('sphere', all=False)
         print(locations)
 
         print('find_obj_of_color_nlp')
-        locations = self.crowracle.find_obj_of_color_nlp('blue', all=True)
+        locations = self.crowracle.find_obj_of_color_nlp('gold', all=False)
         print(locations)
 
         print('done')

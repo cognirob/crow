@@ -275,9 +275,10 @@ class CrowtologyClient():
             list of strings: nlp names of all tangible objects, 0...N
         """
         all_tangible = self.getTangibleObjectClasses()
+        all_tangible = [tang[0] for tang in all_tangible] ###### returned in touples (uri, )
         all_tangible_nlp = []
         for tangible in all_tangible:
-            all_tangible_nlp.append(self.get_nlp_from_uri(tangible[0], language=language))
+            all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
         return all_tangible_nlp
 
     # B "which objects are in the scene?"
@@ -291,6 +292,7 @@ class CrowtologyClient():
             list of strings: nlp names of tangible objects in the scene, 0...N
         """
         all_tangible = self.getTangibleObjects()
+        all_tangible = [tang[0] for tang in all_tangible] ###### returned in touples (uri, )
         all_tangible_nlp = []
         for tangible in all_tangible:
             all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
@@ -332,6 +334,7 @@ class CrowtologyClient():
         obj_names = []
         if all == False:
             objs_in_scene = self.getTangibleObjects() # go through objects in the scene only
+            objs_in_scene = [tang[0] for tang in objs_in_scene] ###### returned in touples (uri, )
         for uri in uris:
             obj_uris = self.get_obj_of_color(uri) # multiple objects may have the same color
             for obj_uri in obj_uris:
@@ -342,7 +345,7 @@ class CrowtologyClient():
         obj_names = list(set(sum(obj_names, []))) # concat objects names
         return obj_names
 
-    # E 
+    # Z 
     def get_all_obj_of_color_nlp(self, name, language='EN'): 
         # NOT NEEDED! have 'all' parameter in get_obj_of_color_nlp()
         #same as get_obj_of_color_nlp but only for objects in the scene
@@ -355,7 +358,7 @@ class CrowtologyClient():
         obj_names = list(set(sum(obj_names, [])))
         return obj_names
 
-    # G "where (in the scene) is cube?"
+    # E "where (in the scene) is cube?"
     def find_obj_nlp(self, name, all=False):
         """Get absolute location of object specified by nlp name
 
@@ -370,6 +373,7 @@ class CrowtologyClient():
         obj_locations = []
         if all == False:
             objs_in_scene = self.getTangibleObjects() # go through objects in the scene only
+            objs_in_scene = [tang[0] for tang in objs_in_scene] ###### returned in touples (uri, )
         for uri in uris:
             if all == True:
                 obj_locations.append(self.get_location_of_obj(uri))
@@ -392,6 +396,7 @@ class CrowtologyClient():
         obj_locations = []
         if all == False:
             objs_in_scene = self.getTangibleObjects() # go through objects in the scene only
+            objs_in_scene = [tang[0] for tang in objs_in_scene] ###### returned in touples (uri, )
         for uri in uris:
             obj_uris = self.get_obj_of_color(uri) # multiple objects may have the same color
             for obj_uri in obj_uris:
