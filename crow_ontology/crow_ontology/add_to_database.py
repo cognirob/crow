@@ -74,16 +74,6 @@ class OntoAdder(Node):
         for class_name, pose, size in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size):
             self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, timestamp)
 
-    def input_callback(self, mask_msg, cam):
-        if not mask_msg.masks:
-            self.get_logger().info("No masks, no party. Quitting early.")
-            return  # no mask detections (for some reason)
-        self.get_logger().info(str(mask_msg.class_names))
-        self.get_logger().info(datetime.fromtimestamp(mask_msg.header.stamp.sec+mask_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ'))
-
-        for class_name in mask_msg.class_names:
-            self.process_detected_object(class_name, [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z')
-
     def process_detected_object(self, object_name, location, size, timestamp):
         if object_name == 'kuka':
             self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
