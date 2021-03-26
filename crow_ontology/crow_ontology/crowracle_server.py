@@ -58,6 +58,7 @@ class CrowtologyServer():
 
     def start_param_server(self):
         self.__node = rclpy.create_node(node_name="ontology_server")
+        self.node.get_logger().info("Setting up 'ontology_server' node.")
         invmap = {v: k for k, v in DB_PARAM_MAP.items()}
         parameters = [(invmap[k], v,
                        ParameterDescriptor(
@@ -68,6 +69,9 @@ class CrowtologyServer():
             namespace=None,
             parameters=parameters
         )
+        self.node.get_logger().info("Created server with params:")
+        for k, v, d in parameters:
+            self.node.get_logger().info(f"\t{k}: {v}")
 
     @property
     def onto(self):
