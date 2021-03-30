@@ -1,0 +1,4 @@
+int16 status
+
+int16 GRIPPER_OPENED=0
+int16 GRIPPER_CLOSED=1

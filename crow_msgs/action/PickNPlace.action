@@ -1,0 +1,10 @@
+string frame_id
+geometry_msgs/Pose pick
+geometry_msgs/Pose place
+float64[3] size
+crow_msgs/ObjectType object
+---
+bool done
+---
+crow_msgs/RobotStatus status
+float32 progress
