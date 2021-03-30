@@ -1,0 +1,10 @@
+int64 NOOP=0
+int64 STOP=1  # stop the robot arm(s)
+int64 RETRACT=2  # retract to starting position
+int64 MOVE=4  # move eef to a location
+int64 POINT=8  # point towards a location
+int64 GRIP=16  # close the gripper
+int64 RELEASE=32  # open the gripper
+int64 PICK=64  # pick an object
+int64 PLACE=128  # place an object (assuming something is being held)
+int64 PNP=192  # pick n place
