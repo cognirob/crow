@@ -35,6 +35,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SegmentedPointcloud.msg"
   "msg/PclDimensions.msg"
   "msg/FilteredPose.msg"
+  "msg/ProcessedSentence.msg"
+  "msg/StringList.msg"
+  "msg/SentenceProgram.msg"
   DEPENDENCIES builtin_interfaces std_msgs sensor_msgs geometry_msgs
 )
 
