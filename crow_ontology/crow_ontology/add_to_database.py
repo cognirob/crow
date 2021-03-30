@@ -67,18 +67,15 @@ class OntoAdder(Node):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses, no party. Quitting early.")
             return  # no mask detections (for some reason)
-        self.get_logger().info(str(pose_array_msg.label))
-        self.get_logger().info(str(pose_array_msg.size))
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
-        self.get_logger().info(timestamp)
         for class_name, pose, size in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size):
             self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, timestamp)
 
     def process_detected_object(self, object_name, location, size, timestamp):
         if object_name == 'kuka':
-            self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
+            #self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
             return None
-        self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
+        #self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
         prop_range = list(self.onto.objects(subject=CROW.hasDetectorName, predicate=RDFS.range))[0]
         corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))
         already_detected = []
@@ -194,7 +191,7 @@ def main():
     rclpy.init()
     time.sleep(1)
     adder = OntoAdder()
-    individual_names = []
+    # individual_names = []
     # for demo: add three objects and update location of the last one
     # individual_names.append(adder.process_detected_object('cube_holes', [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z'))
     # individual_names.append(adder.process_detected_object('cube_holes', [4.0, 4.0, 3.0], '2020-03-11T15:55:00Z'))
