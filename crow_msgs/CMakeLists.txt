@@ -38,6 +38,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ProcessedSentence.msg"
   "msg/StringList.msg"
   "msg/SentenceProgram.msg"
+  "msg/StampedString.msg"
+  "msg/CommandType.msg"
   DEPENDENCIES builtin_interfaces std_msgs sensor_msgs geometry_msgs
 )
 
