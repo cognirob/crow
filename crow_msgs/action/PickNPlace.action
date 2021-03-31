@@ -1,10 +1,11 @@
 string frame_id
-geometry_msgs/Pose pick
-geometry_msgs/Pose place
+geometry_msgs/Pose pick_pose
+geometry_msgs/Pose place_pose
 float64[3] size
 crow_msgs/ObjectType object
 ---
 bool done
 ---
-crow_msgs/RobotStatus status
+string status
+crow_msgs/RobotStatus robot_status
 float32 progress

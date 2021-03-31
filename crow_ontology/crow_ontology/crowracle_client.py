@@ -43,6 +43,12 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
                                    )
+    _present_nocls_query = prepareQuery("""SELECT ?obj
+        WHERE {
+            ?obj crow:hasId ?c .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW}
+                                   )
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
@@ -135,7 +141,7 @@ class CrowtologyClient():
             list: List of RDFLib terms describing the classes. Use str(result[i]) to turn into string.
         """
         qres = self.onto.query(self._tangible_leaf_query if mustBeLeaf else self._tangible_query)
-        return list(qres)
+        return [g[0] for g in qres]
 
     def getTangibleObjects(self):
         """Lists physical objects present on the workspace
@@ -143,16 +149,17 @@ class CrowtologyClient():
         Returns:
             list: The objects.
         """
-        # res = self.onto.triples((None, self.CROW.hasColor, None))
-        # objects = []
-        # for tangible, _, id in res:
-        #     for _, _, tcls in self.onto.triples((tangible, RDF.type, None)):
-        #         if self.CROW.TangibleObject in self.onto.transitive_objects(tcls, RDFS.subClassOf):
-        #             objects.append(tangible)
-        #             break
-        # return objects
         res = self.onto.query(self._present_query)
-        return list(res)
+        return [g["obj"] for g in res]
+
+    def getTangibleObjects_nocls(self):
+        """Lists physical objects present on the workspace NO CLS
+
+        Returns:
+            list: The objects.
+        """
+        res = self.onto.query(self._present_nocls_query)
+        return [g["obj"] for g in res]
 
     # 7
     def get_location_of_obj(self, uri):
@@ -225,7 +232,7 @@ class CrowtologyClient():
             if len(obj_of_ent_class) > 0: # ent is a class
                 for obj in obj_of_ent_class: 
                     result_entities.append(obj) # append URIobject of this class
-            else:
+            elif ent not in result_entities:
                 result_entities.append(ent) # ent is a color, append the URIcolor
         return(result_entities)
 
@@ -275,7 +282,6 @@ class CrowtologyClient():
             list of strings: nlp names of all tangible objects, 0...N
         """
         all_tangible = self.getTangibleObjectClasses()
-        all_tangible = [tang[0] for tang in all_tangible] ###### returned in touples (uri, )
         all_tangible_nlp = []
         for tangible in all_tangible:
             all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
@@ -292,7 +298,6 @@ class CrowtologyClient():
             list of strings: nlp names of tangible objects in the scene, 0...N
         """
         all_tangible = self.getTangibleObjects()
-        all_tangible = [tang[0] for tang in all_tangible] ###### returned in touples (uri, )
         all_tangible_nlp = []
         for tangible in all_tangible:
             all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
@@ -334,7 +339,6 @@ class CrowtologyClient():
         obj_names = []
         if all == False:
             objs_in_scene = self.getTangibleObjects() # go through objects in the scene only
-            objs_in_scene = [tang[0] for tang in objs_in_scene] ###### returned in touples (uri, )
         for uri in uris:
             obj_uris = self.get_obj_of_color(uri) # multiple objects may have the same color
             for obj_uri in obj_uris:
@@ -373,7 +377,6 @@ class CrowtologyClient():
         obj_locations = []
         if all == False:
             objs_in_scene = self.getTangibleObjects() # go through objects in the scene only
-            objs_in_scene = [tang[0] for tang in objs_in_scene] ###### returned in touples (uri, )
         for uri in uris:
             if all == True:
                 obj_locations.append(self.get_location_of_obj(uri))
@@ -396,7 +399,6 @@ class CrowtologyClient():
         obj_locations = []
         if all == False:
             objs_in_scene = self.getTangibleObjects() # go through objects in the scene only
-            objs_in_scene = [tang[0] for tang in objs_in_scene] ###### returned in touples (uri, )
         for uri in uris:
             obj_uris = self.get_obj_of_color(uri) # multiple objects may have the same color
             for obj_uri in obj_uris:

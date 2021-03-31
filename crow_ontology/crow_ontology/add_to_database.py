@@ -67,49 +67,61 @@ class OntoAdder(Node):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses, no party. Quitting early.")
             return  # no mask detections (for some reason)
-        self.get_logger().info(str(pose_array_msg.label))
-        self.get_logger().info(str(pose_array_msg.size))
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
-        self.get_logger().info(timestamp)
-        for class_name, pose, size in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size):
-            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, timestamp)
+        for class_name, pose, size, uuid in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid):
+            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, timestamp)
 
-    def process_detected_object(self, object_name, location, size, timestamp):
+    def process_detected_object(self, object_name, location, size, uuid, timestamp):
         if object_name == 'kuka':
-            self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
+            #self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
             return None
-        self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
+        #self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
         prop_range = list(self.onto.objects(subject=CROW.hasDetectorName, predicate=RDFS.range))[0]
         corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))
         already_detected = []
+        already_located = []
         for x in corresponding_objects:
             if len(list(self.onto.objects(subject=x, predicate=CROW.hasTimestamp))) > 0:
+                already_detected.append(x)
+        for x in already_detected:
+            x_uuid = list(self.onto.objects(x, CROW.hasUuid))[0]
+            if uuid == x_uuid.toPython(): # update timestamp and loc of matched already detected object
+                individual_name = self.update_detected_object(x, location, size, timestamp)
+                return individual_name
+            else:
                 old_loc_obj = list(self.onto.objects(x, CROW.hasAbsoluteLocation))[0]
                 old_loc = [float(list(self.onto.objects(old_loc_obj, x))[0]) for x in [CROW.x, CROW.y, CROW.z]]
                 dist = (np.linalg.norm(np.asarray(old_loc) - np.asarray(location)))
-                already_detected.append([x, dist])
-        if len(already_detected) > 0:
-            already_detected.sort(key=distance)
-            closest = already_detected[0]
+                already_located.append([x, dist])
+        if len(already_located) > 0:
+            already_located.sort(key=distance)
+            closest = already_located[0]
             if closest[-1] <= self.loc_threshold: # update timestamp and loc of matched already detected object
-                individual_name = closest[0].split('#')[-1]
-                self.get_logger().info("Object {} already detected, updating timestamp to {} and location to {}.".format(individual_name, timestamp, location))
-                self.onto.set((closest[0], CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
-                abs_loc = list(self.onto.objects(CROW[individual_name], CROW.hasAbsoluteLocation))[0]
-                self.onto.set((abs_loc, CROW.x, Literal(location[0], datatype=XSD.float)))
-                self.onto.set((abs_loc, CROW.y, Literal(location[1], datatype=XSD.float)))
-                self.onto.set((abs_loc, CROW.z, Literal(location[2], datatype=XSD.float)))
-                pcl_dim = list(self.onto.objects(CROW[individual_name], CROW.hasPclDimensions))[0]
-                self.onto.set((pcl_dim, CROW.x, Literal(size[0], datatype=XSD.float)))
-                self.onto.set((pcl_dim, CROW.y, Literal(size[1], datatype=XSD.float)))
-                self.onto.set((pcl_dim, CROW.z, Literal(size[2], datatype=XSD.float)))
+                individual_name = self.update_detected_object(closest[0], location, size, timestamp)
             else: # add new detected object
-                individual_name = self.add_detected_object(object_name, location, timestamp, size, corresponding_objects[0])
+                individual_name = self.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0])
         else: # add new detected object
-                individual_name = self.add_detected_object(object_name, location, timestamp, size, corresponding_objects[0])
+                individual_name = self.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0])
         return individual_name
 
-    def add_detected_object(self, object_name, location, size, timestamp, template):
+    def update_detected_object(self, object, location, size, timestamp):
+        individual_name = object.split('#')[-1]
+        self.get_logger().info("Object {} already detected, updating timestamp to {} and location to {}.".format(individual_name, timestamp, location))
+        self.onto.set((object, CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+        
+        abs_loc = list(self.onto.objects(CROW[individual_name], CROW.hasAbsoluteLocation))[0]
+        self.onto.set((abs_loc, CROW.x, Literal(location[0], datatype=XSD.float)))
+        self.onto.set((abs_loc, CROW.y, Literal(location[1], datatype=XSD.float)))
+        self.onto.set((abs_loc, CROW.z, Literal(location[2], datatype=XSD.float)))
+        
+        pcl_dim = list(self.onto.objects(CROW[individual_name], CROW.hasPclDimensions))[0]
+        self.onto.set((pcl_dim, CROW.x, Literal(size[0], datatype=XSD.float)))
+        self.onto.set((pcl_dim, CROW.y, Literal(size[1], datatype=XSD.float)))
+        self.onto.set((pcl_dim, CROW.z, Literal(size[2], datatype=XSD.float)))
+                
+        return individual_name
+
+    def add_detected_object(self, object_name, location, size, uuid, timestamp, template):
         self.get_logger().info("Adding detected object {}, id {} at location {}.".format(object_name, 'od_'+str(self.id), location))
         # Find template object
         all_props = list(self.onto.triples((template, None, None)))
@@ -160,6 +172,7 @@ class OntoAdder(Node):
         # Add unique ID and timestamp
         self.onto.add((CROW[individual_name], CROW.hasId, Literal('od_'+str(self.id), datatype=XSD.string)))
         self.id += 1
+        self.onto.add((CROW[individual_name], CROW.hasUuid, Literal(uuid, datatype=XSD.string)))
         self.onto.add((CROW[individual_name], CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
 
         # if len(individual_names) == 0:
@@ -194,7 +207,7 @@ def main():
     rclpy.init()
     time.sleep(1)
     adder = OntoAdder()
-    individual_names = []
+    # individual_names = []
     # for demo: add three objects and update location of the last one
     # individual_names.append(adder.process_detected_object('cube_holes', [2.0, 2.0, 3.0], '2020-03-11T15:50:00Z'))
     # individual_names.append(adder.process_detected_object('cube_holes', [4.0, 4.0, 3.0], '2020-03-11T15:55:00Z'))

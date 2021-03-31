@@ -3,11 +3,12 @@ from rclpy.node import Node
 from rcl_interfaces.msg import ParameterType
 from ros2param.api import call_get_parameters
 import message_filters
+from rclpy.action import ActionClient
 
-#Pointcloud
-from crow_msgs.msg import StampedString, CommandType, RobotStatus
+from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
 from crow_msgs.srv import GetRobotStatus
 from crow_msgs.action import PickNPlace
+from geometry_msgs.msg import Pose
 
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
@@ -15,8 +16,6 @@ from rclpy.qos import QoSReliabilityPolicy
 from datetime import datetime
 import json
 import numpy as np
-import cv2
-import cv_bridge
 
 import pkg_resources
 import time
@@ -28,10 +27,12 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
+import time
 
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
+    ROBOT_ACTION = 'picknplace'
 
     def __init__(self, node_name="control_logic"):
         super().__init__(node_name)
@@ -41,6 +42,8 @@ class ControlLogic(Node):
                                  topic=self.NLP_ACTION_TOPIC,
                                  callback=self.command_cb,
                                  qos_profile=10)
+        self.robot_action_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION)
+        print(self.robot_action_client.wait_for_server())
 
     def processTarget(self, target, target_type):
         if target_type == "xyz":
@@ -93,12 +96,43 @@ class ControlLogic(Node):
             # TODO: perform
 
     def sendAction(self, target, location=None, obj=None):
-        pass
+        goal_msg = PickNPlace.Goal()
+        goal_msg.frame_id = "camera1_color_optical_frame"
+        goal_msg.pick_pose = Pose()
+        goal_msg.place_pose = Pose()
+        goal_msg.size = [0.1, 0.2, 0.3]
+        goal_msg.object = ObjectType(type=ObjectType.CUBE)
+
+        self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future.add_done_callback(self.robot_response_cb)
+
+    def robot_response_cb(self, future):
+        goal_handle = future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Goal rejected :(')
+            return
+
+        self.get_logger().info('Goal accepted :)')
+
+        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future.add_done_callback(self.robot_done_cb)
+
+    def robot_done_cb(self, future):
+        result = future.result().result
+        self.get_logger().info(f'Action done, result: {result.done}')
+
+    def robot_feedback_cb(self, feedback_msg):
+        self.get_logger().info('Got FB')
+        feedback = feedback_msg.feedback
+        self.get_logger().info(f'Received feedback: {[(k, getattr(feedback, k)) for k in feedback.get_fields_and_field_types()]}')
 
 
 def main():
     rclpy.init()
     cl = ControlLogic()
+    rclpy.spin_once(cl)
+    time.sleep(1)
+    cl.sendAction(None)
     rclpy.spin(cl)
     cl.destroy_node()
     exit(0)
