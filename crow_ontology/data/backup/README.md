@@ -1,0 +1,1 @@
+Folder for ontology backups. Each time the ontology server is restarted, a copy of the database is stored here if it is not empty.
