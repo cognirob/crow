@@ -45,12 +45,21 @@ class CrowtologyServer():
 
         self.__onto = OntologyAPI(config_path)
 
-        if len(self.onto) > 0:  # try to make a backup
-            bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
-            self.onto.graph.serialize(bkp_path, format="xml")
-            self.onto.destroy("I know what I am doing")
-            self.onto.closelink()
-            self.__onto = OntologyAPI(config_path)
+        try:
+            if len(self.onto) > 0:  # try to make a backup
+                bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
+                self.onto.graph.serialize(bkp_path, format="xml")
+                self.onto.destroy("I know what I am doing")
+                self.onto.closelink()
+                self.__onto = OntologyAPI(config_path)
+        except Exception as e:
+            print(f"Tried backing up the ontology but failed because: {e}")
+            try:
+                self.onto.destroy("I know what I am doing")
+                self.onto.closelink()
+                self.__onto = OntologyAPI(config_path)
+            except Exception as e:
+                print(f"Tried cleaning up the ontology but failed because: {e}")
 
         if base_onto_path is None:  # load new onto
             base_onto_path = os.path.join(modulePath, "..", "data", "onto_draft_03.owl")

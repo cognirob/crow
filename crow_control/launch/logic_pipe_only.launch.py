@@ -17,6 +17,7 @@ def generate_launch_description():
         launch_ros.actions.Node(
             package='crow_ontology',
             node_executable='server',
+            output="screen"
         )
     )
 
