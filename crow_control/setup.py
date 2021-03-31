@@ -20,7 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'logic = crow_control.logic:main'
+            'logic = crow_control.logic:main',
+            'dummy = crow_control.testing.dummy_action_robot:main'
         ],
     },
 )
