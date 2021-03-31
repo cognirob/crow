@@ -53,6 +53,13 @@ class ControlLogic(Node):
                 return
             xyz = self.crowracle.get_location_of_obj(uri)
             return np.array(xyz)
+        elif target_type == "onto_uri":
+            try:
+                xyz = self.crowracle.get_location_of_obj(uri)
+            except:
+                self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
+            else:
+                return np.array(xyz)
         else:
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
