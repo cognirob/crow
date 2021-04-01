@@ -38,10 +38,11 @@ class ControlLogic(Node):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
                                  callback=self.command_cb,
-                                 qos_profile=10)
+                                 qos_profile=qos)
         self.robot_action_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION)
         print(self.robot_action_client.wait_for_server())
 
@@ -58,7 +59,7 @@ class ControlLogic(Node):
             return np.array(xyz)
         elif target_type == "onto_uri":
             try:
-                xyz = self.crowracle.get_location_of_obj(uri)
+                xyz = self.crowracle.get_location_of_obj(target)
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
             else:
@@ -67,9 +68,12 @@ class ControlLogic(Node):
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
     def command_cb(self, msg):
+        # self.get_logger().info("Received command msg!")
         data = json.loads(msg.data)
         if type(data) is dict:
             data = [data]
+        # for p, o in self.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"): 
+        #     print(p, " --- ", o)
 
         self.get_logger().info(f"Received {len(data)} command(s):")
         for d in data:
@@ -131,8 +135,10 @@ def main():
     rclpy.init()
     cl = ControlLogic()
     rclpy.spin_once(cl)
-    time.sleep(1)
-    cl.sendAction(None)
+    # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"): 
+    #     print(p, " --- ", o)
+    # time.sleep(1)
+    # cl.sendAction(None)
     rclpy.spin(cl)
     cl.destroy_node()
     exit(0)
