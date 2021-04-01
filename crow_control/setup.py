@@ -24,7 +24,8 @@ setup(
     entry_points={
         'console_scripts': [
             'logic = crow_control.logic:main',
-            'dummy = crow_control.testing.dummy_action_robot:main'
+            'dummy = crow_control.testing.dummy_action_robot:main',
+            'ovis = crow_control.onto_vision:main'
         ],
     },
 )
