@@ -34,7 +34,6 @@ class OntoAdder(Node):
         # self.get_logger().info(self.onto)
         self.loc_threshold = 0.05 # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
-        self.get_logger().info("There are {} already detected objects in the database.".format(self.id))
 
         self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
         while len(self.cameras) == 0: #wait for cams to come online
@@ -43,6 +42,9 @@ class OntoAdder(Node):
             self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
         self.mask_topics = [cam + "/detections/masks" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
         self.filter_topics = ["filtered_poses"] #input masks from 2D rgb (from our detector.py)
+
+        #create timer for crawler - periodically delete old objects from database
+        self.create_timer(1, self.timer_callback)
 
         #create listeners (synchronized)
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -54,11 +56,24 @@ class OntoAdder(Node):
                                           qos_profile=qos) #the listener QoS has to be =1, "keep last only".
 
             self.get_logger().info('Input listener created on topic: "%s"' % maskTopic)
+    
+    def timer_callback(self):
+        obj_in_database = self.crowracle.getTangibleObjects_nocls()
+        now_time = datetime.now()
+        for obj in obj_in_database:
+            last_obj_time = list(self.onto.objects(obj, CROW.hasTimestamp))[0]
+            last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
+            time_diff = now_time - last_obj_time
+            if time_diff.seconds >= 10:
+                print("Deleting object {}".format(obj.split('#')[-1]))
+                self.delete_object(obj)
 
     def get_last_id(self):
         all_detected = list(self.onto.objects(None, CROW.hasId))
         all_detected = [int(id.split('od_')[-1]) for id in all_detected]
-        if len(all_detected) > 0:
+        num_detected = len(all_detected)
+        self.get_logger().info("There are {} already detected objects in the database.".format(num_detected))
+        if num_detected > 0:
             return max(all_detected)
         else:
             return -1
@@ -182,6 +197,10 @@ class OntoAdder(Node):
         # else:
         #     rel_loc = []
         return individual_name
+
+    def delete_object(self, obj):
+        #@TODO if not type Class or Property
+        self.onto.remove((obj, None, None))
 
     def add_assembled_object(self, object_name, location):
         self.get_logger().info("Setting properties of assembled object {} at location {}.".format(object_name, location))
