@@ -17,11 +17,11 @@ except:  # noqa
 
 
 ONTO_SERVER_NAME = "ontology_server"
-
+ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 
 class CrowtologyClient():
 
-    CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
+    CROW = Namespace(f"{ONTO_IRI}#")
     _tangible_leaf_query = prepareQuery("""SELECT ?cls
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
@@ -407,6 +407,78 @@ class CrowtologyClient():
                 elif obj_uri in objs_in_scene:
                     obj_locations.append(self.get_location_of_obj(obj_uri))
         return obj_locations
+
+    def update_detected_object(self, object, location, size, timestamp):
+        individual_name = object.split('#')[-1]
+        self.__node.get_logger().info("Object {} already detected, updating timestamp to {} and location to {}.".format(individual_name, timestamp, location))
+        self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+        
+        abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))[0]
+        self.onto.set((abs_loc, self.CROW.x, Literal(location[0], datatype=XSD.float)))
+        self.onto.set((abs_loc, self.CROW.y, Literal(location[1], datatype=XSD.float)))
+        self.onto.set((abs_loc, self.CROW.z, Literal(location[2], datatype=XSD.float)))
+        
+        pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))[0]
+        self.onto.set((pcl_dim, self.CROW.x, Literal(size[0], datatype=XSD.float)))
+        self.onto.set((pcl_dim, self.CROW.y, Literal(size[1], datatype=XSD.float)))
+        self.onto.set((pcl_dim, self.CROW.z, Literal(size[2], datatype=XSD.float)))
+                
+    def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
+        self.__node.get_logger().info("Adding detected object {}, id {} at location {}.".format(object_name, 'od_'+str(adder_id), location))
+        # Find template object
+        all_props = list(self.onto.triples((template, None, None)))
+        template_type = list(self.onto.objects(template, RDF.type))
+        template_type = [x for x in template_type if ONTO_IRI in x][0]
+        num_subjects = len(list(self.onto.subjects(RDF.type, template_type)))
+        individual_name = object_name + '_' + str(num_subjects)
+        PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
+
+        # Add common object properties
+        for prop in all_props:
+            #add idividual_name_ns#hole1 for all objectParts of template
+            if prop[1] == self.CROW.hasObjectPart:
+                all_object_part_props = list(self.onto.triples((prop[2], None, None)))
+                prop_name = PART[str(prop[2]).split('#')[-1]]
+                self.onto.add((self.CROW[individual_name], prop[1], prop_name))
+                for object_part_prop in all_object_part_props:
+                    self.onto.add((prop_name, object_part_prop[1], object_part_prop[2]))
+            #add other properties based on template
+            else:
+                self.onto.add((self.CROW[individual_name], prop[1], prop[2]))
+        # correct references between holes in property 'extendsTo'
+        all_object_parts = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasObjectPart))
+        for object_part in all_object_parts:
+            extendsto_obj = list(self.onto.objects(object_part, self.CROW.extendsTo))
+            if len(extendsto_obj) > 0:
+                correct_obj = PART[str(extendsto_obj[0]).split('#')[-1]]
+                self.onto.set((object_part, self.CROW.extendsTo, correct_obj))
+
+        # Add AbsoluteLocaton (object specific)
+        prop_name = PART.xyzAbsoluteLocation
+        prop_range = list(self.onto.objects(self.CROW.hasAbsoluteLocation, RDFS.range))[0]
+        self.onto.add((prop_name, RDF.type, prop_range))
+        self.onto.add((prop_name, self.CROW.x, Literal(location[0], datatype=XSD.float)))
+        self.onto.add((prop_name, self.CROW.y, Literal(location[1], datatype=XSD.float)))
+        self.onto.add((prop_name, self.CROW.z, Literal(location[2], datatype=XSD.float)))
+        self.onto.set((self.CROW[individual_name], self.CROW.hasAbsoluteLocation, prop_name))
+
+        # Add PclDimensions (object specific)
+        prop_name = PART.xyzPclDimensions
+        prop_range = list(self.onto.objects(self.CROW.hasPclDimensions, RDFS.range))[0]
+        self.onto.add((prop_name, RDF.type, prop_range))
+        self.onto.add((prop_name, self.CROW.x, Literal(size[0], datatype=XSD.float)))
+        self.onto.add((prop_name, self.CROW.y, Literal(size[1], datatype=XSD.float)))
+        self.onto.add((prop_name, self.CROW.z, Literal(size[2], datatype=XSD.float)))
+        self.onto.set((self.CROW[individual_name], self.CROW.hasPclDimensions, prop_name))
+
+        # Add unique ID and timestamp
+        self.onto.add((self.CROW[individual_name], self.CROW.hasId, Literal('od_'+str(adder_id), datatype=XSD.string)))
+        self.onto.add((self.CROW[individual_name], self.CROW.hasUuid, Literal(uuid, datatype=XSD.string)))
+        self.onto.add((self.CROW[individual_name], self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+
+    def delete_object(self, obj):
+        #@TODO if not type Class or Property
+        self.onto.remove((obj, None, None))
 
     @property
     def client_id(self):
