@@ -5,4 +5,5 @@ crow_msgs/PclDimensions[] size
 string[] label #must be one of the class labels from detector
 string[] uuid #identifying model in filter
 float32 confidence #confidence, can be empty
-crow_msgs/Particles[] particles #model_particles, can be empty
+#crow_msgs/Particles[] particles #model_particles, can be empty
+std_msgs/Float32MultiArray[] particles

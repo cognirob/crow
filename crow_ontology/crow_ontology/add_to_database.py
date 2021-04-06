@@ -20,6 +20,7 @@ from rdflib.term import Identifier
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
+DELETION_TIME_LIMIT = 10  # 10 seconds
 
 def distance(entry):
     return entry[-1]
@@ -64,7 +65,7 @@ class OntoAdder(Node):
             last_obj_time = list(self.onto.objects(obj, CROW.hasTimestamp))[0]
             last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
             time_diff = now_time - last_obj_time
-            if time_diff.seconds >= 10:
+            if time_diff.seconds >= DELETION_TIME_LIMIT:
                 print("Deleting object {}".format(obj.split('#')[-1]))
                 self.crowracle.delete_object(obj)
 
