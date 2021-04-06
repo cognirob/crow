@@ -1,4 +1,4 @@
-geometry_msgs/Pose effector_pose
+crow_msgs/RobotPose robot_pose
 crow_msgs/GripperStatus gripper_status
 crow_msgs/StopStatus stop_status
 string info

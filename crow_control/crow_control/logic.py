@@ -5,9 +5,13 @@ from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
 
-from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
-from crow_msgs.srv import GetRobotStatus
-from crow_msgs.action import PickNPlace
+from crow_msgs.msg import StampedString, CommandType
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType
+from trio3_ros2_interfaces.srv import GetRobotStatus
+from trio3_ros2_interfaces.action import PickNPlace
+# from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
+# from crow_msgs.srv import GetRobotStatus
+# from crow_msgs.action import PickNPlace
 from geometry_msgs.msg import Pose
 
 from rclpy.qos import qos_profile_sensor_data
@@ -32,7 +36,7 @@ import time
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
-    ROBOT_ACTION = 'picknplace'
+    ROBOT_ACTION = 'pick_n_place'
 
     def __init__(self, node_name="control_logic"):
         super().__init__(node_name)
@@ -76,6 +80,7 @@ class ControlLogic(Node):
         #     print(p, " --- ", o)
 
         self.get_logger().info(f"Received {len(data)} command(s):")
+        self.get_logger().info(f"Received {data}")
         for d in data:
             if d["action"] == CommandType.PNP:
                 op_name = "Pick & Place"
@@ -95,6 +100,7 @@ class ControlLogic(Node):
                     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
                     continue
                 self.get_logger().info(f"Target set to {target}.")
+                cl.sendAction(target)
 
             self.get_logger().info(f"Will perform {op_name}")
             # TODO: perform
@@ -103,6 +109,8 @@ class ControlLogic(Node):
         goal_msg = PickNPlace.Goal()
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
+        if target is not None:
+            goal_msg.pick_pose.point.x, goal_msg.pick_pose.point.y, goal_msg.pick_pose.point.z = target
         goal_msg.place_pose = Pose()
         goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object = ObjectType(type=ObjectType.CUBE)
@@ -138,6 +146,7 @@ def main():
     # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"): 
     #     print(p, " --- ", o)
     # time.sleep(1)
+    cl.get_logger().info("ready")
     # cl.sendAction(None)
     rclpy.spin(cl)
     cl.destroy_node()

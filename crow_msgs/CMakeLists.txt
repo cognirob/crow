@@ -40,14 +40,15 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SentenceProgram.msg"
   "msg/StampedString.msg"
   "msg/CommandType.msg"
-  "msg/StopStatus.msg"
-  "msg/GripperStatus.msg"
-  "msg/RobotStatus.msg"
+  #"msg/StopStatus.msg"
+  #"msg/GripperStatus.msg"
+  #"msg/RobotStatus.msg"
+  #"msg/RobotPose.msg"
   "msg/ObjectType.msg"
 
-  "srv/GetRobotStatus.srv"
+  #"srv/GetRobotStatus.srv"
 
-  "action/PickNPlace.action"
+  #"action/PickNPlace.action"
   DEPENDENCIES builtin_interfaces std_msgs sensor_msgs geometry_msgs
 )
 

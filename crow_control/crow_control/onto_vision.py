@@ -12,7 +12,7 @@ CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
 
 
 class OntoTester(Node):
-    GUI_UPDATE_INTERVAL = 0.1
+    GUI_UPDATE_INTERVAL = 0.3
 
     def __init__(self, node_name="onto_tester"):
         super().__init__(node_name)
@@ -22,6 +22,8 @@ class OntoTester(Node):
         self.create_timer(self.GUI_UPDATE_INTERVAL, self.update_cb)
 
     def update_cb(self):
+        self.stdscr.clear()
+        self.stdscr.addstr(0, 0, "= Entities in ontology =")
         # self.get_logger().info(str(list(self.crowracle.getTangibleObjectClasses())))
         for i, (s) in enumerate(self.crowracle.getTangibleObjects()):
             self.stdscr.addstr(1 + i, 0, f"{s}")
