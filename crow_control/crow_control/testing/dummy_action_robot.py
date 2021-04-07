@@ -5,9 +5,10 @@ from ros2param.api import call_get_parameters
 from rclpy.action import ActionServer
 import message_filters
 
-from crow_msgs.msg import StampedString, CommandType, RobotStatus
-from crow_msgs.srv import GetRobotStatus
-from crow_msgs.action import PickNPlace
+from crow_msgs.msg import StampedString, CommandType
+from trio3_ros2_interfaces.msg import RobotStatus
+from trio3_ros2_interfaces.srv import GetRobotStatus
+from trio3_ros2_interfaces.action import PickNPlace
 
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
@@ -23,7 +24,7 @@ class DummyActionRobot(Node):
         self._action_server = ActionServer(
             self,
             PickNPlace,
-            'picknplace',
+            'pick_n_place',
             self.execute_callback)
 
     def execute_callback(self, goal_handle):
