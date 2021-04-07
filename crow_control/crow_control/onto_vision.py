@@ -25,7 +25,7 @@ class OntoTester(Node):
         self.stdscr.clear()
         self.stdscr.addstr(0, 0, "= Entities in ontology =")
         # self.get_logger().info(str(list(self.crowracle.getTangibleObjectClasses())))
-        for i, (s) in enumerate(self.crowracle.getTangibleObjects()):
+        for i, (s) in enumerate(self.crowracle.getTangibleObjects_nocls()):
             self.stdscr.addstr(1 + i, 0, f"{s}")
         self.stdscr.refresh()
 
