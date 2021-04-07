@@ -5,8 +5,8 @@ from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
 
-from crow_msgs.msg import StampedString, CommandType, ObjectType
-from trio3_ros2_interfaces.msg import RobotStatus#, ObjectType
+from crow_msgs.msg import StampedString, CommandType#, ObjectType
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
 # from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
@@ -110,7 +110,7 @@ class ControlLogic(Node):
                     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
                     continue
                 self.get_logger().info(f"Target set to {target}.")
-                cl.sendAction(target)
+                self.sendAction(target)
 
             self.get_logger().info(f"Will perform {op_name}")
             # TODO: perform
@@ -120,17 +120,20 @@ class ControlLogic(Node):
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
         if target is not None:
-            goal_msg.pick_pose.point.x, goal_msg.pick_pose.point.y, goal_msg.pick_pose.point.z = target[0]
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target[0]
             if target[1] is None:
-                goal_msg.pick_pose.size = [0, 0, 0]
+                goal_msg.size = [0, 0, 0]
             else:
-                goal_msg.pick_pose.size = target[1]
-            if target[2] is None:
-                goal_msg.pick_pose.object.type = -1
-            else:
-                goal_msg.pick_pose.object.type = target[2]
-        goal_msg.place_pose = Pose()
-        goal_msg.size = [0.1, 0.2, 0.3]
+                goal_msg.size = target[1]
+            # if target[2] is None:
+            #     goal_msg.object.type = -1
+            # else:
+            #     goal_msg.object = ObjectType(type=target[2])
+        if location is None:
+            goal_msg.place_pose = Pose()
+        else:
+            pass  # TODO
+        # goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object = ObjectType(type=ObjectType.CUBE)
 
         self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
