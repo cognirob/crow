@@ -36,13 +36,13 @@ def generate_launch_description():
         )
     )
 
-    launchConfigs.append(
-        launch_ros.actions.Node(
-            package='crow_control',
-            node_executable='logic',
-            output="screen"
-        )
-    )
+    # launchConfigs.append(
+    #     launch_ros.actions.Node(
+    #         package='crow_control',
+    #         node_executable='logic',
+    #         output="screen"
+    #     )
+    # )
 
 
     return LaunchDescription([
