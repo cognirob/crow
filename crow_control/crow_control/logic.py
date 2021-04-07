@@ -5,8 +5,8 @@ from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
 
-from crow_msgs.msg import StampedString, CommandType
-from trio3_ros2_interfaces.msg import RobotStatus, ObjectType
+from crow_msgs.msg import StampedString, CommandType, ObjectType
+from trio3_ros2_interfaces.msg import RobotStatus#, ObjectType
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
 # from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
@@ -51,23 +51,33 @@ class ControlLogic(Node):
         print(self.robot_action_client.wait_for_server())
 
     def processTarget(self, target, target_type):
+        """Processes target according to its type.
+
+        Args:
+            target (any): Data or target identifier.
+            target_type (str): Type of the target. Any of ["onto_id", "onto_uri", "xyz"]
+
+        Returns:
+            tuple: (<position>, <size>, <type>) - None where not applicable.
+        """
         if target_type == "xyz":
-            return np.array(target)
+            return (np.array(target), None, ObjectType.POINT)
         elif target_type == "onto_id":
             try:
                 uri = next(self.onto.subjects(self.crowracle.CROW.hasId, target))
+                # uri = next(self.onto.objects(self.crowracle.CROW.hasId, target))
             except StopIteration:
                 self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
                 return
             xyz = self.crowracle.get_location_of_obj(uri)
-            return np.array(xyz)
+            return (np.array(xyz), [0.05, 0.04, 0.03], ObjectType.CUBE)  # TODO set object type
         elif target_type == "onto_uri":
             try:
                 xyz = self.crowracle.get_location_of_obj(target)
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
             else:
-                return np.array(xyz)
+                return (np.array(xyz), [0.05, 0.04, 0.03], ObjectType.CUBE)  # TODO set object type
         else:
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
@@ -76,7 +86,7 @@ class ControlLogic(Node):
         data = json.loads(msg.data)
         if type(data) is dict:
             data = [data]
-        # for p, o in self.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"): 
+        # for p, o in self.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
         #     print(p, " --- ", o)
 
         self.get_logger().info(f"Received {len(data)} command(s):")
@@ -110,7 +120,15 @@ class ControlLogic(Node):
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
         if target is not None:
-            goal_msg.pick_pose.point.x, goal_msg.pick_pose.point.y, goal_msg.pick_pose.point.z = target
+            goal_msg.pick_pose.point.x, goal_msg.pick_pose.point.y, goal_msg.pick_pose.point.z = target[0]
+            if target[1] is None:
+                goal_msg.pick_pose.size = [0, 0, 0]
+            else:
+                goal_msg.pick_pose.size = target[1]
+            if target[2] is None:
+                goal_msg.pick_pose.object.type = -1
+            else:
+                goal_msg.pick_pose.object.type = target[2]
         goal_msg.place_pose = Pose()
         goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object = ObjectType(type=ObjectType.CUBE)
@@ -143,7 +161,7 @@ def main():
     rclpy.init()
     cl = ControlLogic()
     rclpy.spin_once(cl)
-    # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"): 
+    # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
     #     print(p, " --- ", o)
     # time.sleep(1)
     cl.get_logger().info("ready")
