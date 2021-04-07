@@ -49,6 +49,12 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
                                    )
+    _colors_query = prepareQuery("""SELECT ?obj
+        WHERE {
+            ?obj rdf:type crow:NamedColor .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW}
+                                   )
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
@@ -161,6 +167,36 @@ class CrowtologyClient():
         res = self.onto.query(self._present_nocls_query)
         return [g["obj"] for g in res]
 
+    def getColors(self):
+        """Lists all colors in the database
+
+        Returns:
+            list: The colors (URIRefs).
+        """
+        res = self.onto.query(self._colors_query)
+        return [g["obj"] for g in res]
+
+    # 8 WIP!!
+    def get_obj_of_properties(self, uris_dict):
+        """Get URI object of properties specified by URIs
+
+        Args:
+            uris_dict (dict): keys=URIs of properties, values=URIs of objects or values for Literals
+
+        Returns:
+            list of URIRefs: objects, 0...N
+        """
+        query_string = '"""SELECT ?obj WHERE {'
+        for k, v in uris_dict.items():
+            if isinstance(v, URIRef):
+                query_string += '?obj {} {} ./n'.format(k, v)
+            else:
+                query_string += '?obj {} "{}" ./n'.format(k, v)
+        query_string += '}"""'
+
+        objects = self.onto.query(query_string)
+        return [x["obj"] for x in objects]
+    
     # 7
     def get_location_of_obj(self, uri):
         """Get absolute location of URI object
@@ -178,6 +214,44 @@ class CrowtologyClient():
             except: # but may be None (if not localized yet)
                 loc = [str(list(self.onto.objects(loc_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
             return loc
+        else:
+            return [None]*3
+
+    def get_pcl_dimensions_of_obj(self, uri):
+        """Get dimensions of pcl of detected object
+
+        Args:
+            uri (URIRef): URI of obj, 1
+
+        Returns:
+            list of floats: xyz dimension, 1x3
+        """
+        dim_obj = list(self.onto.objects(uri, self.CROW.hasPclDimensions))
+        if len(dim_obj) > 0: # assume obj has max one dimensions
+            try: # expect floats
+                dim = [float(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+            except: # but may be None (if not localized yet)
+                dim = [str(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+            return dim
+        else:
+            return [None]*3
+
+    def get_fixed_dimensions_of_obj(self, uri):
+        """Get dimensions of detected object, specified by 3D models
+
+        Args:
+            uri (URIRef): URI of obj, 1
+
+        Returns:
+            list of floats: xyz dimension, 1x3
+        """
+        dim_obj = list(self.onto.objects(uri, self.CROW.hasBoxDimensions))
+        if len(dim_obj) > 0: # assume obj has max one dimensions
+            try: # expect floats
+                dim = [float(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+            except: # but may be None (if not localized yet)
+                dim = [str(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+            return dim
         else:
             return [None]*3
 
@@ -206,7 +280,7 @@ class CrowtologyClient():
         """
         color = list(self.onto.objects(uri, self.CROW.hasColor))
         if len(color) > 0:
-            return color[0] # assume obj has only one color
+            return color # assume obj has only one color
         else: # this obj does not have color
             return None
 
@@ -303,6 +377,21 @@ class CrowtologyClient():
             all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
         return all_tangible_nlp
 
+    def get_colors_nlp(self, language='EN'):
+        """Get nlp names of all colors in the database
+
+        Args:
+            language (str): nlp names in which language
+
+        Returns:
+            list of strings: nlp names of colors in the database, 0...N
+        """
+        all_colors = self.getColors()
+        all_colors_nlp = []
+        for color in all_colors:
+            all_colors_nlp.append(self.get_nlp_from_uri(color, language=language))
+        return all_colors_nlp
+
     # C "what color does the cube have?"
     def get_color_of_obj_nlp(self, name, language='EN'):
         """Get nlp name of color of an object specified by nlp name
@@ -317,9 +406,10 @@ class CrowtologyClient():
         uris = self.get_uri_from_nlp(name) # multiple objects may have same nlp name
         result_entities = []
         for uri in uris: # find colors of each object
-            color = self.get_color_of_obj(uri) # assume one obj has one color
-            color_names = self.get_nlp_from_uri(color, language=language) # color may have multiple nlp names
-            result_entities.append(color_names)
+            colors = self.get_color_of_obj(uri) # assume one obj may have more than one color
+            for color in colors:
+                color_names = self.get_nlp_from_uri(color, language=language) # color may have multiple nlp names
+                result_entities.append(color_names)
         result_entities = list(set(sum(result_entities, []))) # concat all possible colors
         return result_entities
 
@@ -429,8 +519,7 @@ class CrowtologyClient():
         all_props = list(self.onto.triples((template, None, None)))
         template_type = list(self.onto.objects(template, RDF.type))
         template_type = [x for x in template_type if ONTO_IRI in x][0]
-        num_subjects = len(list(self.onto.subjects(RDF.type, template_type)))
-        individual_name = object_name + '_' + str(num_subjects)
+        individual_name = object_name + '_od_'+str(adder_id)
         PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
 
         # Add common object properties

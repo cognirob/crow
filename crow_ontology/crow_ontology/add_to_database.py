@@ -91,7 +91,7 @@ class OntoAdder(Node):
             return -1
 
     def process_detected_object(self, object_name, location, size, uuid, timestamp):
-        if object_name == 'kuka':
+        if object_name in ['kuka', 'kuka_gripper']:
             #self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
             return
         #self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
@@ -120,9 +120,11 @@ class OntoAdder(Node):
             else: # add new detected object
                 self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
                 self.id += 1
-        else: # add new detected object
+        elif len(corresponding_objects) > 0: # add new detected object
             self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
             self.id += 1
+        else:
+            self.get_logger().info("Object {} not added - there is no corresponding template in the ontology.".format(object_name))
 
     #@TODO: assembly functions, update, move to client
     # def add_assembled_object(self, object_name, location):

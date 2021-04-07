@@ -88,6 +88,22 @@ class OntoTester(Node):
         locations = self.crowracle.find_obj_of_color_nlp('gold', all=False)
         print(locations)
 
+        print('get_colors')
+        colors = self.crowracle.getColors()
+        print(colors)
+
+        print('get_colors_nlp')
+        colors = self.crowracle.get_colors_nlp()
+        print(colors)
+
+        print('get_pcl_dimensions_of_obj')
+        dims = self.crowracle.get_pcl_dimensions_of_obj(self.crowracle.CROW.cube_holes_od_2)
+        print(dims)
+
+        print('get_fixed_dimensions_of_obj')
+        dims = self.crowracle.get_fixed_dimensions_of_obj(self.crowracle.CROW.cube_holes_od_2)
+        print(dims)
+
         print('done')
 
 def main():
