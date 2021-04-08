@@ -176,27 +176,67 @@ class CrowtologyClient():
         res = self.onto.query(self._colors_query)
         return [g["obj"] for g in res]
 
-    # 8 WIP!!
-    def get_obj_of_properties(self, uris_dict):
+    def get_obj_of_properties_list(self, obj_cls, uri_list):
         """Get URI object of properties specified by URIs
 
         Args:
-            uris_dict (dict): keys=URIs of properties, values=URIs of objects or values for Literals
+            uri_list (list of lists): [[URIs of properties, URIs of objects or values for Literals],[..., ...], ...]
 
         Returns:
             list of URIRefs: objects, 0...N
         """
-        query_string = '"""SELECT ?obj WHERE {'
-        for k, v in uris_dict.items():
-            if isinstance(v, URIRef):
-                query_string += '?obj {} {} ./n'.format(k, v)
-            else:
-                query_string += '?obj {} "{}" ./n'.format(k, v)
-        query_string += '}"""'
+        q_string = 'SELECT ?sub WHERE { ?sub rdf:type ?cls . '
+        for i in range(len(uri_list)):
+            q_string += '?sub ?prop{} ?obj{} . '.format(i, i)
+        q_string += '}'
+        q = prepareQuery(q_string, initNs={"rdf": RDF})
 
-        objects = self.onto.query(query_string)
-        return [x["obj"] for x in objects]
-    
+        initBindings = {}
+        initBindings['cls'] = obj_cls
+        for i, l in enumerate(uri_list):
+            initBindings['prop{}'.format(i)] = l[0]
+            initBindings['obj{}'.format(i)] = l[1]
+        subjects = self.onto.query(q, initBindings=initBindings)
+        return [x['sub'] for x in subjects]
+
+    def get_obj_of_properties(self, obj_cls, uri_dict):
+        """Get URI object of properties specified by URIs
+
+        Args:
+            uri_dict (dict): keys=URIs of properties, values=URIs of objects or values for Literals
+
+        Returns:
+            list of URIRefs: objects, 0...N
+        """
+        q_string = 'SELECT ?sub WHERE { ?sub rdf:type ?cls . '
+        for i in range(len(uri_dict)):
+            q_string += '?sub ?prop{} ?obj{} . '.format(i, i)
+        q_string += '}'
+        q = prepareQuery(q_string, initNs={"rdf": RDF})
+
+        initBindings = {}
+        initBindings['cls'] = obj_cls
+        for i, (k, v) in enumerate(uri_dict.items()):
+            kns = k.rsplit('#')[0]
+            kNS = Namespace(f"{kns}#")
+            initBindings['prop{}'.format(i)] = kNS[k.rsplit('#')[-1]]
+            initBindings['obj{}'.format(i)] = v
+        subjects = self.onto.query(q, initBindings=initBindings)
+        return [x['sub'] for x in subjects]
+
+    def get_obj_of_id(self, id):
+        """Get URI object of specified URI color
+
+        Args:
+            id (str): id of object
+
+        Returns:
+            list of URIRefs: objects, 0...N
+        """
+        #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
+        objects = list(self.onto.subjects(self.CROW.hasId, Literal(id)))
+        return objects
+
     # 7
     def get_location_of_obj(self, uri):
         """Get absolute location of URI object

@@ -103,6 +103,20 @@ class OntoTester(Node):
         print('get_fixed_dimensions_of_obj')
         dims = self.crowracle.get_fixed_dimensions_of_obj(self.crowracle.CROW.cube_holes_od_2)
         print(dims)
+        
+        q1 = [[self.crowracle.CROW.hasColor, self.crowracle.CROW.COLOR_GREEN],[self.crowracle.CROW.hasDetectorName, "cube_holes"]]
+        print('get_obj_of_properties_list')
+        uris = self.crowracle.get_obj_of_properties_list(self.crowracle.CROW.Cube, q1)
+        print(uris)
+
+        q1 = {str(self.crowracle.CROW.hasColor): self.crowracle.CROW.COLOR_LIGHT_BLUE}
+        print('get_obj_of_properties')
+        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Nut, q1)
+        print(uris)
+
+        print('get_obj_of_id')
+        objs = self.crowracle.get_obj_of_id('od_0')
+        print(objs)
 
         print('done')
 
