@@ -119,6 +119,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <owl:inverseOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#belowOf"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">above_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -127,6 +128,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#affordanceConsumer">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">affordance_consumer</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -135,6 +137,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#affordanceProvider">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">affordance_provider</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -144,6 +147,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyHasComponents">
         <owl:inverseOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#partOfAssemblyGraph"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyGraph"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">assembly_has_components</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -159,6 +163,7 @@
                 </owl:unionOf>
             </owl:Class>
         </rdfs:range>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">assembly_restrictions</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -171,6 +176,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TemporalThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">at_time</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -181,6 +187,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <owl:inverseOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#inFrontOf"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">behind_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -190,6 +197,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#belowOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">below_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -200,6 +208,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#GeometricObject"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Point"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">center</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -210,6 +219,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">connected_to</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -220,6 +230,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectedTo"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">connected_to_prismatically</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -231,6 +242,7 @@
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <owl:propertyDisjointWith rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectedToWeakly"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">connected_to_rigidly</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -241,6 +253,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectedTo"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">connected_to_rotationelly</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -251,6 +264,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectedTo"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">connected_to_weakly</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -260,6 +274,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#connectionStrength">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyConnection"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ConnectionStrength"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">connestion_strength</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -268,6 +283,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#consumesAssemblyAffordance">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAssemblyAffordance"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">consumes_assembly_affordance</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -277,6 +293,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#contains-topo">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">contains_topo</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -286,6 +303,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#covers-topo">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">covers_topo</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -295,6 +313,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#definesOrder">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyHasComponents"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Order"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">defines_order</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -304,6 +323,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#definesRelation">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyHasComponents"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Relation"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">defined_relation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -314,6 +334,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">directional_relation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -324,6 +345,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disables</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -332,6 +354,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#disablesAA">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyRestrictions"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disablesAA</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -340,6 +363,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#disjoint-topo">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disjoint_topo</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -350,6 +374,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">enables</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -361,6 +386,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#EnduringTemporalThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">end_time</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -371,6 +397,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">extends_to</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -379,6 +406,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#first">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">first</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -389,6 +417,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLocation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">absolute_location</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -399,6 +428,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVector"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">absolute_vector</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -408,6 +438,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAffordance">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Object"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Affordance"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">affordance</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -425,6 +456,7 @@
             </owl:Class>
         </rdfs:domain>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyAffordance"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">assembly_affordance</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -442,6 +474,7 @@
                 </owl:unionOf>
             </owl:Class>
         </rdfs:range>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">assembly_element</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -450,6 +483,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasBottomObject">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bottom_object</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -460,6 +494,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">box_dimensions</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -501,6 +536,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasObjectPart">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Object"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ObjectPart"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">object_part</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -522,6 +558,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pcl_dimensions</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -543,6 +580,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Object"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Pose"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pose</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -553,6 +591,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLocation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Location"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">relative_location</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -563,6 +602,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVector"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">relative_vector</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -572,6 +612,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSpatialReference">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Relation"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">spatial_reference</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -611,6 +652,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasTopObject">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">top_object</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -621,6 +663,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Vector"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">vector</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -629,6 +672,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#inCenterOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">center_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -638,6 +682,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#inFrontOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">in_front_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -647,6 +692,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#insideOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">inside_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -657,6 +703,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Enabled"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">enabled</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -667,6 +714,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <owl:inverseOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#rightOf"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">left_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -681,6 +729,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#PathPoint"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#PathPoint"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">next_point</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -691,6 +740,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">next_to</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -701,6 +751,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalCausalRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TemporalThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TemporalThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurs_after</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -711,6 +762,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalCausalRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TemporalThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TemporalThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">occurs_before</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -720,6 +772,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ordersOperation">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Order"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyOperation"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">orders_operation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -729,6 +782,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#outsideOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">outside_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -738,13 +792,16 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#overlap-topo">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">overlap_topo</owlr:python_name>
     </owl:ObjectProperty>
     
 
 
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#partOfAssemblyGraph -->
 
-    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#partOfAssemblyGraph"/>
+    <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#partOfAssemblyGraph">
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">part_of_assembly_graph</owlr:python_name>
+    </owl:ObjectProperty>
     
 
 
@@ -757,6 +814,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AsymmetricProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#PathPoint"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#PathPoint"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">prev_point</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -765,6 +823,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#providesAssemblyAffordance">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAssemblyAffordance"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">provides_assembly_affordance</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -774,6 +833,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesOperation">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Relation"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyOperation"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">relates_operation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -783,6 +843,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#relatesToMaterial">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyOperation"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#WorkMaterial"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">realtes_to_material</owlr:python_name>
         <rdfs:comment>General AssemblyOperation property to specify which matrials are used by it.</rdfs:comment>
     </owl:ObjectProperty>
     
@@ -803,6 +864,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#removesAA">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyRestrictions"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">removesAA</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -812,6 +874,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#requiresTool">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyHasComponents"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Tool"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">requires_tool</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -821,6 +884,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#rightOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#directionalRelation"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">right_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -874,6 +938,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">spatial_causal_relation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -884,6 +949,7 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#SpatialThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">spatial_relation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -895,6 +961,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TemporalThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">start_time</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -903,6 +970,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalCausalRelation">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalRelation"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">temporal_causal_relation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -911,6 +979,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalRelation">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">temporal_relation</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -919,6 +988,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#then">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topObjectProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">then</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -927,6 +997,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">topological_relations</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -936,6 +1007,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#touchingOf">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#topologicalRelations"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#SymmetricProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">touching_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -944,6 +1016,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#usesConnectionAffordance">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyBindingConnection"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uses_connection_affordance</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -954,6 +1027,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#assemblyHasComponents"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyGraph"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#WorkMaterial"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uses_material</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -963,6 +1037,7 @@
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#usesTool">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ToolAsistedAssemblyOperation"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Tool"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uses_tool</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -971,6 +1046,7 @@
 
     <owl:ObjectProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#visibleFrom">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">visible_from</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -981,6 +1057,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#spatialRelation"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">within_reach_of</owlr:python_name>
     </owl:ObjectProperty>
     
 
@@ -1014,6 +1091,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Interval"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">duration</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1023,6 +1101,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAction">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AffordancePart"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">action</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1055,6 +1134,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDetectorName">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">detector_name</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1065,6 +1145,7 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">diameter</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1074,6 +1155,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasId">
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">id</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1095,6 +1177,7 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">length</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1125,6 +1208,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPitch">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pitch</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1133,6 +1217,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRepresentation">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">representation</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1142,6 +1227,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasThreadType">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyPart"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">thread_type</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1152,6 +1238,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#dateTimeStamp"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">timestamp</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1181,6 +1268,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasUuid">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">uuid</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1191,6 +1279,7 @@
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#DrivableFastener"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">head_type</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1199,6 +1288,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#isBool">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#boolean"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bool</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1245,6 +1335,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">msec</owlr:python_name>
         <rdfs:comment>Milliseconds, counted from the last whole second</rdfs:comment>
     </owl:DatatypeProperty>
     
@@ -1256,6 +1347,7 @@
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">nsec</owlr:python_name>
         <rdfs:comment>Nanoseconds (10^-9), counted from the last whole second</rdfs:comment>
     </owl:DatatypeProperty>
     
@@ -1268,6 +1360,7 @@
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Nut"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Nutdriver"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">nut_size</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1276,6 +1369,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#pointCoordinates">
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">point_coordinates</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1284,6 +1378,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#qu">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#quaternionComponent"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">qu</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1294,6 +1389,7 @@
         <rdfs:subPropertyOf rdf:resource="http://www.w3.org/2002/07/owl#topDataProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Quaternion"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">quaternion_component</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1302,6 +1398,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#qx">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#quaternionComponent"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">qx</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1310,6 +1407,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#qy">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#quaternionComponent"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">qy</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1318,6 +1416,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#qz">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#quaternionComponent"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">qz</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1351,6 +1450,7 @@
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TimePoint"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">secs</owlr:python_name>
         <rdfs:comment>Seconds, usually counting from the begining of the &quot;Epoch&quot;</rdfs:comment>
     </owl:DatatypeProperty>
     
@@ -1358,13 +1458,17 @@
 
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#specialProperty -->
 
-    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#specialProperty"/>
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#specialProperty">
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">special_property</owlr:python_name>
+    </owl:DatatypeProperty>
     
 
 
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty -->
 
-    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty">
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">temporal_property</owlr:python_name>
+    </owl:DatatypeProperty>
     
 
 
@@ -1373,6 +1477,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#x">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#pointCoordinates"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">x</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1382,6 +1487,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#y">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#pointCoordinates"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">y</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1391,6 +1497,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#z">
         <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#pointCoordinates"/>
         <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#FunctionalProperty"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">z</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -7019,6 +7126,22 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
@@ -7039,18 +7162,6 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
@@ -7060,10 +7171,6 @@
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>

@@ -68,10 +68,6 @@ class OntoTester(Node):
         uris = self.crowracle.get_obj_of_color(self.crowracle.CROW.COLOR_GREEN)
         print(uris)
 
-        print('get_all_obj_of_color_nlp')
-        names = self.crowracle.get_all_obj_of_color_nlp('blue')
-        print(names)
-
         print('get_obj_of_color_nlp')
         names = self.crowracle.get_obj_of_color_nlp('gold', all=False)
         print(names)
@@ -104,19 +100,36 @@ class OntoTester(Node):
         dims = self.crowracle.get_fixed_dimensions_of_obj(self.crowracle.CROW.cube_holes_od_2)
         print(dims)
         
-        q1 = [[self.crowracle.CROW.hasColor, self.crowracle.CROW.COLOR_GREEN],[self.crowracle.CROW.hasDetectorName, "cube_holes"]]
-        print('get_obj_of_properties_list')
-        uris = self.crowracle.get_obj_of_properties_list(self.crowracle.CROW.Cube, q1)
-        print(uris)
-
-        q1 = {str(self.crowracle.CROW.hasColor): self.crowracle.CROW.COLOR_LIGHT_BLUE}
+        q1 = {"color": self.crowracle.CROW.COLOR_LIGHT_BLUE}
+        q2 = {"color": None}
+        obj_cls1 = self.crowracle.CROW.Nut
+        obj_cls2 = None
         print('get_obj_of_properties')
-        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Nut, q1)
+        uris = self.crowracle.get_obj_of_properties(obj_cls1, q1, all=True)
+        print(uris)
+        print('get_obj_of_properties')
+        uris = self.crowracle.get_obj_of_properties(obj_cls2, q2, all=True)
         print(uris)
 
         print('get_obj_of_id')
         objs = self.crowracle.get_obj_of_id('od_0')
         print(objs)
+
+        print('get_name_from_prop')
+        name = self.crowracle.get_name_from_prop(self.crowracle.CROW.hasColor)
+        print(name)
+
+        print('get_prop_from_name')
+        uri = self.crowracle.get_prop_from_name('color')
+        print(uri)
+
+        print('get_all_tools')
+        uri = self.crowracle.get_all_tools(all=True)
+        print(uri)
+
+        print('get_all_tools')
+        uri = self.crowracle.get_all_tools(all=False)
+        print(uri)
 
         print('done')
 

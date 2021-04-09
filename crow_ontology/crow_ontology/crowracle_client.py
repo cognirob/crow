@@ -18,10 +18,13 @@ except:  # noqa
 
 ONTO_SERVER_NAME = "ontology_server"
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
+OWL_READY = "http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl"
 
 class CrowtologyClient():
 
     CROW = Namespace(f"{ONTO_IRI}#")
+    OWL_READY_NS = Namespace(f"{OWL_READY}#")
+
     _tangible_leaf_query = prepareQuery("""SELECT ?cls
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
@@ -176,51 +179,35 @@ class CrowtologyClient():
         res = self.onto.query(self._colors_query)
         return [g["obj"] for g in res]
 
-    def get_obj_of_properties_list(self, obj_cls, uri_list):
+    def get_obj_of_properties(self, obj_cls, uri_dict, all=False):
         """Get URI object of properties specified by URIs
 
         Args:
-            uri_list (list of lists): [[URIs of properties, URIs of objects or values for Literals],[..., ...], ...]
+            obj_cls (URIRef): class of object
+            uri_dict (dict): keys=Python names of properties, values=URIs of objects or values for Literals
+            all (bool): search among all or only in the scene objects
 
         Returns:
             list of URIRefs: objects, 0...N
         """
-        q_string = 'SELECT ?sub WHERE { ?sub rdf:type ?cls . '
-        for i in range(len(uri_list)):
-            q_string += '?sub ?prop{} ?obj{} . '.format(i, i)
-        q_string += '}'
-        q = prepareQuery(q_string, initNs={"rdf": RDF})
-
+        q_string = 'SELECT DISTINCT ?sub WHERE { ?sub rdf:type ?cls . '
         initBindings = {}
-        initBindings['cls'] = obj_cls
-        for i, l in enumerate(uri_list):
-            initBindings['prop{}'.format(i)] = l[0]
-            initBindings['obj{}'.format(i)] = l[1]
-        subjects = self.onto.query(q, initBindings=initBindings)
-        return [x['sub'] for x in subjects]
+        if obj_cls is not None:
+            initBindings['cls'] = obj_cls
+        if all == False:
+            q_string += '?sub crow:hasId ?id . '
 
-    def get_obj_of_properties(self, obj_cls, uri_dict):
-        """Get URI object of properties specified by URIs
-
-        Args:
-            uri_dict (dict): keys=URIs of properties, values=URIs of objects or values for Literals
-
-        Returns:
-            list of URIRefs: objects, 0...N
-        """
-        q_string = 'SELECT ?sub WHERE { ?sub rdf:type ?cls . '
-        for i in range(len(uri_dict)):
-            q_string += '?sub ?prop{} ?obj{} . '.format(i, i)
-        q_string += '}'
-        q = prepareQuery(q_string, initNs={"rdf": RDF})
-
-        initBindings = {}
-        initBindings['cls'] = obj_cls
         for i, (k, v) in enumerate(uri_dict.items()):
-            kns = k.rsplit('#')[0]
-            kNS = Namespace(f"{kns}#")
-            initBindings['prop{}'.format(i)] = kNS[k.rsplit('#')[-1]]
-            initBindings['obj{}'.format(i)] = v
+            k_property = self.get_prop_from_name(k)
+            if k_property is None:
+                continue
+            initBindings['prop{}'.format(i)] = k_property
+            if v is not None:
+                initBindings['obj{}'.format(i)] = v
+            q_string += '?sub ?prop{} ?obj{} . '.format(i, i)
+        q_string += '}'
+
+        q = prepareQuery(q_string, initNs={"rdf": RDF, "crow":self.CROW})
         subjects = self.onto.query(q, initBindings=initBindings)
         return [x['sub'] for x in subjects]
 
@@ -385,6 +372,42 @@ class CrowtologyClient():
             nlp_name = [x.toPython() for x in nlp_name_uri]
         return nlp_name
 
+    def get_prop_from_name(self, py_name):
+        """Get property URIRef specifiend by python name
+
+        Args:
+            py_name (str): python name of property
+
+        Returns:
+            property (URIRef): property of given python name
+        """
+        prop = list(self.onto.subjects(self.OWL_READY_NS.python_name, Literal(py_name)))
+        if len(prop) > 0:
+            if len(prop) > 1:
+                #@TODO: logger info
+                print("More than one property of name {} found, continue with the first one.".format(py_name))
+            return prop[0]
+        else:
+            return None
+
+    def get_name_from_prop(self, prop):
+        """Get python name of property specified by URIRef
+
+        Args:
+            prop (URIRef): URI of property
+
+        Returns:
+            name (str): python name of the given property
+        """
+        name = list(self.onto.objects(prop, self.OWL_READY_NS.python_name))
+        if len(name) > 0:
+            if len(name) > 1:
+                #@TODO: logger info
+                print("More than one name for property {} found, continue with the first one.".format(prop))
+            return name[0]
+        else:
+            return None
+
     # A "which all objects are in the ontology?"
     def get_all_tangible_nlp(self, language='EN'):
         """Get nlp names of all tangible objects
@@ -431,6 +454,21 @@ class CrowtologyClient():
         for color in all_colors:
             all_colors_nlp.append(self.get_nlp_from_uri(color, language=language))
         return all_colors_nlp
+
+    def get_all_tools(self, all=False):
+        """
+        Returns a list of all tools in the workspace.
+
+        Args:
+            all (bool): search among all or only in the scene objects
+        """
+        if all == False:
+            q_string = 'SELECT ?sub WHERE { ?sub rdf:type ?cls . ?cls rdfs:subClassOf* crow:Tool . ?sub crow:hasId ?id . }'
+        elif all == True:
+            q_string = 'SELECT ?sub WHERE { ?sub rdfs:subClassOf+ crow:Tool . FILTER NOT EXISTS {?nan rdfs:subClassOf ?sub . }}'
+        q = prepareQuery(q_string, initNs={"rdf": RDF, "rdfs": RDFS, "crow":self.CROW})
+        subjects = self.onto.query(q)
+        return [x['sub'] for x in subjects]
 
     # C "what color does the cube have?"
     def get_color_of_obj_nlp(self, name, language='EN'):
@@ -479,19 +517,6 @@ class CrowtologyClient():
         obj_names = list(set(sum(obj_names, []))) # concat objects names
         return obj_names
 
-    # Z 
-    def get_all_obj_of_color_nlp(self, name, language='EN'): 
-        # NOT NEEDED! have 'all' parameter in get_obj_of_color_nlp()
-        #same as get_obj_of_color_nlp but only for objects in the scene
-        uris = self.get_uri_from_nlp(name)
-        obj_names = []
-        for uri in uris:
-            obj_uris = self.get_obj_of_color(uri)
-            for obj_uri in obj_uris:
-                obj_names.append(self.get_nlp_from_uri(obj_uri, language=language))
-        obj_names = list(set(sum(obj_names, [])))
-        return obj_names
-
     # E "where (in the scene) is cube?"
     def find_obj_nlp(self, name, all=False):
         """Get absolute location of object specified by nlp name
@@ -538,7 +563,38 @@ class CrowtologyClient():
                     obj_locations.append(self.get_location_of_obj(obj_uri))
         return obj_locations
 
+    def set_last_mentioned_object(self, object):
+        """Sets an object as last mentioned.
+
+        Args:
+            object (URIRef): the object which should be set as "last mentioned"
+        """
+        subjects = self.get_last_mentioned_object()
+        if subjects is not None:
+            for sub in subjects:
+                self.onto.set((sub, self.CROW.isLastMentioned, False))
+        self.onto.set((object, self.CROW.isLastMentioned, True))
+
+    def get_last_mentioned_object(self):
+        """
+        Returns the object which was set as last mentioned or None if there is no such object.
+        """
+        subjects = list(self.onto.subjects(self.CROW.isLastMentioned, True))
+        if len(subjects) > 0:
+            return subjects
+        else:
+            return None
+
     def update_detected_object(self, object, location, size, timestamp):
+        """
+        Update info about an existing object after new detection for this object comes
+
+        Args:
+            object (URIRef): existing object to be updated
+            location (list of floats): new xyz of object's location received from detection
+            size (list of floats): new xyz dimensions of object's pointcloud received from detection
+            timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
+        """
         individual_name = object.split('#')[-1]
         self.__node.get_logger().info("Object {} already detected, updating timestamp to {} and location to {}.".format(individual_name, timestamp, location))
         self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
@@ -554,6 +610,19 @@ class CrowtologyClient():
         self.onto.set((pcl_dim, self.CROW.z, Literal(size[2], datatype=XSD.float)))
                 
     def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
+        """
+        Add newly detected object and info about the object after a detection for this object comes
+
+        Args:
+            object_name (str): name of the object to be added (detector name)
+            location (list of floats): xyz of object's location received from detection
+            size (list of floats): xyz dimensions of object's pointcloud received from detection
+            uuid (str): id of object given by filter node (id of corresponding model in the filter)
+            timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
+            template (URIRef): template object from ontology corresponding to the detected object
+            adder_id (str): if of object given by adder node, according to the amount and order of overall detections
+        """
+    
         self.__node.get_logger().info("Adding detected object {}, id {} at location {}.".format(object_name, 'od_'+str(adder_id), location))
         # Find template object
         all_props = list(self.onto.triples((template, None, None)))
@@ -606,8 +675,15 @@ class CrowtologyClient():
         self.onto.add((self.CROW[individual_name], self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
 
     def delete_object(self, obj):
-        #@TODO if not type Class or Property
-        self.onto.remove((obj, None, None))
+        """
+        Delete existing object and all info about the object
+
+        Args:
+            object (URIRef): existing object to be deleated
+        """
+        if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
+            self.onto.remove((obj, None, None))
+            
 
     @property
     def client_id(self):
