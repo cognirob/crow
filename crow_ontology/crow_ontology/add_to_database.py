@@ -20,7 +20,7 @@ from rdflib.term import Identifier
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 3  # 10 seconds
+DELETION_TIME_LIMIT = 10  # 10 seconds
 
 def distance(entry):
     return entry[-1]
