@@ -212,7 +212,7 @@ class CrowtologyClient():
         return [x['sub'] for x in subjects]
 
     def get_obj_of_id(self, id):
-        """Get URI object of specified URI color
+        """Get URI object of specified id
 
         Args:
             id (str): id of object
@@ -223,6 +223,22 @@ class CrowtologyClient():
         #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
         objects = list(self.onto.subjects(self.CROW.hasId, Literal(id)))
         return objects
+
+    def get_id_of_obj(self, uri):
+        """Get id of URI object
+
+        Args:
+            uri URIRefs: objects 
+
+        Returns:
+            id (str): id of object
+        """
+        #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
+        ids = list(self.onto.objects(uri, self.CROW.hasId))
+        if len(ids) == 1:
+            return ids[0].toPython()
+        else:
+            return None
 
     # 7
     def get_location_of_obj(self, uri):
