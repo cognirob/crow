@@ -37,6 +37,7 @@ import time
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     ROBOT_ACTION = 'pick_n_place'
+    DEBUG = False
 
     def __init__(self, node_name="control_logic"):
         super().__init__(node_name)
@@ -70,14 +71,17 @@ class ControlLogic(Node):
                 self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
                 return
             xyz = self.crowracle.get_location_of_obj(uri)
-            return (np.array(xyz), [0.05, 0.04, 0.03], ObjectType.CUBE)  # TODO set object type
+            size = self.crowracle.get_pcl_dimensions_of_obj(uri)
+            return (np.array(xyz), np.array(size), ObjectType.CUBE)  # TODO set object type
         elif target_type == "onto_uri":
             try:
+                # xyz = np.array([-0.00334, 0.00232, 0.6905])
                 xyz = self.crowracle.get_location_of_obj(target)
+                size = self.crowracle.get_pcl_dimensions_of_obj(target)
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
             else:
-                return (np.array(xyz), [0.05, 0.04, 0.03], ObjectType.CUBE)  # TODO set object type
+                return (np.array(xyz), np.array(size), ObjectType.CUBE)  # TODO set object type
         else:
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
@@ -110,7 +114,10 @@ class ControlLogic(Node):
                     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
                     continue
                 self.get_logger().info(f"Target set to {target}.")
-                self.sendAction(target)
+                if self.DEBUG:
+                    self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
+                else:
+                    self.sendAction(target)
 
             self.get_logger().info(f"Will perform {op_name}")
             # TODO: perform
