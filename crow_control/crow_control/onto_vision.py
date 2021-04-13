@@ -53,7 +53,7 @@ class OntoTester(Node):
                 flags = curses.color_pair(2)
             else:
                 flags = curses.color_pair(5)
-            if not dead and id is None or "error" in id:
+            if not dead and (id is None or "error" in id):
                 flags = curses.color_pair(4)
 
             self.stdscr.addstr(1 + i, 0, f"{uri}", flags)
