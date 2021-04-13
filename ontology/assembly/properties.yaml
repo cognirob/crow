@@ -391,7 +391,7 @@ objects:
         hasAction: screwing
         nutSize: 25
 
-  Screwdriver:
+  FlatScrewdriver:
     hasDetectorName: screwdriver
     hasColor: COLOR_RED
     hasBoxDimensions: [258.0, 30.0, 30.0]
