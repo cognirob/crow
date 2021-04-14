@@ -17,10 +17,11 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
+from rcl_interfaces.srv import GetParameters
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 3  # 10 seconds
+DELETION_TIME_LIMIT = 10  # 10 seconds
 
 def distance(entry):
     return entry[-1]
@@ -35,6 +36,10 @@ class OntoAdder(Node):
         # self.get_logger().info(self.onto)
         self.loc_threshold = 0.05 # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
+
+        client = self.create_client(GetParameters, f'/calibrator/get_parameters')
+        if not client.wait_for_service(10):
+            raise Exception("Could not get parameters from calibrator!")
 
         self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
         while len(self.cameras) == 0: #wait for cams to come online
