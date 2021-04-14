@@ -131,6 +131,10 @@ class OntoTester(Node):
         uri = self.crowracle.get_all_tools(all=False)
         print(uri)
 
+        print('get_tang_with_props')
+        list_of_dicts = self.crowracle.getTangibleObjectsProps()
+        print(list_of_dicts)
+
         print('done')
 
 def main():

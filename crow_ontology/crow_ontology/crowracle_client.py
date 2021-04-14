@@ -46,20 +46,22 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
                                    )
-    _present_query_props = prepareQuery("""SELECT ?obj ?col ?ename ?czname ?x ?y ?z
+    _present_query_props = prepareQuery("""SELECT ?obj ?id ?cls ?col ?colczname ?colenname ?czname ?enname ?x ?y ?z
         WHERE {
-            
+            ?obj crow:hasId ?id .
             ?obj rdf:type ?cls .
             ?cls rdfs:subClassOf* crow:TangibleObject .
-            ?obj crow:hasColor ?col.
-            ?obj crow:hasNlpNameEN: ?enname.
-            ?obj crow:hasNlpNameCZ: ?czname.
-            ?obj crow:hasAbsoluteLocation: ?loc.
-            ?loc crow:x ?x.
-            ?loc crow:y ?y.
-            ?loc crow:z ?z.
+            ?obj crow:hasColor ?col .
+            ?col crow:hasNlpNameEN ?colenname .
+            ?col crow:hasNlpNameCZ ?colczname .
+            ?obj crow:hasNlpNameEN ?enname .
+            ?obj crow:hasNlpNameCZ ?czname .
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
         }""",
-                                   initNs={"owl": OWL, "crow": CROW}
+                                   initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
     _present_nocls_query = prepareQuery("""SELECT ?obj
         WHERE {
@@ -178,9 +180,23 @@ class CrowtologyClient():
 
     def getTangibleObjectsProps(self):
         res = self.onto.query(self._present_query_props)
-        print([g["obj"] for g in res])
-        print([g["x"].toPython() for g in res])
-        return [g["obj"] for g in res]
+        res_list = []
+        for g in res:
+            res_dict = {}
+            res_dict["uri"] = g["obj"]
+            res_dict["id"] = g["id"].toPython()
+            res_dict["color"] = g["col"]
+            res_dict["color_nlp_name_CZ"] = g["colczname"].toPython()
+            res_dict["color_nlp_name_EN"] = g["colenname"].toPython()
+            res_dict["nlp_name_CZ"] = g["czname"].toPython()
+            res_dict["nlp_name_EN"] = g["enname"].toPython()
+            try:
+                res_dict["absolute_location"] = [float(q) for q in [g["x"], g["y"], g["z"]]]
+            except:
+                res_dict["absolute_location"] = [str(q) for q in [g["x"], g["y"], g["z"]]]
+            res_list.append(res_dict)
+
+        return res_list
 
     def getTangibleObjects_nocls(self):
         """Lists physical objects present on the workspace NO CLS
@@ -245,10 +261,6 @@ class CrowtologyClient():
         objects = list(self.onto.subjects(self.CROW.hasId, Literal(id)))
         return objects
 
-#TODO: get tanglible with props (loc, color, nlpnames)
-
-#TODO: list(...)[0] error - change to be safe!
-
     def get_id_of_obj(self, uri):
         """Get id of URI object
 
@@ -260,7 +272,7 @@ class CrowtologyClient():
         """
         #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
         ids = list(self.onto.objects(uri, self.CROW.hasId))
-        if len(ids) == 1:
+        if len(ids) > 1: # assume obj has exactly one id
             return ids[0].toPython()
         else:
             return None
@@ -395,7 +407,11 @@ class CrowtologyClient():
         elif len(list(self.onto.triples((uri, RDF.type, self.CROW.NamedColor)))) > 0:
             uri = uri # if ent is named color, then proceed
         else: # uri is a object, it's class should have nlp name
-            uri = list(self.onto.objects(uri, RDF.type))[0]
+            class_uri = list(self.onto.objects(uri, RDF.type))
+            if len(class_uri) > 0:
+                uri = class_uri[0]
+            else:
+                uri = uri # ent is not class nor color, assuming it's an object but didn't find it's class
 
         if language == 'EN':
             nlp_name_property = self.CROW.hasNlpNameEN
@@ -640,15 +656,19 @@ class CrowtologyClient():
         self.__node.get_logger().info("Object {} already detected, updating timestamp to {} and location to {}.".format(individual_name, timestamp, location))
         self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
         
-        abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))[0]
-        self.onto.set((abs_loc, self.CROW.x, Literal(location[0], datatype=XSD.float)))
-        self.onto.set((abs_loc, self.CROW.y, Literal(location[1], datatype=XSD.float)))
-        self.onto.set((abs_loc, self.CROW.z, Literal(location[2], datatype=XSD.float)))
+        abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))
+        if len(abs_loc) > 0:
+            self.onto.set((abs_loc[0], self.CROW.x, Literal(location[0], datatype=XSD.float)))
+            self.onto.set((abs_loc[0], self.CROW.y, Literal(location[1], datatype=XSD.float)))
+            self.onto.set((abs_loc[0], self.CROW.z, Literal(location[2], datatype=XSD.float)))
+        else:
+            self.__node.get_logger().info("Object {} location update failed.".format(individual_name, timestamp, location))
         
-        pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))[0]
-        self.onto.set((pcl_dim, self.CROW.x, Literal(size[0], datatype=XSD.float)))
-        self.onto.set((pcl_dim, self.CROW.y, Literal(size[1], datatype=XSD.float)))
-        self.onto.set((pcl_dim, self.CROW.z, Literal(size[2], datatype=XSD.float)))
+        pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))
+        if len(pcl_dim) > 0:
+            self.onto.set((pcl_dim[0], self.CROW.x, Literal(size[0], datatype=XSD.float)))
+            self.onto.set((pcl_dim[0], self.CROW.y, Literal(size[1], datatype=XSD.float)))
+            self.onto.set((pcl_dim[0], self.CROW.z, Literal(size[2], datatype=XSD.float)))
                 
     def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
         """
@@ -667,8 +687,6 @@ class CrowtologyClient():
         self.__node.get_logger().info("Adding detected object {}, id {} at location {}.".format(object_name, 'od_'+str(adder_id), location))
         # Find template object
         all_props = list(self.onto.triples((template, None, None)))
-        template_type = list(self.onto.objects(template, RDF.type))
-        template_type = [x for x in template_type if ONTO_IRI in x][0]
         individual_name = object_name + '_od_'+str(adder_id)
         PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
 
