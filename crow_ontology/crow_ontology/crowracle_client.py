@@ -46,6 +46,21 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
                                    )
+    _present_query_props = prepareQuery("""SELECT ?obj ?col ?ename ?czname ?x ?y ?z
+        WHERE {
+            
+            ?obj rdf:type ?cls .
+            ?cls rdfs:subClassOf* crow:TangibleObject .
+            ?obj crow:hasColor ?col.
+            ?obj crow:hasNlpNameEN: ?enname.
+            ?obj crow:hasNlpNameCZ: ?czname.
+            ?obj crow:hasAbsoluteLocation: ?loc.
+            ?loc crow:x ?x.
+            ?loc crow:y ?y.
+            ?loc crow:z ?z.
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW}
+                                   )
     _present_nocls_query = prepareQuery("""SELECT ?obj
         WHERE {
             ?obj crow:hasId ?c .
@@ -161,6 +176,12 @@ class CrowtologyClient():
         res = self.onto.query(self._present_query)
         return [g["obj"] for g in res]
 
+    def getTangibleObjectsProps(self):
+        res = self.onto.query(self._present_query_props)
+        print([g["obj"] for g in res])
+        print([g["x"].toPython() for g in res])
+        return [g["obj"] for g in res]
+
     def getTangibleObjects_nocls(self):
         """Lists physical objects present on the workspace NO CLS
 
@@ -223,6 +244,10 @@ class CrowtologyClient():
         #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
         objects = list(self.onto.subjects(self.CROW.hasId, Literal(id)))
         return objects
+
+#TODO: get tanglible with props (loc, color, nlpnames)
+
+#TODO: list(...)[0] error - change to be safe!
 
     def get_id_of_obj(self, uri):
         """Get id of URI object
