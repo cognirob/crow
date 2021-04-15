@@ -32,6 +32,7 @@ from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 import time
+import subprocess
 
 
 class ControlLogic(Node):
@@ -150,6 +151,7 @@ class ControlLogic(Node):
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
+            subprocess.run("ros2 param set /nl_input robot_failed True".split())
             return
 
         self.get_logger().info('Goal accepted :)')
@@ -160,6 +162,9 @@ class ControlLogic(Node):
     def robot_done_cb(self, future):
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
+        subprocess.run("ros2 param set /nl_input robot_done True".split())
+        if not result.done:
+            subprocess.run("ros2 param set /nl_input robot_failed True".split())
 
     def robot_feedback_cb(self, feedback_msg):
         self.get_logger().info('Got FB')
@@ -175,7 +180,7 @@ def main():
     #     print(p, " --- ", o)
     # time.sleep(1)
     cl.get_logger().info("ready")
-    # cl.sendAction(None)
+    cl.sendAction(None)
     rclpy.spin(cl)
     cl.destroy_node()
     exit(0)
