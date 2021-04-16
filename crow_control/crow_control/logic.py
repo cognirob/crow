@@ -33,12 +33,19 @@ from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 import time
 import subprocess
+from collections import deque
 
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     ROBOT_ACTION = 'pick_n_place'
     DEBUG = False
+    UPDATE_INTERVAL = 0.1
+    MAX_QUEUE_LENGTH = 10
+
+    STATUS_IDLE = 1
+    STATUS_PROCESSING = 2
+    STATUS_EXECUTING = 4
 
     def __init__(self, node_name="control_logic"):
         super().__init__(node_name)
@@ -50,7 +57,11 @@ class ControlLogic(Node):
                                  callback=self.command_cb,
                                  qos_profile=qos)
         self.robot_action_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION)
-        print(self.robot_action_client.wait_for_server())
+        self.get_logger().info(f"Connected to robot: {self.robot_action_client.wait_for_server()}")
+
+        self.status = self.STATUS_IDLE
+        self.create_timer(self.UPDATE_INTERVAL, self.update_cb)
+        self.command_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
 
     def processTarget(self, target, target_type):
         """Processes target according to its type.
@@ -96,6 +107,9 @@ class ControlLogic(Node):
 
         self.get_logger().info(f"Received {len(data)} command(s):")
         self.get_logger().info(f"Received {data}")
+        self.process_actions(data)
+
+    def process_actions(self, data):
         for d in data:
             if d["action"] == CommandType.PNP:
                 op_name = "Pick & Place"
@@ -118,12 +132,34 @@ class ControlLogic(Node):
                 if self.DEBUG:
                     self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
                 else:
-                    self.sendAction(target)
+                    # self.sendAction(target)
+                    self.push_actions(self.sendAction, target=target)
 
             self.get_logger().info(f"Will perform {op_name}")
-            # TODO: perform
+
+    def push_actions(self, comand, **kwargs):
+            self.command_buffer.append((self.sendAction, kwargs))
+
+    def update_cb(self):
+        if self.status & self.STATUS_IDLE:
+            try:
+                command, kwargs = self.command_buffer.pop()
+            except IndexError as ie:  # no new commands to process
+                pass  # noqa
+            else:
+                try:
+                    command(**kwargs)
+                except Exception as e:
+                    self.get_logger().error(f"Error executing action {command} with args {str(kwargs)}. The error was:\n{e}")
+                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+
+    def _set_status(self, status):
+        self.status = status
+        print(self.status)
 
     def sendAction(self, target, location=None, obj=None):
+        self._set_status(self.STATUS_PROCESSING)
         goal_msg = PickNPlace.Goal()
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
@@ -151,10 +187,13 @@ class ControlLogic(Node):
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
-            subprocess.run("ros2 param set /nl_input robot_failed True".split())
+            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+            subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+            self._set_status(self.STATUS_IDLE)
             return
 
         self.get_logger().info('Goal accepted :)')
+        self._set_status(self.STATUS_EXECUTING)
 
         self._get_result_future = goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.robot_done_cb)
@@ -162,9 +201,10 @@ class ControlLogic(Node):
     def robot_done_cb(self, future):
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
-        subprocess.run("ros2 param set /nl_input robot_done True".split())
+        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+        self._set_status(self.STATUS_IDLE)
         if not result.done:
-            subprocess.run("ros2 param set /nl_input robot_failed True".split())
+            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
 
     def robot_feedback_cb(self, feedback_msg):
         self.get_logger().info('Got FB')
@@ -174,16 +214,24 @@ class ControlLogic(Node):
 
 def main():
     rclpy.init()
-    cl = ControlLogic()
-    rclpy.spin_once(cl)
-    # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
-    #     print(p, " --- ", o)
-    # time.sleep(1)
-    cl.get_logger().info("ready")
-    cl.sendAction(None)
-    rclpy.spin(cl)
-    cl.destroy_node()
-    exit(0)
+    try:
+        cl = ControlLogic()
+        rclpy.spin_once(cl)
+        # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
+        #     print(p, " --- ", o)
+        # time.sleep(1)
+        cl.get_logger().info("ready")
+        # cl.push_actions(cl.sendAction, target=None)
+        # cl.push_actions(cl.sendAction, target=None)
+        # cl.push_actions(cl.sendAction, target=None)
+        # cl.push_actions(cl.sendAction, target=None)
+        rclpy.spin(cl)
+        cl.destroy_node()
+    except Exception as e:
+        print(f"Some error had occured: {e}")
+    finally:
+        subprocess.run("ros2 param set /sentence_processor robot_failed False".split())
+        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
 
 if __name__ == '__main__':
     main()
