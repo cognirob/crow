@@ -272,7 +272,7 @@ class CrowtologyClient():
         """
         #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
         ids = list(self.onto.objects(uri, self.CROW.hasId))
-        if len(ids) > 1: # assume obj has exactly one id
+        if len(ids) > 0: # assume obj has exactly one id
             return ids[0].toPython()
         else:
             return None
