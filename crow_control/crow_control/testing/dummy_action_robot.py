@@ -37,10 +37,7 @@ class DummyActionRobot(Node):
         for i in range(10):
             time.sleep(1)
             self.get_logger().info(f'\trunning loop {i}')
-            feedback_msg.progress = (i + np.random.rand()) / 10
-            status = RobotStatus()
-            status.gripper_status.status = i % 2
-            feedback_msg.robot_status = status
+            feedback_msg.status = str((i + np.random.rand()) / 10)
             goal_handle.publish_feedback(feedback_msg)
             self.get_logger().info(f'\t\tsent feedback')
 
