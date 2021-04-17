@@ -21,7 +21,9 @@ from rcl_interfaces.srv import GetParameters
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 10  # 10 seconds
+DELETION_TIME_LIMIT = 10  # seconds
+DISABLING_TIME_LIMIT = 5  # seconds
+TIMER_FREQ = 0.5 # seconds
 
 def distance(entry):
     return entry[-1]
@@ -50,7 +52,7 @@ class OntoAdder(Node):
         self.filter_topics = ["filtered_poses"] #input masks from 2D rgb (from our detector.py)
 
         #create timer for crawler - periodically delete old objects from database
-        self.create_timer(1, self.timer_callback)
+        self.create_timer(TIMER_FREQ, self.timer_callback)
 
         #create listeners (synchronized)
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -64,7 +66,7 @@ class OntoAdder(Node):
             self.get_logger().info('Input listener created on topic: "%s"' % maskTopic)
     
     def timer_callback(self):
-        obj_in_database = self.crowracle.getTangibleObjects_nocls()
+        obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
         now_time = datetime.now()
         for obj in obj_in_database:
             try:
@@ -74,12 +76,15 @@ class OntoAdder(Node):
             last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
             time_diff = now_time - last_obj_time
             if time_diff.seconds >= DELETION_TIME_LIMIT:
-                print("Deleting object {}".format(obj.split('#')[-1]))
                 self.crowracle.delete_object(obj)
+            elif time_diff.seconds >= DISABLING_TIME_LIMIT:
+                self.crowracle.disable_object(obj)
+            else:
+                self.crowracle.enable_object(obj)
 
     def input_filter_callback(self, pose_array_msg, cam):
         if not pose_array_msg.poses:
-            self.get_logger().info("No poses, no party. Quitting early.")
+            self.get_logger().info("No poses received. Quitting early.")
             return  # no mask detections (for some reason)
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         for class_name, pose, size, uuid in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid):

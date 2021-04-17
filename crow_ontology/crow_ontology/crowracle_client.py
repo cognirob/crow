@@ -46,6 +46,12 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
                                    )
+    _present_and_disabled_nocls_query = prepareQuery("""SELECT ?obj
+        WHERE {
+            ?obj crow:hasTimestamp ?c .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW}
+                                   )
     _present_query_props = prepareQuery("""SELECT ?obj ?id ?cls ?col ?colczname ?colenname ?czname ?enname ?x ?y ?z
         WHERE {
             ?obj crow:hasId ?id .
@@ -205,6 +211,15 @@ class CrowtologyClient():
             list: The objects.
         """
         res = self.onto.query(self._present_nocls_query)
+        return [g["obj"] for g in res]
+
+    def getTangibleObjects_disabled_nocls(self):
+        """Lists physical objects present or disabled on the workspace NO CLS
+
+        Returns:
+            list: The objects.
+        """
+        res = self.onto.query(self._present_and_disabled_nocls_query)
         return [g["obj"] for g in res]
 
     def getColors(self):
@@ -653,7 +668,7 @@ class CrowtologyClient():
             timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
         """
         individual_name = object.split('#')[-1]
-        self.__node.get_logger().info("Object {} already detected, updating timestamp to {} and location to {}.".format(individual_name, timestamp, location))
+        self.__node.get_logger().info("UPDATING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
         self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
         
         abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))
@@ -662,7 +677,7 @@ class CrowtologyClient():
             self.onto.set((abs_loc[0], self.CROW.y, Literal(location[1], datatype=XSD.float)))
             self.onto.set((abs_loc[0], self.CROW.z, Literal(location[2], datatype=XSD.float)))
         else:
-            self.__node.get_logger().info("Object {} location update failed.".format(individual_name, timestamp, location))
+            self.__node.get_logger().info("Object {} location update failed.".format(individual_name))
         
         pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))
         if len(pcl_dim) > 0:
@@ -684,11 +699,11 @@ class CrowtologyClient():
             adder_id (str): if of object given by adder node, according to the amount and order of overall detections
         """
     
-        self.__node.get_logger().info("Adding detected object {}, id {} at location {}.".format(object_name, 'od_'+str(adder_id), location))
         # Find template object
         all_props = list(self.onto.triples((template, None, None)))
         individual_name = object_name + '_od_'+str(adder_id)
         PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
+        self.__node.get_logger().info("ADDING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
 
         # Add common object properties
         for prop in all_props:
@@ -741,7 +756,36 @@ class CrowtologyClient():
             object (URIRef): existing object to be deleated
         """
         if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
+            self.__node.get_logger().info("DELETING object {}.".format(obj.split('#')[-1]))
             self.onto.remove((obj, None, None))
+    
+    def disable_object(self, obj):
+        """
+        Disable existing object - temporarly remove id
+
+        Args:
+            object (URIRef): existing object to be disabled
+        """
+        if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
+            id = list(self.onto.objects(obj, self.CROW.hasId))
+            if len(id) > 0:
+                self.__node.get_logger().info("DISABLING object {}.".format(obj.split('#')[-1]))
+                self.onto.remove((obj, self.CROW.hasId, None))
+                self.onto.add((obj, self.CROW.disabledId, id[0]))
+
+    def enable_object(self, obj):
+        """
+        Enable existing object - refresh temporarly removed id
+
+        Args:
+            object (URIRef): existing object to be enabled
+        """
+        if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
+            id = list(self.onto.objects(obj, self.CROW.disabledId))
+            if len(id) > 0:
+                self.__node.get_logger().info("ENABLING object {}.".format(obj.split('#')[-1]))
+                self.onto.remove((obj, self.CROW.disabledId, None))
+                self.onto.add((obj, self.CROW.hasId, id[0]))
             
 
     @property
