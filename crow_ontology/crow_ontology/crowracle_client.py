@@ -657,6 +657,11 @@ class CrowtologyClient():
         else:
             return None
 
+    def get_uri_from_str(self, str):
+        new_ns = Namespace(f"{str.split('#')[0]}#")
+        obj_uri = new_ns[str.split('#')[-1]]
+        return obj_uri
+
     def update_detected_object(self, object, location, size, timestamp):
         """
         Update info about an existing object after new detection for this object comes
