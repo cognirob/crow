@@ -92,6 +92,7 @@ class ControlLogic(Node):
                 size = self.crowracle.get_pcl_dimensions_of_obj(target)
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
+                return
             else:
                 return (np.array(xyz), np.array(size), ObjectType.CUBE)  # TODO set object type
         else:
@@ -116,10 +117,14 @@ class ControlLogic(Node):
                 target = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, target cannot be set!")
+                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
                     continue
                 location = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, location cannot be set!")
+                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
                     continue
                 self.get_logger().info(f"Target set to {target} and location is {location}.")
             elif d["action"] == CommandType.POINT:
@@ -127,6 +132,8 @@ class ControlLogic(Node):
                 target = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
+                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
                     continue
                 self.get_logger().info(f"Target set to {target}.")
                 if self.DEBUG:
