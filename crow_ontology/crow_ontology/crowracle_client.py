@@ -14,6 +14,7 @@ try:
     from rcl_interfaces.srv import GetParameters
 except:  # noqa
     pass
+from threading import RLock
 
 
 ONTO_SERVER_NAME = "ontology_server"
@@ -98,6 +99,7 @@ class CrowtologyClient():
             for the configuration file in some default location. Defaults to None.
             local_mode (bool, optional): Whether to run in local mode. Defaults to False.
         """
+        self.lock = RLock()
         self.__client_id = str(uuid4()).replace("-", "_")  # id in case this client needs to be identified in ROS
         self.__uses_external_node = False
 
@@ -672,24 +674,27 @@ class CrowtologyClient():
             size (list of floats): new xyz dimensions of object's pointcloud received from detection
             timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
         """
-        individual_name = object.split('#')[-1]
-        self.__node.get_logger().info("UPDATING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
-        self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
-        
-        abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))
-        if len(abs_loc) > 0:
-            self.onto.set((abs_loc[0], self.CROW.x, Literal(location[0], datatype=XSD.float)))
-            self.onto.set((abs_loc[0], self.CROW.y, Literal(location[1], datatype=XSD.float)))
-            self.onto.set((abs_loc[0], self.CROW.z, Literal(location[2], datatype=XSD.float)))
-        else:
-            self.__node.get_logger().info("Object {} location update failed.".format(individual_name))
-        
-        pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))
-        if len(pcl_dim) > 0:
-            self.onto.set((pcl_dim[0], self.CROW.x, Literal(size[0], datatype=XSD.float)))
-            self.onto.set((pcl_dim[0], self.CROW.y, Literal(size[1], datatype=XSD.float)))
-            self.onto.set((pcl_dim[0], self.CROW.z, Literal(size[2], datatype=XSD.float)))
+        if self.lock.acquire(1):
+            individual_name = object.split('#')[-1]
+            self.__node.get_logger().info("UPDATING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
+            self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+            
+            abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))
+            if len(abs_loc) > 0:
+                self.onto.set((abs_loc[0], self.CROW.x, Literal(location[0], datatype=XSD.float)))
+                self.onto.set((abs_loc[0], self.CROW.y, Literal(location[1], datatype=XSD.float)))
+                self.onto.set((abs_loc[0], self.CROW.z, Literal(location[2], datatype=XSD.float)))
+            else:
+                self.__node.get_logger().info("Object {} location update failed.".format(individual_name))
+            
+            pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))
+            if len(pcl_dim) > 0:
+                self.onto.set((pcl_dim[0], self.CROW.x, Literal(size[0], datatype=XSD.float)))
+                self.onto.set((pcl_dim[0], self.CROW.y, Literal(size[1], datatype=XSD.float)))
+                self.onto.set((pcl_dim[0], self.CROW.z, Literal(size[2], datatype=XSD.float)))
                 
+            self.lock.release()
+
     def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
         """
         Add newly detected object and info about the object after a detection for this object comes
@@ -710,48 +715,51 @@ class CrowtologyClient():
         PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
         self.__node.get_logger().info("ADDING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
 
-        # Add common object properties
-        for prop in all_props:
-            #add idividual_name_ns#hole1 for all objectParts of template
-            if prop[1] == self.CROW.hasObjectPart:
-                all_object_part_props = list(self.onto.triples((prop[2], None, None)))
-                prop_name = PART[str(prop[2]).split('#')[-1]]
-                self.onto.add((self.CROW[individual_name], prop[1], prop_name))
-                for object_part_prop in all_object_part_props:
-                    self.onto.add((prop_name, object_part_prop[1], object_part_prop[2]))
-            #add other properties based on template
-            else:
-                self.onto.add((self.CROW[individual_name], prop[1], prop[2]))
-        # correct references between holes in property 'extendsTo'
-        all_object_parts = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasObjectPart))
-        for object_part in all_object_parts:
-            extendsto_obj = list(self.onto.objects(object_part, self.CROW.extendsTo))
-            if len(extendsto_obj) > 0:
-                correct_obj = PART[str(extendsto_obj[0]).split('#')[-1]]
-                self.onto.set((object_part, self.CROW.extendsTo, correct_obj))
+        if self.lock.acquire(1):
+            # Add common object properties
+            for prop in all_props:
+                #add idividual_name_ns#hole1 for all objectParts of template
+                if prop[1] == self.CROW.hasObjectPart:
+                    all_object_part_props = list(self.onto.triples((prop[2], None, None)))
+                    prop_name = PART[str(prop[2]).split('#')[-1]]
+                    self.onto.add((self.CROW[individual_name], prop[1], prop_name))
+                    for object_part_prop in all_object_part_props:
+                        self.onto.add((prop_name, object_part_prop[1], object_part_prop[2]))
+                #add other properties based on template
+                else:
+                    self.onto.add((self.CROW[individual_name], prop[1], prop[2]))
+            # correct references between holes in property 'extendsTo'
+            all_object_parts = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasObjectPart))
+            for object_part in all_object_parts:
+                extendsto_obj = list(self.onto.objects(object_part, self.CROW.extendsTo))
+                if len(extendsto_obj) > 0:
+                    correct_obj = PART[str(extendsto_obj[0]).split('#')[-1]]
+                    self.onto.set((object_part, self.CROW.extendsTo, correct_obj))
 
-        # Add AbsoluteLocaton (object specific)
-        prop_name = PART.xyzAbsoluteLocation
-        prop_range = list(self.onto.objects(self.CROW.hasAbsoluteLocation, RDFS.range))[0]
-        self.onto.add((prop_name, RDF.type, prop_range))
-        self.onto.add((prop_name, self.CROW.x, Literal(location[0], datatype=XSD.float)))
-        self.onto.add((prop_name, self.CROW.y, Literal(location[1], datatype=XSD.float)))
-        self.onto.add((prop_name, self.CROW.z, Literal(location[2], datatype=XSD.float)))
-        self.onto.set((self.CROW[individual_name], self.CROW.hasAbsoluteLocation, prop_name))
+            # Add AbsoluteLocaton (object specific)
+            prop_name = PART.xyzAbsoluteLocation
+            prop_range = list(self.onto.objects(self.CROW.hasAbsoluteLocation, RDFS.range))[0]
+            self.onto.add((prop_name, RDF.type, prop_range))
+            self.onto.add((prop_name, self.CROW.x, Literal(location[0], datatype=XSD.float)))
+            self.onto.add((prop_name, self.CROW.y, Literal(location[1], datatype=XSD.float)))
+            self.onto.add((prop_name, self.CROW.z, Literal(location[2], datatype=XSD.float)))
+            self.onto.set((self.CROW[individual_name], self.CROW.hasAbsoluteLocation, prop_name))
 
-        # Add PclDimensions (object specific)
-        prop_name = PART.xyzPclDimensions
-        prop_range = list(self.onto.objects(self.CROW.hasPclDimensions, RDFS.range))[0]
-        self.onto.add((prop_name, RDF.type, prop_range))
-        self.onto.add((prop_name, self.CROW.x, Literal(size[0], datatype=XSD.float)))
-        self.onto.add((prop_name, self.CROW.y, Literal(size[1], datatype=XSD.float)))
-        self.onto.add((prop_name, self.CROW.z, Literal(size[2], datatype=XSD.float)))
-        self.onto.set((self.CROW[individual_name], self.CROW.hasPclDimensions, prop_name))
+            # Add PclDimensions (object specific)
+            prop_name = PART.xyzPclDimensions
+            prop_range = list(self.onto.objects(self.CROW.hasPclDimensions, RDFS.range))[0]
+            self.onto.add((prop_name, RDF.type, prop_range))
+            self.onto.add((prop_name, self.CROW.x, Literal(size[0], datatype=XSD.float)))
+            self.onto.add((prop_name, self.CROW.y, Literal(size[1], datatype=XSD.float)))
+            self.onto.add((prop_name, self.CROW.z, Literal(size[2], datatype=XSD.float)))
+            self.onto.set((self.CROW[individual_name], self.CROW.hasPclDimensions, prop_name))
 
-        # Add unique ID and timestamp
-        self.onto.add((self.CROW[individual_name], self.CROW.hasId, Literal('od_'+str(adder_id), datatype=XSD.string)))
-        self.onto.add((self.CROW[individual_name], self.CROW.hasUuid, Literal(uuid, datatype=XSD.string)))
-        self.onto.add((self.CROW[individual_name], self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+            # Add unique ID and timestamp
+            self.onto.add((self.CROW[individual_name], self.CROW.hasId, Literal('od_'+str(adder_id), datatype=XSD.string)))
+            self.onto.add((self.CROW[individual_name], self.CROW.hasUuid, Literal(uuid, datatype=XSD.string)))
+            self.onto.add((self.CROW[individual_name], self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+
+            self.lock.release()
 
     def delete_object(self, obj):
         """
@@ -760,9 +768,11 @@ class CrowtologyClient():
         Args:
             object (URIRef): existing object to be deleated
         """
+        self.lock.acquire()
         if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
             self.__node.get_logger().info("DELETING object {}.".format(obj.split('#')[-1]))
             self.onto.remove((obj, None, None))
+        self.lock.release()
     
     def disable_object(self, obj):
         """
