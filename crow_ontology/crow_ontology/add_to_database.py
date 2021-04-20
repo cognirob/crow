@@ -22,7 +22,7 @@ from rcl_interfaces.srv import GetParameters
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 10  # seconds
-DISABLING_TIME_LIMIT = 3  # seconds
+DISABLING_TIME_LIMIT = 4  # seconds
 TIMER_FREQ = 0.5 # seconds
 
 def distance(entry):
