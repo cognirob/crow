@@ -77,7 +77,7 @@ def buildGraph(names_file, onto, recipe_name=None):
 # %% Do
 buildGraph(names_file, onto)
 # %% Draw
-outonto_file = "./src/crow/ontology/onto_draft_03.owl"
+outonto_file = "./src/crow/ontology/onto_draft_02.owl"
 #utonto_file = onto_file
 
 onto.serialize(outonto_file)

@@ -1,6 +1,8 @@
 #Class (#hasNlpName) #Name
 classes:
   en:
+    StorageMarker: [storage marker]
+    StorageSpace: [storage space]
     Equipment: [equipment]
     Hand: [hand]
     Tool: [tool]
@@ -59,6 +61,8 @@ classes:
     ScrewThread: [screw thread]
 
   cz:
+    StorageMarker: [značka úložiště]
+    StorageSpace: [úložný prostor, úložiště]
     Equipment: [vybavení]
     Hand: [ruka]
     Tool: [nástroj]

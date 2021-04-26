@@ -2,6 +2,7 @@ data_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#canBePicked: _can_be_picked
   http://imitrob.ciirc.cvut.cz/ontologies/crow#duration: duration
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasAction: action
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasArea: area
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasArucoId: aruco_id
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDescription: description
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDetectorName: detector_name
@@ -18,7 +19,9 @@ data_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasToken: token
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasTokens: tokens
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasUuid: uuid
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasVolume: volume
   http://imitrob.ciirc.cvut.cz/ontologies/crow#headType: head_type
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#isActive: active
   http://imitrob.ciirc.cvut.cz/ontologies/crow#isBool: bool
   http://imitrob.ciirc.cvut.cz/ontologies/crow#isInWorkspace: _is_in_workspace
   http://imitrob.ciirc.cvut.cz/ontologies/crow#isLastMentioned: _is_last_mentioned
@@ -82,6 +85,8 @@ obj_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasObjectPart: object_part
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasParseTree: parse_tree
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPclDimensions: pcl_dimensions
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPolygon: polygon
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPolyhedron: polyhedron
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPos: pos
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPose: pose
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRelativeLocation: relative_location
