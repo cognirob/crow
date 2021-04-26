@@ -174,14 +174,29 @@ class CrowtologyClient():
         return {k: p.string_value for k, p in zip(DB_PARAM_NAMES, future.result().values)}
 
     def get_filter_object_properties(self):
-        qres = self.onto.query(self._filter_properties_query)
+        """Return dict of numbered dicts with info about objects relevant to filter
+
+        Returns:
+            res_list (dict of dicts): Object properties (name, sigma, color) for filter  
+        """
+        qres = list(self.onto.query(self._filter_properties_query))
         res_list = {}
+        qres.sort(key = lambda i: i["name"])
         for idx, g in enumerate(qres):
             res_dict = {}
             res_dict["name"] = g["name"].toPython()
             res_dict["sigma"] = g['sigma'].toPython()
             res_dict["color"] = np.fromstring(g["col"].toPython().strip('[]').strip("''"), dtype=float, sep=' ')
             res_list[idx] = res_dict
+        names = [res_list[res]['name'] for res in res_list.keys()]
+        for name in ['kuka', 'kuka_gripper', 'hand']:  
+            if name not in names:
+                idx += 1
+                res_dict = {}
+                res_dict['name'] = name
+                res_dict['sigma'] = res_list[idx-1]['sigma']
+                res_dict['color'] = np.array([0.004, 0.004, 0.004])
+                res_list[idx] = res_dict
         return res_list
 
     def getTangibleObjectClasses(self, mustBeLeaf=True):
@@ -207,6 +222,11 @@ class CrowtologyClient():
         return [g["obj"] for g in res]
 
     def getTangibleObjectsProps(self):
+        """Lists physical objects present on the workspace together with their properties
+
+        Returns:
+            res_list (list of dicts): The objects and their properties
+        """
         res = self.onto.query(self._present_query_props)
         res_list = []
         for g in res:
