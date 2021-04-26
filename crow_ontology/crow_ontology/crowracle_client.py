@@ -6,6 +6,7 @@ from knowl import OntologyAPI, DBConfig
 import os
 from importlib.util import find_spec
 from uuid import uuid4
+import numpy as np
 import yaml
 from crow_ontology.crowracle_server import DB_PARAM_NAMES, DB_PARAM_MAP
 try:
@@ -81,6 +82,14 @@ class CrowtologyClient():
             ?obj rdf:type crow:NamedColor .
         }""",
                                    initNs={"owl": OWL, "crow": CROW}
+                                   )
+    _filter_properties_query = prepareQuery("""SELECT DISTINCT ?name ?col ?sigma
+        WHERE {
+            ?obj crow:hasDetectorName ?name .
+            ?obj crow:hasFilterColor ?col .
+            ?obj crow:hasSigma ?sigma .
+        }""",
+                                   initNs={"crow": CROW}
                                    )
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
@@ -163,6 +172,17 @@ class CrowtologyClient():
         if not future.done():
             raise Exception("Could not retrieve the database parameters from the ROS server node.")
         return {k: p.string_value for k, p in zip(DB_PARAM_NAMES, future.result().values)}
+
+    def get_filter_object_properties(self):
+        qres = self.onto.query(self._filter_properties_query)
+        res_list = {}
+        for idx, g in enumerate(qres):
+            res_dict = {}
+            res_dict["name"] = g["name"].toPython()
+            res_dict["sigma"] = g['sigma'].toPython()
+            res_dict["color"] = np.fromstring(g["col"].toPython().strip('[]').strip("''"), dtype=float, sep=' ')
+            res_list[idx] = res_dict
+        return res_list
 
     def getTangibleObjectClasses(self, mustBeLeaf=True):
         """Return classes of all TangibleObjects (i.e. physical objects that can be present on the workspace)

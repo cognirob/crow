@@ -135,6 +135,10 @@ class OntoTester(Node):
         list_of_dicts = self.crowracle.getTangibleObjectsProps()
         print(list_of_dicts)
 
+        print('get_filter_object_properties')
+        dict_of_dicts = self.crowracle.get_filter_object_properties()
+        print(dict_of_dicts)
+
         print('done')
 
 def main():

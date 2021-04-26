@@ -11,14 +11,14 @@ from warnings import warn
 import cv2
 import os
 import argparse
-from owlrl import DeductiveClosure, OWLRL_Semantics
+#from owlrl import DeductiveClosure, OWLRL_Semantics
 import re
 
 
 # %%ArgParser
 parser = argparse.ArgumentParser()
 #parser.add_argument("properties_file")
-parser.add_argument("--onto_file", "-o", default="./src/crow/ontology/onto_draft_03.owl")
+parser.add_argument("--onto_file", "-o", default="./src/crow/ontology/onto_draft_02.owl")
 args = parser.parse_args()
 
 # %%Initialization
@@ -83,6 +83,8 @@ def add_parsed_property(ns, onto_name, prop, value):
             onto.add((prop_name, RDF.type, prop_range))
             onto.add((prop_name, CROW.isBool, Literal(value, datatype=XSD.boolean)))
             onto.add((onto_name, onto_property, prop_name))
+        elif prop == 'hasFilterColor':
+            onto.add((onto_name, onto_property, Literal(value)))
         elif prop_range in [CROW.Location, CROW.Vector]:
             if value is None:
                 value = [None]*3
