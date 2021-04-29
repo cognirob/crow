@@ -6,6 +6,7 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
+from crow_vision_ros2.utils.test_point_in_polyhedron import test_in_hull
 import time
 
 
@@ -138,6 +139,16 @@ class OntoTester(Node):
         print('get_filter_object_properties')
         dict_of_dicts = self.crowracle.get_filter_object_properties()
         print(dict_of_dicts)
+
+        print('get_storage')
+        q1 = {"name": 'storage1'}
+        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
+        print(uris)
+
+        print('test in hull')
+        poly = self.crowracle.get_polyhedron(uris)
+        res = test_in_hull([1., 0.5, 2.5], poly)
+        print(res)
 
         print('done')
 

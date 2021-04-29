@@ -700,9 +700,115 @@ class CrowtologyClient():
             return None
 
     def get_uri_from_str(self, str):
+        """
+        Returns correct URIRef from the URI string.
+
+        Args:
+            str (str): URI string
+        Returns:
+            obj_uri (URIRef): URI
+        """
         new_ns = Namespace(f"{str.split('#')[0]}#")
         obj_uri = new_ns[str.split('#')[-1]]
         return obj_uri
+
+    def get_polyhedron(self, uri):
+        """Get location of points in polyhedron defining a storage space
+
+        Args:
+            uri (URIRef): URI of the storage space
+
+        Returns:
+            polyhedron (list of lists of floats): xyz locations
+        """
+        poly = list(self.onto.objects(uri, self.CROW.hasPolyhedron))
+        if len(poly) > 0:
+            points = list(self.onto.objects(poly, self.CROW.hasPoint3D))
+            if len(points) > 0:
+                polyhedron = []
+                for point in points:
+                    loc = [float(list(self.onto.objects(point, x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+                    polyhedron.append(loc)
+                return polyhedron
+            else:
+                return [[None]]
+        else:
+            return [[None]]
+
+    def get_polygon(self, uri):
+        """Get location of points in polygon defining a storage space
+
+        Args:
+            uri (URIRef): URI of the storage space
+
+        Returns:
+            polygon (list of lists of floats): xyz locations
+        """
+        poly = list(self.onto.objects(uri, self.CROW.hasPolygon))
+        if len(poly) > 0:
+            points = list(self.onto.objects(poly, self.CROW.hasPoint3D))
+            if len(points) > 0:
+                polygon = []
+                for point in points:
+                    loc = [float(list(self.onto.objects(point, x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+                    polygon.append(loc)
+                return polygon
+            else:
+                return [[None]]
+        else:
+            return [[None]]
+
+    def add_storage_space(self, name, polygon, polyhedron, area, volume, centroid):
+        """
+        Add new storage space defined by markers
+
+        Args:
+            name (str): name of storage space
+            polygon (list of lists): 3d points defining the base of the storage space
+            polyhedron (list of lists): all 3d points defininf the storage space
+            area (float): area of the base polygon (base of the storage space)
+            volume (float): volume of the polyhedron (storage space)
+            centroid (list): location of the storage space (the base)
+        """
+        self.__node.get_logger().info("CREATING storage {}, location: [{:.2f},{:.2f},{:.2f}].".format(name, *centroid))
+        storage_uuid = str(uuid4()).replace("-", "_")
+        onto_name = self.CROW[name]
+        PART = Namespace(f"{ONTO_IRI}/{name}#") #ns for each storage space
+        self.onto.add((onto_name, RDF.type, self.CROW.StorageSpace))
+        self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
+        self.onto.add((onto_name, self.CROW.hasUuid, Literal(storage_uuid, datatype=XSD.string)))
+        self.onto.add((onto_name, self.CROW.hasArea, Literal(area, datatype=XSD.float)))
+        self.onto.add((onto_name, self.CROW.hasVolume, Literal(volume, datatype=XSD.float)))
+        self.onto.add((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
+        
+        onto_location = PART['xyzAbsoluteLocation']
+        self.onto.add((onto_location, RDF.type, self.CROW.Location))
+        self.onto.add((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
+        self.onto.add((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
+        self.onto.add((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
+        self.onto.add((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
+        
+        onto_polygon = PART['Polygon']
+        self.onto.add((onto_polygon, RDF.type, self.CROW.Vector))
+        for idx, point in enumerate(polygon):
+            point_name = PART['PolygonPoint{}'.format(idx)]
+            self.onto.add((point_name, RDF.type, self.CROW.Point3D))
+            self.onto.add((point_name, self.CROW.x, Literal(point[0], datatype=XSD.float)))
+            self.onto.add((point_name, self.CROW.y, Literal(point[1], datatype=XSD.float)))
+            self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
+            self.onto.add((onto_polygon, self.CROW.hasPoint3D, point_name))
+        self.onto.add((onto_name, self.CROW.hasPolygon, onto_polygon))
+
+        onto_polyhedron = PART['Polyhedron']
+        self.onto.add((onto_polyhedron, RDF.type, self.CROW.Vector))
+        for idx, point in enumerate(polyhedron):
+            point_name = PART['PolyhedronPoint{}'.format(idx)]
+            self.onto.add((point_name, RDF.type, self.CROW.Point3D))
+            self.onto.add((point_name, self.CROW.x, Literal(point[0], datatype=XSD.float)))
+            self.onto.add((point_name, self.CROW.y, Literal(point[1], datatype=XSD.float)))
+            self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
+            self.onto.add((onto_polyhedron, self.CROW.hasPoint3D, point_name))
+        self.onto.add((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
 
     def update_detected_object(self, object, location, size, timestamp):
         """
