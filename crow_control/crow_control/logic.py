@@ -43,6 +43,7 @@ class ControlLogic(Node):
     DEBUG = False
     UPDATE_INTERVAL = 0.1
     MAX_QUEUE_LENGTH = 10
+    TARGET_BUFFERING_TIME = 0.3 # seconds
 
     STATUS_IDLE = 1
     STATUS_PROCESSING = 2
@@ -90,9 +91,12 @@ class ControlLogic(Node):
             try:
                 uri = next(self.onto.subjects(self.crowracle.CROW.hasId, target))
                 # uri = next(self.onto.objects(self.crowracle.CROW.hasId, target))
-            except StopIteration:
-                self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
-                return
+            except:
+                try:
+                    uri = next(self.onto.subjects(self.crowracle.CROW.disabledId, target))
+                except StopIteration:
+                    self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
+                    return
             xyz = self.crowracle.get_location_of_obj(uri)
             size = self.crowracle.get_pcl_dimensions_of_obj(uri)
             typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
@@ -144,18 +148,19 @@ class ControlLogic(Node):
                 self.get_logger().info(f"Target set to {target} and location is {location}.")
             elif d["action"] == CommandType.POINT:
                 op_name = "Point"
-                target = self.processTarget(d["target"], d["target_type"])
-                if target is None:
-                    self.get_logger().error("Failed to issue pointing action, target cannot be set!")
-                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
-                    continue
-                self.get_logger().info(f"Target set to {target}.")
+                # target = self.processTarget(d["target"], d["target_type"])
+                # if target is None:
+                #     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
+                #     subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                #     subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                #     continue
+                # self.get_logger().info(f"Target set to {target}.")
                 if self.DEBUG:
                     self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
                 else:
                     # self.sendAction(target)
-                    self.push_actions(self.sendAction, target=target)
+                    #self.push_actions(self.sendAction, target=target)
+                    self.push_actions(self.sendAction, data_target=d["target"], data_target_type=d["target_type"])
 
             self.get_logger().info(f"Will perform {op_name}")
 
@@ -163,21 +168,38 @@ class ControlLogic(Node):
         self.command_buffer.append((comand, kwargs))
         subprocess.run("ros2 param set /sentence_processor robot_done True".split())
 
+    def prepare_command(self, data_target=None, data_target_type=None):
+        start_time = datetime.now()
+        #@TODO: data_target and data_target_type may be lists of candidates or as well dicts with constraints only
+        while (target is None) and (duration <= self.TARGET_BUFFERING_TIME):
+            target = self.processTarget(data_target, data_target_type)
+            duration = datetime.now() - start_time
+        if target is None: #@TODO: try another target candidate
+            self.get_logger().error("Failed to issue pointing action, target cannot be set!")
+            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+            subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+            return None
+        else:
+            self.get_logger().info(f"Target set to {target}.")
+            return target
+
     def update_cb(self):
-        if self.status & self.STATUS_IDLE:
+        if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
             try:
                 command, kwargs = self.command_buffer.pop()
             except IndexError as ie:  # no new commands to process
                 pass  # noqa
             else:
-                try:
-                    command(**kwargs)
-                except Exception as e:
-                    self.get_logger().error(f"Error executing action {command} with args {str(kwargs)}. The error was:\n{e}")
-                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
-                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-                finally:
-                    self._set_status(self.STATUS_IDLE)
+                target = self.prepare_command(**kwargs) #multiple attempts to identify target
+                if self.status & self.STATUS_IDLE:
+                    try:
+                        command(target)
+                    except Exception as e:
+                        self.get_logger().error(f"Error executing action {command} with args {str(target)}. The error was:\n{e}")
+                        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                        subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                    finally:
+                        self._set_status(self.STATUS_IDLE)
             finally:
                 pass
 
