@@ -170,6 +170,8 @@ class ControlLogic(Node):
 
     def prepare_command(self, data_target=None, data_target_type=None):
         start_time = datetime.now()
+        target = None
+        duration = 0
         #@TODO: data_target and data_target_type may be lists of candidates or as well dicts with constraints only
         while (target is None) and (duration <= self.TARGET_BUFFERING_TIME):
             target = self.processTarget(data_target, data_target_type)
