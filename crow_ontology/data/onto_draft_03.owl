@@ -78,6 +78,12 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#world_name -->
+
+    <owl:AnnotationProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#world_name"/>
+    
+
+
     <!-- http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#python_name -->
 
     <owl:AnnotationProperty rdf:about="http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#python_name"/>
@@ -2141,6 +2147,7 @@
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">střecha auta</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">car roof</hasNlpNameEN>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">roof of the car</hasNlpNameEN>
+        <world_name>CAR_ROOF</world_name>
     </owl:Class>
     
 
@@ -2354,6 +2361,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Workpiece"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kostka</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cube</hasNlpNameEN>
+        <world_name>CUBE</world_name>
     </owl:Class>
     
 
@@ -2696,6 +2704,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Workpiece"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lžíce bagru</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">excavator bucket</hasNlpNameEN>
+        <world_name>EXCAVATOR_BUCKET</world_name>
     </owl:Class>
     
 
@@ -2851,6 +2860,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#InsertingTool"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kladivo</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hammer</hasNlpNameEN>
+        <world_name>HAMMER</world_name>
     </owl:Class>
     
 
@@ -3624,6 +3634,7 @@
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">matice</hasNlpNameCZ>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">matka</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">nut</hasNlpNameEN>
+        <world_name>NUT</world_name>
     </owl:Class>
     
 
@@ -3917,6 +3928,7 @@
         </rdfs:subClassOf>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">čep</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">peg</hasNlpNameEN>
+        <world_name>PEG</world_name>
     </owl:Class>
     
 
@@ -4424,6 +4436,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#DrivingTool"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">šroubovák</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwdriver</hasNlpNameEN>
+        <world_name>SCREWDRIVER</world_name>
     </owl:Class>
     
 
@@ -4667,6 +4680,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Workpiece"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">koule</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">sphere</hasNlpNameEN>
+        <world_name>SPHERE</world_name>
     </owl:Class>
     
 
@@ -5124,6 +5138,7 @@
         </rdfs:subClassOf>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">destička</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wafer</hasNlpNameEN>
+        <world_name>WAFER</world_name>
     </owl:Class>
     
 
@@ -5141,6 +5156,7 @@
         </rdfs:subClassOf>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">podložka</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">washer</hasNlpNameEN>
+        <world_name>WASHER</world_name>
     </owl:Class>
     
 
@@ -5166,6 +5182,7 @@
         </rdfs:subClassOf>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kolo</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wheel</hasNlpNameEN>
+        <world_name>WHEEL</world_name>
     </owl:Class>
     
 
@@ -5205,6 +5222,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Nutdriver"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">klíč</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">wrench</hasNlpNameEN>
+        <world_name>WRENCH</world_name>
     </owl:Class>
     
 
@@ -7289,11 +7307,7 @@
         <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
     </owl:NamedIndividual>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7310,10 +7324,6 @@
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7333,11 +7343,19 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
