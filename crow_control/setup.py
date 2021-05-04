@@ -26,7 +26,10 @@ setup(
         'console_scripts': [
             'logic = crow_control.logic:main',
             'dummy = crow_control.testing.dummy_action_robot:main',
-            'ovis = crow_control.onto_vision:main'
+            'ptest = crow_control.testing.test_param:main',
+            'stest = crow_control.testing.test_param_server:main',
+            'ovis = crow_control.onto_vision:main',
+            'profiler = crow_control.utils.profiler_node:main'
         ],
     },
 )
