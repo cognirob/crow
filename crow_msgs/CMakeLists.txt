@@ -47,6 +47,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   #"msg/RobotPose.msg"
   "msg/ObjectType.msg"
   "msg/NlpStatus.msg"
+  "msg/Runtime.msg"
 
   #"srv/GetRobotStatus.srv"
 

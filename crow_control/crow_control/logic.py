@@ -66,7 +66,6 @@ class ControlLogic(Node):
 
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
         StatTimer.init()
-        StatTimer.ENABLED = False
 
     def _extract_obj_type(self, type_str):
         if type_str in self._type_dict:

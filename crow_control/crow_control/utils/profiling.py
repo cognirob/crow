@@ -3,75 +3,38 @@
 from time import time
 import rclpy
 from datetime import datetime
+from crow_msgs.msg import Runtime
+from uuid import uuid4
+
 
 class StatTimer():
-    ENABLED = True
-    NAME = ">>> TIMER <<<"
-    _logger = None
+    PROFILING_TOPIC = "/profile"
+    DISABLED = False
     _clock = None
-    _time = 0
-    _sections_time = {}
-    _sections_stat = {}
 
     @classmethod
     def init(cls):
-        try:
-            rclpy.init()
-        except:
-            pass
-
-        if cls._logger is None:
-            cls._logger = rclpy.logging.get_logger(cls.NAME)
+        if cls._clock is None:
             cls._clock = rclpy.clock.ROSClock()
-            # rclpy.get_default_context().on_shutdown(cls.print_summary)
-
-    @staticmethod
-    def _format_time(ros_time):
-        s, m = ros_time.seconds_nanoseconds()
-        return datetime.fromtimestamp(s + m * 1e-9).strftime("%Y/%m/%d @ %H:%M:%S.%f")
-
-    @classmethod
-    def _log(cls, msg):
-        if cls.ENABLED:
-            cls._logger.info(f"[{cls._format_time(cls._clock.now())}] {msg}")
-
-    @classmethod
-    def _warn(cls, msg):
-        if cls.ENABLED:
-            cls._logger.warn(f"[{cls._format_time(cls._clock.now())}] {msg}")
+            cls._node = rclpy.create_node("profile_timer_" + str(uuid4()).replace("-", ""))
+            cls._pub = cls._node.create_publisher(Runtime, cls.PROFILING_TOPIC, 10)
 
     @classmethod
     def _now(cls):
         return cls._clock.now()
 
     @classmethod
-    def reset(cls, enabled=True):
-        cls._time = cls._now()
-        cls._log(f"Timer is reset to: {cls._format_time(cls._time)}")
-
-    @classmethod
     def enter(cls, section_name):
-        cls._log(f"Entering section {section_name}")
-        cls._sections_time[section_name] = cls._now()
+        if cls.DISABLED:
+            return
+        time = cls._now().to_msg()
+        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_ENTER)
+        cls._pub.publish(msg)
 
     @classmethod
     def exit(cls, section_name):
-        end_time = cls._now()
-        if section_name not in cls._sections_time:
-            cls._warn(f"Trying to exit section {section_name} but it was never entered!")
+        if cls.DISABLED:
             return
-
-        duration = (end_time - cls._sections_time[section_name]).nanoseconds * 1e-9
-        cls._log(f"Exiting section {section_name}, duration = {duration} seconds.")
-        del cls._sections_time[section_name]
-
-    @classmethod
-    def append_section_result(cls, section_name, duration):
-        if section_name not in cls._sections_stat:
-            cls._sections_stat[section_name] = []
-        cls._sections_stat[section_name].append(duration)
-
-    @classmethod
-    def print_summary(cls, *args, **kwargs):
-        print("asdasfsgfsgafdgdfgafdgadfgdfg")
-        cls._log(cls._sections_stat)
+        time = cls._now().to_msg()
+        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_EXIT)
+        cls._pub.publish(msg)
