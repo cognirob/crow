@@ -91,6 +91,12 @@ class CrowtologyClient():
         }""",
                                    initNs={"crow": CROW}
                                    )
+    _wname_query = prepareQuery('''SELECT ?wname
+        WHERE {
+            ?obj rdf:type ?cls .
+            ?cls crow:world_name ?wname .
+            }
+        ''', initNs={"rdf": RDF, "rdfs": RDFS, "crow": CROW})
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
@@ -177,7 +183,7 @@ class CrowtologyClient():
         """Return dict of numbered dicts with info about objects relevant to filter
 
         Returns:
-            res_list (dict of dicts): Object properties (name, sigma, color) for filter  
+            res_list (dict of dicts): Object properties (name, sigma, color) for filter
         """
         qres = list(self.onto.query(self._filter_properties_query))
         res_list = {}
@@ -189,7 +195,7 @@ class CrowtologyClient():
             res_dict["color"] = np.fromstring(g["col"].toPython().strip('[]').strip("''"), dtype=float, sep=' ')
             res_list[idx] = res_dict
         names = [res_list[res]['name'] for res in res_list.keys()]
-        for name in ['kuka', 'kuka_gripper', 'hand']:  
+        for name in ['kuka', 'kuka_gripper', 'hand']:
             if name not in names:
                 idx += 1
                 res_dict = {}
@@ -322,7 +328,7 @@ class CrowtologyClient():
         """Get id of URI object
 
         Args:
-            uri URIRefs: objects 
+            uri URIRefs: objects
 
         Returns:
             id (str): id of object
@@ -441,7 +447,7 @@ class CrowtologyClient():
         for ent in entities:
             obj_of_ent_class = list(self.onto.subjects(RDF.type, ent))
             if len(obj_of_ent_class) > 0: # ent is a class
-                for obj in obj_of_ent_class: 
+                for obj in obj_of_ent_class:
                     result_entities.append(obj) # append URIobject of this class
             elif ent not in result_entities:
                 result_entities.append(ent) # ent is a color, append the URIcolor
@@ -712,6 +718,22 @@ class CrowtologyClient():
         obj_uri = new_ns[str.split('#')[-1]]
         return obj_uri
 
+    def get_world_name_from_uri(self, uri):
+        """Get annotation property "world_name" from URI
+
+        Args:
+            str (URIRef): URI of the object
+
+        Returns:
+            str
+        """
+        try:
+            result = self.onto.query(self._wname_query, initBindings={'?obj': uri})
+            world_name = str(list(result)[0][0])
+        except:
+            return "UNKNOWN"
+        return world_name
+
     def get_polyhedron(self, uri):
         """Get location of points in polyhedron defining a storage space
 
@@ -780,14 +802,14 @@ class CrowtologyClient():
         self.onto.add((onto_name, self.CROW.hasArea, Literal(area, datatype=XSD.float)))
         self.onto.add((onto_name, self.CROW.hasVolume, Literal(volume, datatype=XSD.float)))
         self.onto.add((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
-        
+
         onto_location = PART['xyzAbsoluteLocation']
         self.onto.add((onto_location, RDF.type, self.CROW.Location))
         self.onto.add((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
         self.onto.add((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
         self.onto.add((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
         self.onto.add((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
-        
+
         onto_polygon = PART['Polygon']
         self.onto.add((onto_polygon, RDF.type, self.CROW.Vector))
         for idx, point in enumerate(polygon):
@@ -824,7 +846,7 @@ class CrowtologyClient():
             individual_name = object.split('#')[-1]
             self.__node.get_logger().info("UPDATING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
             self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
-            
+
             abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))
             if len(abs_loc) > 0:
                 self.onto.set((abs_loc[0], self.CROW.x, Literal(location[0], datatype=XSD.float)))
@@ -832,13 +854,13 @@ class CrowtologyClient():
                 self.onto.set((abs_loc[0], self.CROW.z, Literal(location[2], datatype=XSD.float)))
             else:
                 self.__node.get_logger().info("Object {} location update failed.".format(individual_name))
-            
+
             pcl_dim = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasPclDimensions))
             if len(pcl_dim) > 0:
                 self.onto.set((pcl_dim[0], self.CROW.x, Literal(size[0], datatype=XSD.float)))
                 self.onto.set((pcl_dim[0], self.CROW.y, Literal(size[1], datatype=XSD.float)))
                 self.onto.set((pcl_dim[0], self.CROW.z, Literal(size[2], datatype=XSD.float)))
-                
+
             self.lock.release()
 
     def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
@@ -854,7 +876,7 @@ class CrowtologyClient():
             template (URIRef): template object from ontology corresponding to the detected object
             adder_id (str): if of object given by adder node, according to the amount and order of overall detections
         """
-    
+
         # Find template object
         all_props = list(self.onto.triples((template, None, None)))
         individual_name = object_name + '_od_'+str(adder_id)
@@ -919,7 +941,7 @@ class CrowtologyClient():
             self.__node.get_logger().info("DELETING object {}.".format(obj.split('#')[-1]))
             self.onto.remove((obj, None, None))
         self.lock.release()
-    
+
     def disable_object(self, obj):
         """
         Disable existing object - temporarly remove id
@@ -947,7 +969,7 @@ class CrowtologyClient():
                 self.__node.get_logger().info("ENABLING object {}.".format(obj.split('#')[-1]))
                 self.onto.remove((obj, self.CROW.disabledId, None))
                 self.onto.add((obj, self.CROW.hasId, id[0]))
-            
+
 
     @property
     def client_id(self):
