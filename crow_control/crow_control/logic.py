@@ -34,6 +34,7 @@ from rdflib.term import Identifier
 import time
 import subprocess
 from collections import deque
+from crow_control.utils.profiling import StatTimer
 
 
 class ControlLogic(Node):
@@ -63,6 +64,16 @@ class ControlLogic(Node):
         self.create_timer(self.UPDATE_INTERVAL, self.update_cb)
         self.command_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
 
+        self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
+        StatTimer.init()
+        StatTimer.ENABLED = False
+
+    def _extract_obj_type(self, type_str):
+        if type_str in self._type_dict:
+            return self._type_dict[type_str]
+        else:
+            return -1
+
     def processTarget(self, target, target_type):
         """Processes target according to its type.
 
@@ -84,21 +95,24 @@ class ControlLogic(Node):
                 return
             xyz = self.crowracle.get_location_of_obj(uri)
             size = self.crowracle.get_pcl_dimensions_of_obj(uri)
-            return (np.array(xyz), np.array(size), ObjectType.CUBE)  # TODO set object type
+            typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
+            return (np.array(xyz), np.array(size), typ)
         elif target_type == "onto_uri":
             try:
                 # xyz = np.array([-0.00334, 0.00232, 0.6905])
                 xyz = self.crowracle.get_location_of_obj(target)
                 size = self.crowracle.get_pcl_dimensions_of_obj(target)
+                typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(target))
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
                 return
             else:
-                return (np.array(xyz), np.array(size), ObjectType.CUBE)  # TODO set object type
+                return (np.array(xyz), np.array(size), typ)
         else:
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
     def command_cb(self, msg):
+        StatTimer.enter("NLP command processing")
         # self.get_logger().info("Received command msg!")
         data = json.loads(msg.data)
         if type(data) is dict:
@@ -109,6 +123,7 @@ class ControlLogic(Node):
         self.get_logger().info(f"Received {len(data)} command(s):")
         self.get_logger().info(f"Received {data}")
         self.process_actions(data)
+        StatTimer.exit("NLP command processing")
 
     def process_actions(self, data):
         for d in data:
@@ -145,7 +160,8 @@ class ControlLogic(Node):
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, comand, **kwargs):
-            self.command_buffer.append((self.sendAction, kwargs))
+        self.command_buffer.append((comand, kwargs))
+        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
 
     def update_cb(self):
         if self.status & self.STATUS_IDLE:
@@ -158,14 +174,19 @@ class ControlLogic(Node):
                     command(**kwargs)
                 except Exception as e:
                     self.get_logger().error(f"Error executing action {command} with args {str(kwargs)}. The error was:\n{e}")
-                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
                     subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                finally:
+                    self._set_status(self.STATUS_IDLE)
+            finally:
+                pass
 
     def _set_status(self, status):
         self.status = status
-        print(self.status)
+        # print(self.status)
 
     def sendAction(self, target, location=None, obj=None):
+        StatTimer.enter("Sending command")
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = PickNPlace.Goal()
         goal_msg.frame_id = "camera1_color_optical_frame"
@@ -185,10 +206,11 @@ class ControlLogic(Node):
         else:
             pass  # TODO
         # goal_msg.size = [0.1, 0.2, 0.3]
-        goal_msg.object = ObjectType(type=ObjectType.CUBE)
+        goal_msg.object_type = ObjectType(type=target[2])
 
         self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
+        StatTimer.exit("Sending command")
 
     def robot_response_cb(self, future):
         goal_handle = future.result()
