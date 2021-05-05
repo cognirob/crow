@@ -5,7 +5,7 @@ from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
 
-from crow_msgs.msg import StampedString, CommandType#, ObjectType
+from crow_msgs.msg import StampedString, CommandType, Runtime
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
@@ -96,16 +96,20 @@ class ControlLogic(Node):
                 except StopIteration:
                     self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
                     return
+            StatTimer.enter("onto data retrieval id")
             xyz = self.crowracle.get_location_of_obj(uri)
             size = self.crowracle.get_pcl_dimensions_of_obj(uri)
             typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
+            StatTimer.exit("onto data retrieval id")
             return (np.array(xyz), np.array(size), typ)
         elif target_type == "onto_uri":
             try:
                 # xyz = np.array([-0.00334, 0.00232, 0.6905])
+                StatTimer.enter("onto data retrieval uri", severity=Runtime.S_MINOR)
                 xyz = self.crowracle.get_location_of_obj(target)
                 size = self.crowracle.get_pcl_dimensions_of_obj(target)
                 typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(target))
+                StatTimer.exit("onto data retrieval uri")
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
                 return
@@ -115,7 +119,7 @@ class ControlLogic(Node):
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
     def command_cb(self, msg):
-        StatTimer.enter("NLP command processing")
+        StatTimer.enter("command callback")
         # self.get_logger().info("Received command msg!")
         data = json.loads(msg.data)
         if type(data) is dict:
@@ -126,7 +130,7 @@ class ControlLogic(Node):
         self.get_logger().info(f"Received {len(data)} command(s):")
         self.get_logger().info(f"Received {data}")
         self.process_actions(data)
-        StatTimer.exit("NLP command processing")
+        StatTimer.exit("command callback")
 
     def process_actions(self, data):
         for d in data:
@@ -159,13 +163,19 @@ class ControlLogic(Node):
                 else:
                     # self.sendAction(target)
                     #self.push_actions(self.sendAction, target=target)
+                    StatTimer.enter("pushing action into queue")
                     self.push_actions(self.sendAction, data_target=d["target"], data_target_type=d["target_type"])
+                    StatTimer.exit("pushing action into queue")
 
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, comand, **kwargs):
+        StatTimer.enter("pushing action into buffer", severity=Runtime.S_SINGLE_LINE)
         self.command_buffer.append((comand, kwargs))
+        StatTimer.exit("pushing action into buffer")
+        StatTimer.enter("setting param", severity=Runtime.S_SINGLE_LINE)
         subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+        StatTimer.exit("setting param")
 
     def prepare_command(self, data_target=None, data_target_type=None):
         start_time = datetime.now()
@@ -244,6 +254,7 @@ class ControlLogic(Node):
             self._set_status(self.STATUS_IDLE)
             return
 
+        StatTimer.enter("robot action")
         self.get_logger().info('Goal accepted :)')
         self._set_status(self.STATUS_EXECUTING)
 
@@ -251,6 +262,7 @@ class ControlLogic(Node):
         self._get_result_future.add_done_callback(self.robot_done_cb)
 
     def robot_done_cb(self, future):
+        StatTimer.exit("robot action")
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
         subprocess.run("ros2 param set /sentence_processor robot_done True".split())
