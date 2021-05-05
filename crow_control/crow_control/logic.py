@@ -95,11 +95,14 @@ class ControlLogic(Node):
                     uri = next(self.onto.subjects(self.crowracle.CROW.disabledId, target))
                 except StopIteration:
                     self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
-                    return
+                    return None
             xyz = self.crowracle.get_location_of_obj(uri)
             size = self.crowracle.get_pcl_dimensions_of_obj(uri)
             typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
-            return (np.array(xyz), np.array(size), typ)
+            if ('None' not in xyz) and (None not in xyz):
+                return (np.array(xyz), np.array(size), typ)
+            else:
+                return None
         elif target_type == "onto_uri":
             try:
                 # xyz = np.array([-0.00334, 0.00232, 0.6905])
@@ -108,9 +111,12 @@ class ControlLogic(Node):
                 typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(target))
             except:
                 self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
-                return
+                return None
             else:
-                return (np.array(xyz), np.array(size), typ)
+                if ('None' not in xyz) and (None not in xyz):
+                    return (np.array(xyz), np.array(size), typ)
+                else:
+                    return None
         else:
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
@@ -168,11 +174,11 @@ class ControlLogic(Node):
         subprocess.run("ros2 param set /sentence_processor robot_done True".split())
 
     def prepare_command(self, data_target=None, data_target_type=None):
-        start_time = datetime.now()
         target = None
-        duration = 0
+        start_time = datetime.now()
+        duration = datetime.now() - start_time
         #@TODO: data_target and data_target_type may be lists of candidates or as well dicts with constraints only
-        while (target is None) and (duration <= self.TARGET_BUFFERING_TIME):
+        while (target is None) and (duration.seconds <= self.TARGET_BUFFERING_TIME):
             target = self.processTarget(data_target, data_target_type)
             duration = datetime.now() - start_time
         if target is None: #@TODO: try another target candidate
@@ -192,7 +198,7 @@ class ControlLogic(Node):
                 pass  # noqa
             else:
                 target = self.prepare_command(**kwargs) #multiple attempts to identify target
-                if self.status & self.STATUS_IDLE:
+                if (self.status & self.STATUS_IDLE) and (target is not None):
                     try:
                         command(target)
                     except Exception as e:
