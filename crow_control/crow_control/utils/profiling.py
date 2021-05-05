@@ -24,17 +24,25 @@ class StatTimer():
         return cls._clock.now()
 
     @classmethod
-    def enter(cls, section_name):
+    def enter(cls, section_name, severity=Runtime.S_NORMAL):
         if cls.DISABLED:
             return
         time = cls._now().to_msg()
-        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_ENTER)
+        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_ENTER, severity=severity)
         cls._pub.publish(msg)
 
     @classmethod
-    def exit(cls, section_name):
+    def exit(cls, section_name, severity=Runtime.S_NORMAL):
         if cls.DISABLED:
             return
         time = cls._now().to_msg()
-        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_EXIT)
+        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_EXIT, severity=severity)
+        cls._pub.publish(msg)
+
+    @classmethod
+    def try_exit(cls, section_name, severity=Runtime.S_NORMAL):
+        if cls.DISABLED:
+            return
+        time = cls._now().to_msg()
+        msg = Runtime(section=section_name, stamp=time, action=Runtime.A_EXIT_IF_IN, severity=severity)
         cls._pub.publish(msg)
