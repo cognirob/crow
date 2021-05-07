@@ -31,6 +31,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BBox.msg"
   "msg/DetectionBBox.msg"
   "msg/DetectionMask.msg"
+  "msg/ActionDetection.msg"
   "msg/DetectionObject.msg"
   "msg/SegmentedPointcloud.msg"
   #"msg/Particles.msg"
