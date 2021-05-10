@@ -55,6 +55,15 @@ def buildGraph(names_file, onto, recipe_name=None):
             if len(list(onto.objects(sub, python_name))) < 1:
                 onto.add((sub, python_name, Literal(v, datatype=XSD.string)))
 
+    # Add world names to objects
+    if 'objects' in names_defs:
+        for k, v in iter(names_defs['objects'].items()):
+            kns = k.rsplit('#')[0]
+            kNS = Namespace(f"{kns}#")
+            sub = kNS[k.rsplit('#')[-1]]
+            if len(list(onto.objects(sub, CROW.world_name))) < 1:
+                onto.add((sub, CROW.world_name, Literal(v, datatype=XSD.string)))
+
 
 # %% Do
 buildGraph(names_file, onto)

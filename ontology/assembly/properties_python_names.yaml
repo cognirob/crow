@@ -10,12 +10,15 @@ data_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasId: id
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLabel: label
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLength: length
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasName: name
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasOrigText: orig_text
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasParameters: parameters
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasPitch: pitch
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRepresentation: representation
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasThreadType: thread_type
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasTimestamp: timestamp
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStartTimestamp: start_timestamp
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStopTimestamp: stop_timestamp
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasToken: token
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasTokens: tokens
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasUuid: uuid
@@ -135,3 +138,18 @@ obj_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#usesTool: uses_tool
   http://imitrob.ciirc.cvut.cz/ontologies/crow#visibleFrom: visible_from
   http://imitrob.ciirc.cvut.cz/ontologies/crow#withinReachOf: within_reach_of
+objects:
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#CarRoof: CAR_ROOF
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube: CUBE
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#ExcavatorBucket: EXCAVATOR_BUCKET
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#FlatScrewdriver: FLAT_SCREWDRIVER
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Hammer: HAMMER
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Nut: NUT
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Peg: PEG
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Pliers: PLIERS
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Screwdriver: SCREWDRIVER
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Sphere: SPHERE
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Wafer: WAFER
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Washer: WASHER
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Wheel: WHEEL
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#Wrench: WRENCH
