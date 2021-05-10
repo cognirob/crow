@@ -141,7 +141,7 @@ class OntoAdder(Node):
         for x in already_detected:
             x_uuid = list(self.onto.objects(x, CROW.hasUuid))[0]
             if uuid == x_uuid.toPython(): # update timestamp and loc of matched already detected object
-                self.crowracle.update_detected_object(x, location, size, timestamp)
+                self.crowracle.update_detected_object(x, location, size, uuid, timestamp)
                 return
             else:
                 old_loc_obj = list(self.onto.objects(x, CROW.hasAbsoluteLocation))[0]
@@ -152,7 +152,7 @@ class OntoAdder(Node):
             already_located.sort(key=distance)
             closest = already_located[0]
             if closest[-1] <= self.loc_threshold: # update timestamp and loc of matched already detected object
-                self.crowracle.update_detected_object(closest[0], location, size, timestamp)
+                self.crowracle.update_detected_object(closest[0], location, size, uuid, timestamp)
             else: # add new detected object
                 self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
                 self.id += 1

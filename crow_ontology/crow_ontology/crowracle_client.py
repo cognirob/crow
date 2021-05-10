@@ -362,6 +362,21 @@ class CrowtologyClient():
         else:
             return None
 
+    def get_uuid_of_obj(self, uri):
+        """Get uuid of URI object
+
+        Args:
+            uri URIRefs: objects
+
+        Returns:
+            uuid (str): uuid of object
+        """
+        ids = list(self.onto.objects(uri, self.CROW.hasUuid))
+        if len(ids) > 0: # assume obj has exactly one uuid
+            return ids[0].toPython()
+        else:
+            return None
+
     # 7
     def get_location_of_obj(self, uri):
         """Get absolute location of URI object
@@ -892,7 +907,7 @@ class CrowtologyClient():
         self.onto.add((self.CROW[individual_name], self.CROW.hasStartTimestamp, Literal(start, datatype=XSD.dateTimeStamp)))
         self.onto.add((self.CROW[individual_name], self.CROW.hasStopTimestamp, Literal(stop, datatype=XSD.dateTimeStamp)))
 
-    def update_detected_object(self, object, location, size, timestamp):
+    def update_detected_object(self, object, location, size, uuid, timestamp):
         """
         Update info about an existing object after new detection for this object comes
 
@@ -906,6 +921,7 @@ class CrowtologyClient():
             individual_name = object.split('#')[-1]
             self.__node.get_logger().info("UPDATING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
             self.onto.set((object, self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
+            self.onto.set((object, self.CROW.hasUuid, Literal(uuid, datatype=XSD.string)))
 
             abs_loc = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasAbsoluteLocation))
             if len(abs_loc) > 0:
