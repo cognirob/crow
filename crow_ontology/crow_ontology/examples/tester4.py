@@ -150,6 +150,11 @@ class OntoTester(Node):
         res = test_in_hull([1., 0.5, 2.5], poly)
         print(res)
 
+        print('get_actions')
+        q1 = {"name": 'Holding something'}
+        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Action, q1, all=True)
+        print(uris)
+
         print('done')
 
 def main():

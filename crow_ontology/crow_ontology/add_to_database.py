@@ -4,7 +4,7 @@ from ros2param.api import call_get_parameters
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
-from crow_msgs.msg import DetectionMask, FilteredPose
+from crow_msgs.msg import DetectionMask, FilteredPose, ActionDetection
 from geometry_msgs.msg import PoseArray
 import message_filters
 
@@ -38,6 +38,7 @@ class OntoAdder(Node):
         # self.get_logger().info(self.onto)
         self.loc_threshold = 0.05 # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
+        self.ad = self.get_last_action_id() + 1
 
         client = self.create_client(GetParameters, f'/calibrator/get_parameters')
         if not client.wait_for_service(10):
@@ -48,23 +49,28 @@ class OntoAdder(Node):
             self.get_logger().warn("No cams detected, waiting 2s.")
             time.sleep(2)
             self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
-        self.mask_topics = [cam + "/detections/masks" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
-        self.filter_topics = ["filtered_poses"] #input masks from 2D rgb (from our detector.py)
+        self.action_topics = ["action_rec"]
+        self.filter_topics = ["filtered_poses"]
 
         #create timer for crawler - periodically delete old objects from database
         self.create_timer(TIMER_FREQ, self.timer_callback)
 
-        #create listeners (synchronized)
+        #create listeners
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-        for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.filter_topics)):
+        for i, (cam, filterTopic) in enumerate(zip(self.cameras, self.filter_topics)):
             listener = self.create_subscription(msg_type=FilteredPose,
-                                          topic=maskTopic,
+                                          topic=filterTopic,
                                           # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
                                           callback=lambda pose_array_msg, cam=cam: self.input_filter_callback(pose_array_msg, cam),
                                           qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+            self.get_logger().info('Input listener created on topic: "%s"' % filterTopic)
+        listener = self.create_subscription(msg_type=ActionDetection,
+                                          topic=self.action_topics[0],
+                                          # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
+                                          callback=lambda action_array_msg: self.input_action_callback(action_array_msg),
+                                          qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+        self.get_logger().info('Input listener created on topic: "%s"' % self.action_topics[0])
 
-            self.get_logger().info('Input listener created on topic: "%s"' % maskTopic)
-    
     def timer_callback(self):
         obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
         now_time = datetime.now()
@@ -90,11 +96,31 @@ class OntoAdder(Node):
         for class_name, pose, size, uuid in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid):
             self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, timestamp)
 
+    def input_action_callback(self, action_array_msg):
+        if not action_array_msg.avg_class_name:
+            self.get_logger().info("No action names received. Quitting early.")
+            return  # no action detections (for some reason)
+        action_name = action_array_msg.avg_class_name
+        start = action_array_msg.times_start[0]
+        stop = action_array_msg.times_end[-1]
+        self.crowracle.add_detected_action(action_name, start, stop, self.ad)
+        self.ad += 1
+
     def get_last_id(self):
         all_detected = list(self.onto.objects(None, CROW.hasId))
         all_detected = [int(id.split('od_')[-1]) for id in all_detected]
         num_detected = len(all_detected)
         self.get_logger().info("There are {} already detected objects in the database.".format(num_detected))
+        if num_detected > 0:
+            return max(all_detected)
+        else:
+            return -1
+
+    def get_last_action_id(self):
+        all_detected = list(self.onto.subjects(RDF.type, CROW.Action))
+        all_detected = [int(str(ad).split('ad_')[-1]) for ad in all_detected]
+        num_detected = len(all_detected)
+        self.get_logger().info("There are {} already detected actions in the database.".format(num_detected))
         if num_detected > 0:
             return max(all_detected)
         else:

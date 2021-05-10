@@ -71,6 +71,16 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
+    _actions_query_props = prepareQuery("""SELECT ?obj ?name ?start ?stop ?uuid 
+        WHERE {
+            ?obj rdf:type crow:Action .
+            ?obj crow:hasName ?name .
+            ?obj crow:hasStartTimestamp ?start .
+            ?obj crow:hasStopTimestamp ?stop .
+            ?obj crow:hasUuid ?uuid .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
+                                   )
     _present_nocls_query = prepareQuery("""SELECT ?obj
         WHERE {
             ?obj crow:hasId ?c .
@@ -322,6 +332,18 @@ class CrowtologyClient():
         """
         #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
         objects = list(self.onto.subjects(self.CROW.hasId, Literal(id)))
+        return objects
+
+    def get_obj_of_uuid(self, uuid):
+        """Get URI object of specified id
+
+        Args:
+            uuid (str): uuid of object
+
+        Returns:
+            list of URIRefs: objects, 0...N
+        """
+        objects = list(self.onto.subjects(self.CROW.hasUuid, Literal(uuid)))
         return objects
 
     def get_id_of_obj(self, uri):
@@ -734,6 +756,24 @@ class CrowtologyClient():
             return "UNKNOWN"
         return world_name
 
+    def getActionsProps(self):
+        """Lists actions detected in the session together with their properties
+
+        Returns:
+            res_list (list of dicts): The actions and their properties
+        """
+        res = self.onto.query(self._actions_query_props)
+        res_list = []
+        for g in res:
+            res_dict = {}
+            res_dict["uri"] = g["obj"]
+            res_dict["name"] = g["name"].toPython()
+            res_dict["uuid"] = g["uuid"].toPython()
+            res_dict["start_timestamp"] = g["start"].toPython()
+            res_dict["stop_timestamp"] = g["stop"].toPython()
+            res_list.append(res_dict)
+        return res_list
+
     def get_polyhedron(self, uri):
         """Get location of points in polyhedron defining a storage space
 
@@ -832,6 +872,26 @@ class CrowtologyClient():
             self.onto.add((onto_polyhedron, self.CROW.hasPoint3D, point_name))
         self.onto.add((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
 
+    def add_detected_action(self, action_name, start, stop, adder_id):
+        """
+        Add detected action and info about the action after a detection comes
+
+        Args:
+            action_name (str): name of the action to be added (action detector name)
+            start (str): timestamp of the beginning of the action, in XSD.dateTimeStamp format
+            stop (str): timestamp of the end of the action, in XSD.dateTimeStamp format
+            adder_id (str): id of action given by adder node, according to the amount and order of overall action detections
+        """
+        individual_name = action_name.replace(" ", "_") + '_ad_'+str(adder_id)
+        self.__node.get_logger().info("ADDING action {}, start: {}, end: {}.".format(individual_name, start, stop))
+        
+        # Add action and its properties
+        self.onto.add((self.CROW[individual_name], RDF.type, self.CROW.Action))
+        self.onto.add((self.CROW[individual_name], self.CROW.hasName, Literal(action_name, datatype=XSD.string)))
+        self.onto.add((self.CROW[individual_name], self.CROW.hasUuid, Literal(str(uuid4()).replace("-", "_"), datatype=XSD.string)))
+        self.onto.add((self.CROW[individual_name], self.CROW.hasStartTimestamp, Literal(start, datatype=XSD.dateTimeStamp)))
+        self.onto.add((self.CROW[individual_name], self.CROW.hasStopTimestamp, Literal(stop, datatype=XSD.dateTimeStamp)))
+
     def update_detected_object(self, object, location, size, timestamp):
         """
         Update info about an existing object after new detection for this object comes
@@ -874,7 +934,7 @@ class CrowtologyClient():
             uuid (str): id of object given by filter node (id of corresponding model in the filter)
             timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
             template (URIRef): template object from ontology corresponding to the detected object
-            adder_id (str): if of object given by adder node, according to the amount and order of overall detections
+            adder_id (str): id of object given by adder node, according to the amount and order of overall object detections
         """
 
         # Find template object
