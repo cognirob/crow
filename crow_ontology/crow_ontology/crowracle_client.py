@@ -81,6 +81,17 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
+    _marker_group_props = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id
+        WHERE {
+            ?obj rdf:type crow:MarkerGroup .
+            ?obj crow:hasName ?name .
+            ?obj crow:hasMarkerDictAmount ?dict_num .
+            ?obj crow:hasMarkerSize ?size .
+            ?obj crow:hasSeed ?seed .
+            ?obj crow:hasMarkerId ?id
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
+                                   )
     _present_nocls_query = prepareQuery("""SELECT ?obj
         WHERE {
             ?obj crow:hasId ?c .
@@ -788,6 +799,24 @@ class CrowtologyClient():
             res_dict["stop_timestamp"] = g["stop"].toPython()
             res_list.append(res_dict)
         return res_list
+
+    def getMarkerGroupProps(self, name):
+        """Lists properties of marker group
+
+        Returns:
+            res_dict: The properties
+        """
+        res = self.onto.query(self._marker_group_props, initBindings={'name': name})
+        res_dict = {}
+        res_dict["id"] = []
+        for g in res:
+            res_dict["id"].append(g["id"].toPython())
+        res_dict["uri"] = g["obj"]
+        res_dict["name"] = str(g["name"])
+        res_dict["dict_num"] = g["dict_num"].toPython()
+        res_dict["size"] = g["size"].toPython()
+        res_dict["seed"] = g["seed"].toPython()
+        return res_dict
 
     def get_polyhedron(self, uri):
         """Get location of points in polyhedron defining a storage space
