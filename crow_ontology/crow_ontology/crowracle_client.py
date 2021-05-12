@@ -81,14 +81,15 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
-    _marker_group_props = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id
+    _marker_group_props = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id ?square_len
         WHERE {
             ?obj rdf:type crow:MarkerGroup .
             ?obj crow:hasName ?name .
             ?obj crow:hasMarkerDictAmount ?dict_num .
             ?obj crow:hasMarkerSize ?size .
             ?obj crow:hasSeed ?seed .
-            ?obj crow:hasMarkerId ?id
+            ?obj crow:hasMarkerId ?id .
+            ?obj crow:hasSquareLength ?square_len .
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
@@ -815,6 +816,7 @@ class CrowtologyClient():
         res_dict["name"] = str(g["name"])
         res_dict["dict_num"] = g["dict_num"].toPython()
         res_dict["size"] = g["size"].toPython()
+        res_dict["square_len"] = g["square_len"].toPython()
         res_dict["seed"] = g["seed"].toPython()
         return res_dict
 

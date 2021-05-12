@@ -5,7 +5,7 @@ from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
 
-from crow_msgs.msg import StampedString, CommandType, Runtime
+from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
@@ -39,6 +39,7 @@ from crow_control.utils.profiling import StatTimer
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
+    STORAGE_TOPIC = "/new_storage"
     ROBOT_ACTION = 'pick_n_place'
     DEBUG = False
     UPDATE_INTERVAL = 0.1
@@ -66,6 +67,7 @@ class ControlLogic(Node):
         self.command_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
 
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
+        self.marker_publisher = self.create_publisher(StorageMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -173,7 +175,13 @@ class ControlLogic(Node):
                     StatTimer.enter("pushing action into queue")
                     self.push_actions(self.sendAction, data_target=d["target"], data_target_type=d["target_type"])
                     StatTimer.exit("pushing action into queue")
-
+            elif d["action"] == "new_storage":
+                #@TODO: NLP sends message "new_storage"
+                op_name = "New storage"
+                marker_msg = StorageMsg()
+                marker_msg.group_name = d["group_name"]
+                marker_msg.storage_name = d["storage_name"]
+                self.marker_publisher.publish(marker_msg)
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, comand, **kwargs):
