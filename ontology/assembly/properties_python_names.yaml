@@ -7,9 +7,14 @@ data_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDescription: description
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDetectorName: detector_name
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDiameter: diameter
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#disabledId: disabled_id
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasFilterColor: filter_color
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasId: id
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLabel: label
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasLength: length
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerDictAmount: marker_dict_amount
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerId: marker_id
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerSize: marker_size
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasName: name
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasOrigText: orig_text
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasParameters: parameters
@@ -17,6 +22,9 @@ data_properties:
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasRepresentation: representation
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasThreadType: thread_type
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasTimestamp: timestamp
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSeed: seed
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSigma: sigma
+  http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSquareLength: square_length
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStartTimestamp: start_timestamp
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStopTimestamp: stop_timestamp
   http://imitrob.ciirc.cvut.cz/ontologies/crow#hasToken: token
