@@ -56,14 +56,13 @@ class OntoAdder(Node):
         self.create_timer(TIMER_FREQ, self.timer_callback)
 
         #create listeners
-        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-        for i, (cam, filterTopic) in enumerate(zip(self.cameras, self.filter_topics)):
-            listener = self.create_subscription(msg_type=FilteredPose,
-                                          topic=filterTopic,
-                                          # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                          callback=lambda pose_array_msg, cam=cam: self.input_filter_callback(pose_array_msg, cam),
-                                          qos_profile=qos) #the listener QoS has to be =1, "keep last only".
-            self.get_logger().info('Input listener created on topic: "%s"' % filterTopic)
+        qos = QoSProfile(depth=20, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        listener = self.create_subscription(msg_type=FilteredPose,
+                                        topic=self.filter_topics[0],
+                                        # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
+                                        callback=lambda pose_array_msg: self.input_filter_callback(pose_array_msg),
+                                        qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+        self.get_logger().info('Input listener created on topic: "%s"' % self.filter_topics[0])
         listener = self.create_subscription(msg_type=ActionDetection,
                                           topic=self.action_topics[0],
                                           # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
@@ -88,7 +87,7 @@ class OntoAdder(Node):
             else:
                 self.crowracle.enable_object(obj)
 
-    def input_filter_callback(self, pose_array_msg, cam):
+    def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses received. Quitting early.")
             return  # no mask detections (for some reason)
