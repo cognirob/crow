@@ -5524,6 +5524,16 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#CurrentAction -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#CurrentAction">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Action"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></hasName>
+        <hasStopTimestamp rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTimeStamp"></hasStopTimestamp>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#EXCAVATORBUCKET -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#EXCAVATORBUCKET">
@@ -7410,22 +7420,6 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
@@ -7446,6 +7440,14 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
@@ -7455,6 +7457,14 @@
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>

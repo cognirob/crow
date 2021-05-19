@@ -100,10 +100,13 @@ class OntoAdder(Node):
             self.get_logger().info("No action names received. Quitting early.")
             return  # no action detections (for some reason)
         action_name = action_array_msg.avg_class_name
-        start = action_array_msg.times_start[0]
-        stop = action_array_msg.times_end[-1]
-        self.crowracle.add_detected_action(action_name, start, stop, self.ad)
-        self.ad += 1
+        stop = action_array_msg.time_end
+        self.crowracle.update_current_action(action_name, stop)
+        if action_array_msg.done_class_name:
+            action_name = action_array_msg.done_class_name
+            start = action_array_msg.time_start
+            self.crowracle.add_detected_action(action_name, start, stop, self.ad)
+            self.ad += 1
 
     def get_last_id(self):
         all_detected = list(self.onto.objects(None, CROW.hasId))
@@ -117,6 +120,7 @@ class OntoAdder(Node):
 
     def get_last_action_id(self):
         all_detected = list(self.onto.subjects(RDF.type, CROW.Action))
+        all_detected = [x for x in all_detected if 'ad_' in x]
         all_detected = [int(str(ad).split('ad_')[-1]) for ad in all_detected]
         num_detected = len(all_detected)
         self.get_logger().info("There are {} already detected actions in the database.".format(num_detected))

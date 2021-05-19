@@ -140,24 +140,32 @@ class OntoTester(Node):
         dict_of_dicts = self.crowracle.get_filter_object_properties()
         print(dict_of_dicts)
 
-        # print('get_storage')
-        # q1 = {"name": 'storage1'}
-        # uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
-        # print(uris)
-
-        # print('test in hull')
-        # poly = self.crowracle.get_polyhedron(uris)
-        # res = test_in_hull([1., 0.5, 2.5], poly)
-        # print(res)
-
-        print('get_actions')
-        q1 = {"name": 'Holding something'}
-        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Action, q1, all=True)
+        print('get_storage')
+        q1 = {"name": 'storage1'}
+        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
         print(uris)
+
+        print('test in hull')
+        poly = self.crowracle.get_polyhedron(uris)
+        res = test_in_hull([1., 0.5, 2.5], poly)
+        print(res)
 
         print('getMarkerGroupProps')
         dicti = self.crowracle.getMarkerGroupProps('blue')
         print(dicti)
+
+        print('get all actions')
+        dicti = self.crowracle.getActionsProps()
+        print(dicti)
+
+        print('get current actions')
+        dicti = self.crowracle.getCurrentAction()
+        print(dicti)
+
+        print('get obj of properties holding')
+        q1 = {"name": 'Holding something'}
+        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Action, q1, all=True)
+        print(uris)
 
         print('done')
 

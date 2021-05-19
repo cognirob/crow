@@ -783,6 +783,20 @@ class CrowtologyClient():
             return "UNKNOWN"
         return world_name
 
+    def getCurrentAction(self):
+        """Get current action's name and last update time
+
+        Returns:
+            res_dict (dictionary): The current action's name and update time
+        """
+        res_dict = {}
+        try:
+            res_dict['name'] = next(self.onto.objects(self.CROW.CurrentAction, self.CROW.hasName)).toPython()
+            res_dict['timestamp'] = str(next(self.onto.objects(self.CROW.CurrentAction, self.CROW.hasStopTimestamp)))
+        except:
+            self.__node.get_logger().info("There is no current action in the loaded database.")
+        return res_dict
+
     def getActionsProps(self):
         """Lists actions detected in the session together with their properties
 
@@ -917,6 +931,20 @@ class CrowtologyClient():
             self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
             self.onto.add((onto_polyhedron, self.CROW.hasPoint3D, point_name))
         self.onto.add((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
+
+    def update_current_action(self, action_name, time):
+        """
+        Update current detected action and info about the action after a detection comes
+
+        Args:
+            action_name (str): name of the current action (action detector name)
+            time (str): timestamp of the last action detection, in XSD.dateTimeStamp format
+        """
+        self.__node.get_logger().info("UPDATING CurrentAction: {}, time: {}.".format(action_name, time))
+        
+        # Add action and its properties
+        self.onto.set((self.CROW.CurrentAction, self.CROW.hasName, Literal(action_name, datatype=XSD.string)))
+        self.onto.set((self.CROW.CurrentAction, self.CROW.hasStopTimestamp, Literal(time, datatype=XSD.dateTimeStamp)))
 
     def add_detected_action(self, action_name, start, stop, adder_id):
         """
