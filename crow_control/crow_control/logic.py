@@ -175,13 +175,10 @@ class ControlLogic(Node):
                     StatTimer.enter("pushing action into queue")
                     self.push_actions(self.sendAction, data_target=d["target"], data_target_type=d["target_type"])
                     StatTimer.exit("pushing action into queue")
-            elif d["action"] == "new_storage":
-                #@TODO: NLP sends message "new_storage"
-                op_name = "New storage"
-                marker_msg = StorageMsg()
-                marker_msg.group_name = d["group_name"]
-                marker_msg.storage_name = d["storage_name"]
-                self.marker_publisher.publish(marker_msg)
+            elif d["action"] == "define_storage":
+                #@TODO: NLP sends message "define_storage"
+                op_name = "Define new storage"
+                self.push_actions(self.defineStorage, storage_name=d["storage_name"], marker_group_name=d["marker_group_name"])
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, comand, **kwargs):
@@ -216,22 +213,31 @@ class ControlLogic(Node):
             except IndexError as ie:  # no new commands to process
                 pass  # noqa
             else:
-                target = self.prepare_command(**kwargs) #multiple attempts to identify target
-                if (self.status & self.STATUS_IDLE) and (target is not None):
-                    try:
-                        command(target)
-                    except Exception as e:
-                        self.get_logger().error(f"Error executing action {command} with args {str(target)}. The error was:\n{e}")
-                        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
-                        subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-                    finally:
-                        self._set_status(self.STATUS_IDLE)
+                if 'data_target' in kwargs.keys():
+                    target = self.prepare_command(**kwargs) #multiple attempts to identify target
+                    if (self.status & self.STATUS_IDLE) and (target is not None):
+                        try:
+                            command(target)
+                        except Exception as e:
+                            self.get_logger().error(f"Error executing action {command} with args {str(target)}. The error was:\n{e}")
+                            subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                        finally:
+                            self._set_status(self.STATUS_IDLE)
+                elif 'storage_name' in kwargs.keys():
+                    command(**kwargs)
             finally:
                 pass
 
     def _set_status(self, status):
         self.status = status
         # print(self.status)
+
+    def defineStorage(self, storage_name=None, marker_group_name=None):
+        marker_msg = StorageMsg()
+        marker_msg.group_name = marker_group_name
+        marker_msg.storage_name = storage_name
+        self.marker_publisher.publish(marker_msg)
 
     def sendAction(self, target, location=None, obj=None):
         StatTimer.enter("Sending command")

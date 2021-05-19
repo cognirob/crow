@@ -16,6 +16,7 @@ try:
 except:  # noqa
     pass
 from threading import RLock
+from unicodedata import normalize
 
 
 ONTO_SERVER_NAME = "ontology_server"
@@ -81,10 +82,22 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
-    _marker_group_props = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id ?square_len
+    _marker_group_propsEN = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id ?square_len
         WHERE {
             ?obj rdf:type crow:MarkerGroup .
-            ?obj crow:hasName ?name .
+            ?obj crow:hasNlpNameEN ?name .
+            ?obj crow:hasMarkerDictAmount ?dict_num .
+            ?obj crow:hasMarkerSize ?size .
+            ?obj crow:hasSeed ?seed .
+            ?obj crow:hasMarkerId ?id .
+            ?obj crow:hasSquareLength ?square_len .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
+                                   )
+    _marker_group_propsCZ = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id ?square_len
+        WHERE {
+            ?obj rdf:type crow:MarkerGroup .
+            ?obj crow:hasNlpNameCZ ?name .
             ?obj crow:hasMarkerDictAmount ?dict_num .
             ?obj crow:hasMarkerSize ?size .
             ?obj crow:hasSeed ?seed .
@@ -815,23 +828,29 @@ class CrowtologyClient():
             res_list.append(res_dict)
         return res_list
 
-    def getMarkerGroupProps(self, name):
+    def getMarkerGroupProps(self, name, language='EN'):
         """Lists properties of marker group
 
         Returns:
             res_dict: The properties
         """
-        res = self.onto.query(self._marker_group_props, initBindings={'name': name})
+        if language == 'CZ':
+            res = self.onto.query(self._marker_group_propsCZ, initBindings={'name': name})
+        elif language == 'EN':
+            res = self.onto.query(self._marker_group_propsEN, initBindings={'name': name})
+        else:
+            "Invalid language choice (EN or CZ), taking default EN option"
+            res = self.onto.query(self._marker_group_propsEN, initBindings={'name': name})
         res_dict = {}
         res_dict["id"] = []
         for g in res:
             res_dict["id"].append(g["id"].toPython())
-        res_dict["uri"] = g["obj"]
-        res_dict["name"] = str(g["name"])
-        res_dict["dict_num"] = g["dict_num"].toPython()
-        res_dict["size"] = g["size"].toPython()
-        res_dict["square_len"] = g["square_len"].toPython()
-        res_dict["seed"] = g["seed"].toPython()
+            res_dict["uri"] = g["obj"]
+            res_dict["name"] = str(g["name"])
+            res_dict["dict_num"] = g["dict_num"].toPython()
+            res_dict["size"] = g["size"].toPython()
+            res_dict["square_len"] = g["square_len"].toPython()
+            res_dict["seed"] = g["seed"].toPython()
         return res_dict
 
     def get_polyhedron(self, uri):
@@ -894,8 +913,11 @@ class CrowtologyClient():
         """
         self.__node.get_logger().info("CREATING storage {}, location: [{:.2f},{:.2f},{:.2f}].".format(name, *centroid))
         storage_uuid = str(uuid4()).replace("-", "_")
-        onto_name = self.CROW[name]
-        PART = Namespace(f"{ONTO_IRI}/{name}#") #ns for each storage space
+        norm_name = name.replace(" ", "_")
+        norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
+        onto_name = self.CROW[norm_name]
+        self.__node.get_logger().info("CREATING storage {}, location: [{:.2f},{:.2f},{:.2f}].".format(name, *centroid))
+        PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each storage space
         self.onto.add((onto_name, RDF.type, self.CROW.StorageSpace))
         self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
         self.onto.add((onto_name, self.CROW.hasUuid, Literal(storage_uuid, datatype=XSD.string)))

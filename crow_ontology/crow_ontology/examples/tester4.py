@@ -141,7 +141,7 @@ class OntoTester(Node):
         print(dict_of_dicts)
 
         print('get_storage')
-        q1 = {"name": 'storage1'}
+        q1 = {"name": 'modrá úložiště'}
         uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
         print(uris)
 
