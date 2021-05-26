@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 from time import time
 import rclpy
-from datetime import datetime
 from crow_msgs.msg import Runtime
 from uuid import uuid4
 
