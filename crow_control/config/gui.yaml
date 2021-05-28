@@ -1,0 +1,42 @@
+languages: ["CZ", "EN"]
+fields:
+  select_camera:
+    - "vyberte kameru"
+    - "select camera"
+  nlp_mode:
+    - "Režim NLP"
+    - "NLP mode"
+  nlp_suspend:
+    - "Pozastavit NLP"
+    - "Suspend NLP"
+  detected_cmd:
+    - "Detekovany prikaz"
+    - "Detected command"
+  detected_object:
+    - "Detekovany objekt"
+    - "Detected object"
+  detected_name:
+    - "Detekovany objekt (jmeno)"
+    - "Detected object (name)"
+  detected_is_present:
+    - "Objekt je na pracovisti?"
+    - "Object in workspace?"
+  state:
+    - "Stav"
+    - "State"
+  cmd_queue:
+    - "Příkazy v pořadí"
+    - "Command queue"
+  cmd_cancel:
+    - "Zrušit příkaz"
+    - "Cancel command"
+options:
+  yes:
+    - "ano"
+    - "yes"
+  no:
+    - "ne"
+    - "no"
+infoText:
+  - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"
+  - "Commands\nPoint at <OBJECT>\nPoint at <COLOR> <OBJECT>\nPick up <OBJECT>"
