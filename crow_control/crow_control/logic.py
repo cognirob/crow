@@ -35,7 +35,7 @@ import time
 import subprocess
 from collections import deque
 from crow_control.utils.profiling import StatTimer
-
+from crow_control.utils import ParamClient
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
@@ -54,6 +54,13 @@ class ControlLogic(Node):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
+        
+        self.pclient = ParamClient()
+        self.pclient.declare("robot_done", True) # If true, the robot has received a goal and completed it.
+        self.pclient.declare("robot_failed", False) # If true, the robot had failed to perform the requested action.
+        self.pclient.declare("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
+        self.pclient.declare("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
+
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
@@ -148,14 +155,14 @@ class ControlLogic(Node):
                 target = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, target cannot be set!")
-                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                    self.pclient.define("robot_failed", True)
+                    self.pclient.define("robot_done", True)
                     continue
                 location = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, location cannot be set!")
-                    subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-                    subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                    self.pclient.define("robot_failed", True)
+                    self.pclient.define("robot_done", True)
                     continue
                 self.get_logger().info(f"Target set to {target} and location is {location}.")
             elif d["action"] == CommandType.POINT:
@@ -163,8 +170,8 @@ class ControlLogic(Node):
                 # target = self.processTarget(d["target"], d["target_type"])
                 # if target is None:
                 #     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
-                #     subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-                #     subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+                #     self.pclient.define("robot_failed", True)
+                #     self.pclient.define("robot_done", True)
                 #     continue
                 # self.get_logger().info(f"Target set to {target}.")
                 if self.DEBUG:
@@ -186,7 +193,7 @@ class ControlLogic(Node):
         self.command_buffer.append((comand, kwargs))
         StatTimer.exit("pushing action into buffer")
         StatTimer.enter("setting param", severity=Runtime.S_SINGLE_LINE)
-        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+        self.pclient.define("robot_done", True)
         StatTimer.exit("setting param")
 
     def prepare_command(self, data_target=None, data_target_type=None):
@@ -199,8 +206,8 @@ class ControlLogic(Node):
             duration = datetime.now() - start_time
         if target is None: #@TODO: try another target candidate
             self.get_logger().error("Failed to issue pointing action, target cannot be set!")
-            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-            subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+            self.pclient.define("robot_failed", True)
+            self.pclient.define("robot_done", True)
             return None
         else:
             self.get_logger().info(f"Target set to {target}.")
@@ -220,8 +227,8 @@ class ControlLogic(Node):
                             command(target)
                         except Exception as e:
                             self.get_logger().error(f"Error executing action {command} with args {str(target)}. The error was:\n{e}")
-                            subprocess.run("ros2 param set /sentence_processor robot_done True".split())
-                            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+                            self.pclient.define("robot_done", True)
+                            self.pclient.define("robot_failed", True)
                         finally:
                             self._set_status(self.STATUS_IDLE)
                 elif 'storage_name' in kwargs.keys():
@@ -270,8 +277,8 @@ class ControlLogic(Node):
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
-            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
-            subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+            self.pclient.define("robot_failed", True)
+            self.pclient.define("robot_done", True)
             self._set_status(self.STATUS_IDLE)
             return
 
@@ -286,10 +293,10 @@ class ControlLogic(Node):
         StatTimer.exit("robot action")
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
-        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+        self.pclient.define("robot_done", True)
         self._set_status(self.STATUS_IDLE)
         if not result.done:
-            subprocess.run("ros2 param set /sentence_processor robot_failed True".split())
+            self.pclient.define("robot_failed", True)
 
     def robot_feedback_cb(self, feedback_msg):
         self.get_logger().info('Got FB')
@@ -315,8 +322,8 @@ def main():
     except Exception as e:
         print(f"Some error had occured: {e}")
     finally:
-        subprocess.run("ros2 param set /sentence_processor robot_failed False".split())
-        subprocess.run("ros2 param set /sentence_processor robot_done True".split())
+        self.pclient.define("robot_failed", False)
+        self.pclient.define("robot_done", True)
 
 if __name__ == '__main__':
     main()

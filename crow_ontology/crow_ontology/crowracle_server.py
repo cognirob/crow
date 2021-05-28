@@ -6,6 +6,7 @@ import yaml
 from importlib.util import find_spec
 import os
 from uuid import uuid4
+from crow_control.utils import ParamServer
 try:
     import rclpy
     from rclpy.node import ParameterDescriptor
@@ -44,6 +45,9 @@ class CrowtologyServer():
             self.__cfg = yaml.safe_load(file)
 
         self.__onto = OntologyAPI(config_path)
+        
+        #@TODO: Crowtology server inits the ParamServer - here?
+        self.ps = ParamServer()
 
         try:
             if len(self.onto) > 0:  # try to make a backup
