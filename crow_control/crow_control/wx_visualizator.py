@@ -28,6 +28,7 @@ import yaml
 import os
 from importlib.util import find_spec
 import pynput
+from crow_control.utils import ParamClient, QueueClient
 
 
 print("WX Version (should be 4+): {}".format(wx.__version__))
@@ -109,12 +110,13 @@ class VizGUI(wx.Frame):
                 self.Refresh()
 
 
-
 class Visualizator(wx.App):
     TIMER_FREQ = 10 # milliseconds
     LANGUAGE = 'CZ' #language of the visualization
     COLOR_GRAY = (128, 128, 128)
     CONFIG_PATH = "config/gui.yaml"
+
+    DEBUG = True
 
     def OnInit(self):
         super().OnInit()
@@ -125,8 +127,8 @@ class Visualizator(wx.App):
         self.logger = self.node.get_logger()
 
         # >>> load config
-        # spec = find_spec("crow_control")
-        # self.config = yaml.safe_load(os.path.join(spec.submodule_search_locations[0], "config", self.CONFIG_PATH))
+        spec = find_spec("crow_control")
+        self.config = yaml.safe_load(os.path.join(spec.submodule_search_locations[0], "config", self.CONFIG_PATH))
 
         # >>> spinning
         self.spinTimer = wx.Timer()
@@ -134,48 +136,61 @@ class Visualizator(wx.App):
         self.spinTimer.Start(self.TIMER_FREQ)
 
         # >>> Crowracle client
-        self.processor_state_srv = self.node.create_client(GetParameters, '/sentence_processor/get_parameters')
         self.crowracle = CrowtologyClient(node=self.node)
         self.object_properties = self.crowracle.get_filter_object_properties()
         self.INVERSE_OBJ_MAP = {v["name"]: i for i, v in enumerate(self.object_properties.values())}
 
-        # >>> Cameras
-        calib_client = self.node.create_client(GetParameters, '/calibrator/get_parameters')
-        self.logger.info("Waiting for calibrator to setup cameras")
-        calib_client.wait_for_service()
-        self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
-        while len(self.cameras) == 0: #wait for cams to come online
-            self.logger.warn("No cams detected, waiting 2s.")
-            time.sleep(2)
-            self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
+        # >>> params
+        self.pclient = ParamClient()
+        self.pclient.declare("det_obj", default_value="-")
+        self.pclient.declare("det_command", default_value="-")
+        self.pclient.declare("det_obj_name", default_value="-")
+        self.pclient.declare("det_obj_in_ws", default_value="-")
+        self.pclient.declare("status", default_value="-")
+        self.pclient.declare("halt_nlp", default_value=False)
+        # self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
+        self.qclient = QueueClient(queue_name="commands")
 
-        self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
-        # self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+        if not self.DEBUG:
+            try:
+                # >>> Cameras
+                calib_client = self.node.create_client(GetParameters, '/calibrator/get_parameters')
+                self.logger.info("Waiting for calibrator to setup cameras")
+                calib_client.wait_for_service()
+                self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
+                while len(self.cameras) == 0: #wait for cams to come online
+                    self.logger.warn("No cams detected, waiting 2s.")
+                    time.sleep(2)
+                    self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
 
-        self.nlp_topics = ["/nlp/status"] #nlp status (from our sentence_processor.py)
-        # response = str(subprocess.check_output("ros2 param get /sentence_processor halt_nlp".split()))
-        self.NLP_HALTED = False  #"False" in response
+                self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+                # self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
 
-        # create listeners
-        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-        for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.mask_topics)):
-            listener = self.node.create_subscription(msg_type=msg_image,
-                                          topic=maskTopic,
-                                          callback=lambda img_msg, cam=cam: wx.CallAfter(self.imageView.updateImage, img_msg, cam),
-                                          qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+                self.nlp_topics = ["/nlp/status"] #nlp status (from our sentence_processor.py)
+                # response = str(subprocess.check_output("ros2 param get /sentence_processor halt_nlp".split()))
+                self.NLP_HALTED = False  #"False" in response
 
-            self.logger.info('Input listener created on topic: "%s"' % maskTopic)
+                # create listeners
+                qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+                for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.mask_topics)):
+                    listener = self.node.create_subscription(msg_type=msg_image,
+                                                topic=maskTopic,
+                                                callback=lambda img_msg, cam=cam: wx.CallAfter(self.imageView.updateImage, img_msg, cam),
+                                                qos_profile=qos) #the listener QoS has to be =1, "keep last only".
 
-        self.node.create_subscription(msg_type=NlpStatus,
-                                            topic=self.nlp_topics[0],
-                                            # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                            callback=lambda status_array_msg: self.input_nlp_callback(status_array_msg),
-                                            qos_profile=qos) #the listener QoS has to be =1, "keep last only".
+                    self.logger.info('Input listener created on topic: "%s"' % maskTopic)
 
-        self.logger.info('Input listener created on topic: "%s"' % self.nlp_topics[0])
+                self.node.create_subscription(msg_type=NlpStatus,
+                                                    topic=self.nlp_topics[0],
+                                                    # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
+                                                    callback=lambda status_array_msg: self.input_nlp_callback(status_array_msg),
+                                                    qos_profile=qos) #the listener QoS has to be =1, "keep last only".
 
-        # >>> Initialize nlp params for info bellow image
-        self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
+                self.logger.info('Input listener created on topic: "%s"' % self.nlp_topics[0])
+            except BaseException:
+                self.cameras = []
+        else:
+            self.cameras = []
 
         # >>> Initialize GUI frame
         self.frame = VizGUI()
@@ -211,7 +226,8 @@ class Visualizator(wx.App):
 
         # Image view
         self.imageView = ImageViewPanel(self.frame)
-        self.imageView.setCurrentCamera(self.cameras[0])
+        if self.cameras:
+            self.imageView.setCurrentCamera(self.cameras[0])
         imageAndControlBox.Add(self.imageView, flag=wx.EXPAND)
 
         controlBox = wx.BoxSizer(wx.VERTICAL)
@@ -234,15 +250,9 @@ class Visualizator(wx.App):
     def HandleROS(self, _=None):
         wx.CallAfter(rclpy.spin_once, self.node, executor=self.executor)
 
-    def window_click(self, event, x, y, flags, param):
+    def toggle_nlp_halting(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            response = str(subprocess.check_output("ros2 param get /sentence_processor halt_nlp".split()))
-            if "False" in response:
-                subprocess.run("ros2 param set /sentence_processor halt_nlp True".split())
-                self.NLP_HALTED = True
-            else:
-                subprocess.run("ros2 param set /sentence_processor halt_nlp False".split())
-                self.NLP_HALTED = False
+            self.pclient.halt_nlp = not self.pclient.halt_nlp
 
     # def input_nlp_callback(self, status_array_msg):
     #     if not status_array_msg.det_obj:
