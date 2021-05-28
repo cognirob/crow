@@ -23,6 +23,11 @@ from pyquaternion import Quaternion
 from unicodedata import normalize
 import subprocess
 import wx
+from datetime import datetime
+import yaml
+import os
+from importlib.util import find_spec
+import pynput
 
 
 print("WX Version (should be 4+): {}".format(wx.__version__))
@@ -30,139 +35,111 @@ print("WX Version (should be 4+): {}".format(wx.__version__))
 
 class ImageViewPanel(wx.Panel):
     """ class ImageViewPanel creates a panel with an image on it, inherits wx.Panel """
-    def __init__(self, parent, sampleCallback=None):
-        self.width = 1024
-        self.height = 768
+    def __init__(self, parent):
+        self.width = 848
+        self.height = 480
         super(ImageViewPanel, self).__init__(parent, id=-1, size=wx.Size(self.width, self.height))
-        self.bitmap = None
+        self.bitmaps = {}
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
+        self.current_camera = None
+        self._cvb = CvBridge()
 
-        self.Bind(wx.EVT_LEFT_DCLICK, self.onClick)
-        self.Bind(wx.EVT_LEFT_DOWN, self.onMouseDown)
-        self.Bind(wx.EVT_LEFT_UP, self.onMouseUp)
-        self.Bind(wx.EVT_MOTION, self.onMouseMove)
+    def updateImage(self, img_msg, camera):
+        image = self._cvb.imgmsg_to_cv2(img_msg, desired_encoding='bgr8')
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        stamp = datetime.fromtimestamp(img_msg.header.stamp.sec + img_msg.header.stamp.nanosec * 1e-9).strftime("%H:%M:%S.%f")
+        cv2.putText(image, f"{stamp}", (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 164, 32), lineType=cv2.LINE_AA)
 
-        self.mouseIsDown = False
-        self.trackingStart = None
-        self.trackingStop = None
-        self.selection = None
-        self.sampleCallback = sampleCallback
-        self.brush = wx.Brush(wx.Colour(200, 200, 255, 128), wx.BRUSHSTYLE_FDIAGONAL_HATCH)
-
-    def onClick(self, event):
-        if not self.sampleCallback:
-            return
-        pos = event.GetPosition()
-        if self.bitmap:
-            rect = wx.Rect(pos.x, pos.y, 10, 10)
-            sample = np.asarray(self.bitmap.GetSubBitmap(rect).ConvertToImage().GetDataBuffer(), dtype=np.uint8).reshape((-1, 1, 3))
-            wx.CallAfter(self.sendSample, sample, rect)
-
-    def onMouseDown(self, event):
-        if not self.sampleCallback:
-            return
-        self.mouseIsDown = True
-        self.trackingStart = event.GetPosition()
-
-    def onMouseUp(self, event):
-        if not (self.sampleCallback and self.trackingStart and self.trackingStop):
-            return
-        self.mouseIsDown = False
-        a, b = (self.trackingStart, self.trackingStop) if self.trackingStart < self.trackingStop else (self.trackingStop, self.trackingStart)
-        rect = wx.Rect(a, b)
-        size = rect.GetSize()
-        # Send the samples only if the selection area is bigger than 64 pixels
-        if size[0] * size[1] < 16:
-            self.selection = None
-        else:
-            self.selection = rect
-            self.Refresh()
-
-    def onMouseMove(self, event):
-        if not (self.sampleCallback and self.mouseIsDown):
-            return
-        self.trackingStop = event.GetPosition()
-        a, b = (self.trackingStart, self.trackingStop) if self.trackingStart < self.trackingStop else (self.trackingStop, self.trackingStart)
-        self.selection = wx.Rect(a, b)
-        self.Refresh()
-
-    def update(self, image):
         if image.shape[2] == 4:
             alpha = image[:, :, 3].astype(np.uint8)
             image = image[:, :, :3].astype(np.uint8)
             image = wx.Image(image.shape[1], image.shape[0], image.tostring(), alpha.tostring())
         else:
-            # print(image.astype(np.uint8).shape)
-            # print(dir(wx.Image))
-            # print(dirwx.Image.__module__)
             image = wx.Image(image.shape[1], image.shape[0], image.astype(np.uint8).ravel().tostring())
-            # image = wx.Image(name="RGB imae", width=image.shape[1], height=image.shape[0], data=image.astype(np.uint8).tostring())
-            # image = wx.Image(image.shape[1], image.shape[0], image.astype(np.uint8).tostring())
         self.imgWidth, self.imgHeight = image.GetSize()
         if self.imgWidth > self.width or self.imgHeight > self.height:
             self.ratio = float(self.height) / self.imgHeight
-            self.bitmap = wx.Bitmap(image.Scale(self.imgWidth * self.ratio, self.height))
+            bitmap = wx.Bitmap(image.Scale(self.imgWidth * self.ratio, self.height))
         else:
-            self.bitmap = wx.Bitmap(image)
+            bitmap = wx.Bitmap(image)
+
+        self.bitmaps[camera] = bitmap
         self.Refresh()
 
-    def backmap(self, x, y):
-        return x * self.ratio, y * self.ratio
-
-    def sendSample(self, sample, rect):
-        invRatio = 1 / self.ratio
-        ogrid = np.ogrid[int(np.round(rect.Top * invRatio)):int(np.round(rect.Bottom * invRatio)), int(np.round(rect.Left * invRatio)):int(np.round(rect.Right * invRatio)), 0:3]
-        self.sampleCallback(sample, ogrid)
+    def setCurrentCamera(self, camera):
+        self.current_camera = camera
 
     def onPaint(self, event):
-        if self.bitmap:
-            # img_w, img_h = self.bitmap.GetSize()
-            margin = 0
-            self.SetSize(wx.Size(self.imgWidth + margin * 2, self.imgHeight + margin * 2))
-            dc = wx.AutoBufferedPaintDC(self)
-            dc.Clear()
-            dc.DrawBitmap(self.bitmap, margin, margin, useMask=True)
-            if self.sampleCallback and self.selection:
-                dc.SetBrush(self.brush)
-                dc.DrawRectangle(self.selection)
-                sample = np.asarray(self.bitmap.GetSubBitmap(self.selection).ConvertToImage().GetDataBuffer(),
-                                    dtype=np.uint8).reshape((-1, 1, 3))
-                # If mouse is up and something is still selected, send the sample
-                if not self.mouseIsDown:
-                    # opcvsamp = np.asarray(self.bitmap.GetSubBitmap(self.selection).ConvertToImage().GetDataBuffer()).reshape((self.selection.Height, self.selection.Width, 3))
-                    # print(self.selection.GetSize())
-                    # print(opcvsamp.shape)
-                    # wx.CallAfter(cv2.imshow, 'sample', opcvsamp)
-                    wx.CallAfter(self.sendSample, sample, self.selection)
-                    self.selection = None
+        if self.current_camera is None or self.current_camera not in self.bitmaps:
+            return
+        bitmap = self.bitmaps[self.current_camera]
+        margin = 0
+        self.SetSize(wx.Size(self.imgWidth + margin * 2, self.imgHeight + margin * 2))
+        dc = wx.AutoBufferedPaintDC(self)
+        dc.Clear()
+        dc.DrawBitmap(bitmap, margin, margin, useMask=True)
 
 
 class VizGUI(wx.Frame):
-    pass
 
+    def __init__(self):
+        super().__init__(None, title="Visualizator", size=(1024, 768))
+        self.maxed = False
+        self.keyDaemon = pynput.keyboard.Listener(on_press=self.onKeyDown)
+        self.keyDaemon.daemon = True
+        self.keyDaemon.start()
+
+    def onKeyDown(self, key):
+        # Pynput is great but captures events when window is not focused. The following condition prevents that.
+        if not self.IsActive():
+            return
+
+        if type(key) is pynput.keyboard.KeyCode:
+            if key.char == "f":
+                print(self.GetWindowStyleFlag())
+                if self.maxed:
+                    # self.SetWindowStyleFlag(wx.BORDER_SIMPLE)
+                    self.Hide()
+                    self.Show(True)
+                else:
+                    # self.SetWindowStyleFlag(wx.MAXIMIZE | wx.BORDER_NONE)
+                    self.ShowFullScreen(True, style=wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOBORDER)
+                self.maxed = not self.maxed
+                self.Refresh()
 
 
 
 class Visualizator(wx.App):
-    TIMER_FREQ = .5 # seconds
+    TIMER_FREQ = 10 # milliseconds
     LANGUAGE = 'CZ' #language of the visualization
     COLOR_GRAY = (128, 128, 128)
+    CONFIG_PATH = "config/gui.yaml"
 
     def OnInit(self):
         super().OnInit()
 
-        self.frame = wx.Frame(None, title="Visualizator", size=(1024, 768))
-        self.frame.Show()
-
+        # >>> ROS initialization
         self.node = rclpy.create_node("visualizator")
+        self.executor = rclpy.executors.MultiThreadedExecutor(num_threads=2)
         self.logger = self.node.get_logger()
 
+        # >>> load config
+        # spec = find_spec("crow_control")
+        # self.config = yaml.safe_load(os.path.join(spec.submodule_search_locations[0], "config", self.CONFIG_PATH))
+
+        # >>> spinning
+        self.spinTimer = wx.Timer()
+        self.spinTimer.Bind(wx.EVT_TIMER, self.HandleROS)
+        self.spinTimer.Start(self.TIMER_FREQ)
+
+        # >>> Crowracle client
         self.processor_state_srv = self.node.create_client(GetParameters, '/sentence_processor/get_parameters')
         self.crowracle = CrowtologyClient(node=self.node)
         self.object_properties = self.crowracle.get_filter_object_properties()
         self.INVERSE_OBJ_MAP = {v["name"]: i for i, v in enumerate(self.object_properties.values())}
 
+        # >>> Cameras
         calib_client = self.node.create_client(GetParameters, '/calibrator/get_parameters')
         self.logger.info("Waiting for calibrator to setup cameras")
         calib_client.wait_for_service()
@@ -171,22 +148,20 @@ class Visualizator(wx.App):
             self.logger.warn("No cams detected, waiting 2s.")
             time.sleep(2)
             self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
-        self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
-        self.filter_topics = ["filtered_poses"] #input masks from 2D rgb (from our detector.py)
+
+        self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+        # self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+
         self.nlp_topics = ["/nlp/status"] #nlp status (from our sentence_processor.py)
-        self.cvb_ = CvBridge()
-        self.cv_image = {} # initialize dict of images, each one for one camera
         # response = str(subprocess.check_output("ros2 param get /sentence_processor halt_nlp".split()))
         self.NLP_HALTED = False  #"False" in response
 
-        self.infoPanel = None
-        #create listeners
+        # create listeners
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.mask_topics)):
             listener = self.node.create_subscription(msg_type=msg_image,
                                           topic=maskTopic,
-                                          # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                          callback=lambda img_array_msg, cam=cam: self.input_detector_callback(img_array_msg, cam),
+                                          callback=lambda img_msg, cam=cam: wx.CallAfter(self.imageView.updateImage, img_msg, cam),
                                           qos_profile=qos) #the listener QoS has to be =1, "keep last only".
 
             self.logger.info('Input listener created on topic: "%s"' % maskTopic)
@@ -199,13 +174,65 @@ class Visualizator(wx.App):
 
         self.logger.info('Input listener created on topic: "%s"' % self.nlp_topics[0])
 
-        # Initialize nlp params for info bellow image
+        # >>> Initialize nlp params for info bellow image
         self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
+
+        # >>> Initialize GUI frame
+        self.frame = VizGUI()
+        self.frame.Bind(wx.EVT_CLOSE, self.destroy)
+
+        self.mainVBox = wx.BoxSizer(wx.VERTICAL)
+
+        # Toolbar
+        toolbar = wx.ToolBar(self.frame, -1)
+        toolbar.SetToolSeparation(20)
+        button = wx.Button(toolbar, -1, 'Maximize', name="buttonMaximize")
+        toolbar.AddControl(button)
+        # toolbar.AddSeparator()
+        # button = wx.Button(toolbar, -1, 'Save setup', name="buttonSaveSetup")
+        # toolbar.AddControl(button)
+        # toolbar.AddSeparator()
+        # button = wx.Button(toolbar, -1, 'Load setup', name="buttonLoad")
+        # toolbar.AddControl(button)
+        # toolbar.AddSeparator()
+        # button = wx.Button(toolbar, -1, 'Load last setup', name="buttonLoadLast")
+        # toolbar.AddControl(button)
+        # toolbar.AddStretchableSpace()
+        # button = wx.Button(toolbar, -1, 'Tracking calibration', name="buttonTrackingCalib")
+        # toolbar.AddControl(button)
+        toolbar.Realize()
+        self.frame.SetToolBar(toolbar)
+        self.mainVBox.Add(toolbar, flag=wx.EXPAND)
+
+        # self.box = wx.GridBagSizer(vgap=5, hgap=10)
+        # self.mainVBox.Add(self.box, flag=wx.EXPAND)
+        imageAndControlBox = wx.BoxSizer(wx.HORIZONTAL)
+        self.mainVBox.Add(imageAndControlBox, flag=wx.EXPAND)
+
+        # Image view
+        self.imageView = ImageViewPanel(self.frame)
+        self.imageView.setCurrentCamera(self.cameras[0])
+        imageAndControlBox.Add(self.imageView, flag=wx.EXPAND)
+
+        controlBox = wx.BoxSizer(wx.VERTICAL)
+        cameraSelector = wx.Choice(self.frame, choices=self.cameras)
+        cameraSelector.Bind(wx.EVT_CHOICE, lambda event: self.imageView.setCurrentCamera(event.GetString()))
+        cameraSelector.Select(0)
+
+        controlBox.Add(cameraSelector, flag=wx.EXPAND)
+        imageAndControlBox.Add(controlBox, flag=wx.EXPAND)
+
+        self.frame.SetSizerAndFit(self.mainVBox)
+        self.frame.ShowWithEffect(wx.SHOW_EFFECT_BLEND)
+#        self.vbox.ComputeFittingWindowSize()
+
+        # self.frame.Bind(wx.EVT_BUTTON, self.onButton)
+        # self.frame.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
+
         return True
 
-    def MainLoop(self):
-        super().MainLoop()
-        rclpy.spin_once(self.node)
+    def HandleROS(self, _=None):
+        wx.CallAfter(rclpy.spin_once, self.node, executor=self.executor)
 
     def window_click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -217,101 +244,86 @@ class Visualizator(wx.App):
                 subprocess.run("ros2 param set /sentence_processor halt_nlp False".split())
                 self.NLP_HALTED = False
 
-    def input_detector_callback(self, img_array_msg, cam):
-        if not img_array_msg.data:
-            self.get_logger().info("No image. Quitting early.")
-            return  # no annotated image received (for some reason)
-        self.cv_image['{}'.format(cam)] = self.cvb_.imgmsg_to_cv2(img_array_msg, desired_encoding='bgr8')
-        self.update_annot_image()
+    # def input_nlp_callback(self, status_array_msg):
+    #     if not status_array_msg.det_obj:
+    #         self.get_logger().info("No nlp detections. Quitting early.")
+    #         return  # no nlp detections received (for some reason)
 
-    def input_nlp_callback(self, status_array_msg):
-        if not status_array_msg.det_obj:
-            self.get_logger().info("No nlp detections. Quitting early.")
-            return  # no nlp detections received (for some reason)
+    #     obj_str = status_array_msg.det_obj
+    #     obj_uri = self.crowracle.get_uri_from_str(obj_str)
+    #     nlp_name = self.crowracle.get_nlp_from_uri(obj_uri)
+    #     if len(nlp_name) > 0:
+    #         nlp_name = nlp_name[0]
+    #     else:
+    #         nlp_name = '-'
 
-        obj_str = status_array_msg.det_obj
-        obj_uri = self.crowracle.get_uri_from_str(obj_str)
-        nlp_name = self.crowracle.get_nlp_from_uri(obj_uri)
-        if len(nlp_name) > 0:
-            nlp_name = nlp_name[0]
-        else:
-            nlp_name = '-'
+    #     if status_array_msg.found_in_ws:
+    #         obj_in_ws = 'ano'
+    #     else:
+    #         obj_in_ws = 'ne'
 
-        if status_array_msg.found_in_ws:
-            obj_in_ws = 'ano'
-        else:
-            obj_in_ws = 'ne'
+    #     self.params['det_obj'] = status_array_msg.det_obj
+    #     self.params['det_command'] = status_array_msg.det_command
+    #     self.params['det_obj_name'] = nlp_name
+    #     self.params['det_obj_in_ws'] = obj_in_ws
+    #     self.params['status'] = status_array_msg.status
+    #     wx.CallAfter(self.update_detection)
 
-        self.params['det_obj'] = status_array_msg.det_obj
-        self.params['det_command'] = status_array_msg.det_command
-        self.params['det_obj_name'] = nlp_name
-        self.params['det_obj_in_ws'] = obj_in_ws
-        self.params['status'] = status_array_msg.status
-        self.update_annot_image()
+    # def _get_obj_color(self, obj_name):
+    #     return self.object_properties[self.INVERSE_OBJ_MAP[obj_name]]["color"]
 
-    def _get_obj_color(self, obj_name):
-        return self.object_properties[self.INVERSE_OBJ_MAP[obj_name]]["color"]
+    # def update_detection(self):
+    #     if self.LANGUAGE == 'CZ':
+    #         scoreScreen = self.__putText(scoreScreen, "Detekovany prikaz: {}".format(self.params['det_command']), (xp, yp*1), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Detekovany objekt: {}".format(self.params['det_obj']), (xp, yp*2), color=self.COLOR_GRAY, size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Detekovany objekt (jmeno): {}".format(self.params['det_obj_name']), (xp, yp*3), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Objekt je na pracovisti: {}".format(self.params['det_obj_in_ws']), (xp, yp*4), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Stav: {}".format(self.params['status']), (xp, yp*5 + 10), color=(255, 224, 200), size=0.7, thickness=2)
+    #         if self.NLP_HALTED:
+    #             scoreScreen = self.__putText(scoreScreen, "STOP", (im_shape[1] - 70, yp), color=(0, 0, 255), size=0.7, thickness=2)
 
-    def update_annot_image(self):
-        xp = 5
-        yp = 20
-        scHeight = 128
-        im_shape = next(iter(self.cv_image.values())).shape
-        scoreScreen = np.zeros((scHeight, im_shape[1], 3), dtype=np.uint8)
-        if self.infoPanel is None:
-            self.infoPanel = np.zeros((im_shape[0] + scHeight, 256, 3), dtype=np.uint8)
-            self.infoPanel = self.__putText(self.infoPanel, "Prikazy:", (xp, yp*1), color=self.COLOR_GRAY, size=0.5, thickness=1)
-            self.infoPanel = self.__putText(self.infoPanel, "Ukaz na <OBJEKT>", (xp, yp*2), color=self.COLOR_GRAY, size=0.5, thickness=1)
-            self.infoPanel = self.__putText(self.infoPanel, "Ukaz na <BARVA> <OBJEKT>", (xp, yp*3), color=self.COLOR_GRAY, size=0.5, thickness=1)
-            self.infoPanel = self.__putText(self.infoPanel, "Seber <OBJEKT>", (xp, yp*4), color=self.COLOR_GRAY, size=0.5, thickness=1)
+    #         for cam, img in self.cv_image.items():
+    #             up_image = np.hstack((self.infoPanel, np.vstack((img, scoreScreen))))
+    #             cv2.imshow('Detekce{}'.format(cam), up_image)
+    #             key = cv2.waitKey(10) & 0xFF
+    #             if key == ord("f"):
+    #                 print(cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN))
+    #                 print(cv2.WINDOW_FULLSCREEN)
+    #                 print(cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN) == cv2.WINDOW_FULLSCREEN)
+    #                 if cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN) == cv2.WINDOW_FULLSCREEN:
+    #                     cv2.setWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_AUTOSIZE)
+    #                 else:
+    #                     cv2.setWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    #             if key == ord(" "):
+    #                 self.window_click(cv2.EVENT_LBUTTONDOWN, None, None, None, None)
+    #             if key == ord("q"):
+    #                 rclpy.utilities.try_shutdown()
 
-        if self.LANGUAGE == 'CZ':
-            scoreScreen = self.__putText(scoreScreen, "Detekovany prikaz: {}".format(self.params['det_command']), (xp, yp*1), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Detekovany objekt: {}".format(self.params['det_obj']), (xp, yp*2), color=self.COLOR_GRAY, size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Detekovany objekt (jmeno): {}".format(self.params['det_obj_name']), (xp, yp*3), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Objekt je na pracovisti: {}".format(self.params['det_obj_in_ws']), (xp, yp*4), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Stav: {}".format(self.params['status']), (xp, yp*5 + 10), color=(255, 224, 200), size=0.7, thickness=2)
-            if self.NLP_HALTED:
-                scoreScreen = self.__putText(scoreScreen, "STOP", (im_shape[1] - 70, yp), color=(0, 0, 255), size=0.7, thickness=2)
+    #     else:
+    #         scoreScreen = self.__putText(scoreScreen, "Detected this command: {}".format(self.params['det_command']), (xp, yp*1), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Detected this object: {}".format(self.params['det_obj']), (xp, yp*2), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Detected object name: {}".format(self.params['det_obj_name']), (xp, yp*3), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Object in the workspace: {}".format(self.params['det_obj_in_ws']), (xp, yp*4), color=(255, 255, 255), size=0.5, thickness=1)
+    #         scoreScreen = self.__putText(scoreScreen, "Status: {}".format(self.params['status']), (xp, yp*5), color=(255, 255, 255), size=0.5, thickness=1)
 
-            for cam, img in self.cv_image.items():
-                up_image = np.hstack((self.infoPanel, np.vstack((img, scoreScreen))))
-                cv2.imshow('Detekce{}'.format(cam), up_image)
-                key = cv2.waitKey(10) & 0xFF
-                if key == ord("f"):
-                    print(cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN))
-                    print(cv2.WINDOW_FULLSCREEN)
-                    print(cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN) == cv2.WINDOW_FULLSCREEN)
-                    if cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN) == cv2.WINDOW_FULLSCREEN:
-                        cv2.setWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_AUTOSIZE)
-                    else:
-                        cv2.setWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                if key == ord(" "):
-                    self.window_click(cv2.EVENT_LBUTTONDOWN, None, None, None, None)
-                if key == ord("q"):
-                    rclpy.utilities.try_shutdown()
+    #         for cam, img in self.cv_image.items():
+    #             up_image = np.hstack((self.infoPanel, np.vstack((img, scoreScreen))))
+    #             cv2.imshow('Detections{}'.format(cam), up_image)
+    #             cv2.waitKey(10)
 
-        else:
-            scoreScreen = self.__putText(scoreScreen, "Detected this command: {}".format(self.params['det_command']), (xp, yp*1), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Detected this object: {}".format(self.params['det_obj']), (xp, yp*2), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Detected object name: {}".format(self.params['det_obj_name']), (xp, yp*3), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Object in the workspace: {}".format(self.params['det_obj_in_ws']), (xp, yp*4), color=(255, 255, 255), size=0.5, thickness=1)
-            scoreScreen = self.__putText(scoreScreen, "Status: {}".format(self.params['status']), (xp, yp*5), color=(255, 255, 255), size=0.5, thickness=1)
-
-            for cam, img in self.cv_image.items():
-                up_image = np.hstack((self.infoPanel, np.vstack((img, scoreScreen))))
-                cv2.imshow('Detections{}'.format(cam), up_image)
-                cv2.waitKey(10)
-
-    def destroy(self):
-        self.node.destroy_node()
+    def destroy(self, something=None):
+        self.spinTimer.Stop()
+        self.ExitMainLoop()
+        try:
+            self.frame.Destroy()
+            self.node.destroy_node()
+        except BaseException:
+            self.logger.warn("Could not destroy node or frame, probably already destroyed.")
 
 
 def main():
     rclpy.init()
-    #time.sleep(5)
     visualizator = Visualizator()
-    # rclpy.spin(visualizator)
     visualizator.MainLoop()
     visualizator.destroy()
 
