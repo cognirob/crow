@@ -155,8 +155,8 @@ class ControlLogic(Node):
     def process_actions(self, data):
         for d in data:
             buffer = d.get("command_buffer", 'main')
+            op_name = d.get("action_type")
             if d["action"] == CommandType.PNP:
-                op_name = "Pick & Place"
                 target = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, target cannot be set!")
@@ -171,7 +171,6 @@ class ControlLogic(Node):
                     continue
                 self.get_logger().info(f"Target set to {target} and location is {location}.")
             elif d["action"] == CommandType.POINT:
-                op_name = "Point"
                 if self.DEBUG:
                     self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
                 else:
@@ -181,13 +180,10 @@ class ControlLogic(Node):
                     self.push_actions(self.sendAction, buffer, data_target=d["target"], data_target_type=d["target_type"])
                     StatTimer.exit("pushing action into queue")
             elif d["action"] == CommandType.DEFINE_STORAGE:
-                op_name = "Define new storage"
                 self.push_actions(self.defineStorage, buffer, storage_name=d["storage_name"], marker_group_name=d["marker_group_name"])
             elif d["action"] == CommandType.REM_CMD_LAST:
-                op_name = "Remove last command"
                 self.push_actions(self.remove_command_last, buffer)
             elif d["action"] == CommandType.REM_CMD_X:
-                op_name = "Remove command X"
                 self.push_actions(self.remove_command_x, buffer, command_name=d["command_name"])
             self.get_logger().info(f"Will perform {op_name}")
 
