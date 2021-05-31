@@ -60,17 +60,19 @@ class ControlLogic(Node):
         self.pclient.declare("robot_failed", False) # If true, the robot had failed to perform the requested action.
         self.pclient.declare("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
         self.pclient.declare("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
+        self.pclient.declare("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
 
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
                                  callback=self.command_cb,
+                                 callback_group=rclpy.callback_groups.ReentrantCallbackGroup(),
                                  qos_profile=qos)
         self.robot_action_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION)
         self.get_logger().info(f"Connected to robot: {self.robot_action_client.wait_for_server()}")
 
         self.status = self.STATUS_IDLE
-        self.create_timer(self.UPDATE_INTERVAL, self.update_cb)
+        self.create_timer(self.UPDATE_INTERVAL, self.update_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.command_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
 
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
@@ -156,13 +158,13 @@ class ControlLogic(Node):
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, target cannot be set!")
                     self.pclient.define("robot_failed", True)
-                    self.pclient.define("robot_done", True)
+                    self.pclient.define("ready_for_next_sentence", True)
                     continue
                 location = self.processTarget(d["target"], d["target_type"])
                 if target is None:
                     self.get_logger().error("Failed to issue Pick & Place action, location cannot be set!")
                     self.pclient.define("robot_failed", True)
-                    self.pclient.define("robot_done", True)
+                    self.pclient.define("ready_for_next_sentence", True)
                     continue
                 self.get_logger().info(f"Target set to {target} and location is {location}.")
             elif d["action"] == CommandType.POINT:
@@ -171,7 +173,7 @@ class ControlLogic(Node):
                 # if target is None:
                 #     self.get_logger().error("Failed to issue pointing action, target cannot be set!")
                 #     self.pclient.define("robot_failed", True)
-                #     self.pclient.define("robot_done", True)
+                #     self.pclient.define("ready_for_next_sentence", True)
                 #     continue
                 # self.get_logger().info(f"Target set to {target}.")
                 if self.DEBUG:
@@ -193,7 +195,7 @@ class ControlLogic(Node):
         self.command_buffer.append((comand, kwargs))
         StatTimer.exit("pushing action into buffer")
         StatTimer.enter("setting param", severity=Runtime.S_SINGLE_LINE)
-        self.pclient.define("robot_done", True)
+        self.pclient.define("ready_for_next_sentence", True)
         StatTimer.exit("setting param")
 
     def prepare_command(self, data_target=None, data_target_type=None):
@@ -248,6 +250,7 @@ class ControlLogic(Node):
 
     def sendAction(self, target, location=None, obj=None):
         StatTimer.enter("Sending command")
+        self.pclient.define("robot_done", False)
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = PickNPlace.Goal()
         goal_msg.frame_id = "camera1_color_optical_frame"
@@ -308,7 +311,9 @@ def main():
     rclpy.init()
     try:
         cl = ControlLogic()
-        rclpy.spin_once(cl)
+        n_threads = 3 # nr of callbacks in group, +1 as backup
+        mte = rclpy.executors.MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
+        rclpy.spin_once(cl, executor=mte)
         # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
         #     print(p, " --- ", o)
         # time.sleep(1)
@@ -317,13 +322,14 @@ def main():
         # cl.push_actions(cl.sendAction, target=None)
         # cl.push_actions(cl.sendAction, target=None)
         # cl.push_actions(cl.sendAction, target=None)
-        rclpy.spin(cl)
+        rclpy.spin(cl, executor=mte)
         cl.destroy_node()
     except Exception as e:
         print(f"Some error had occured: {e}")
     finally:
         self.pclient.define("robot_failed", False)
         self.pclient.define("robot_done", True)
+        self.pclient.define("ready_for_next_sentence", False)
 
 if __name__ == '__main__':
     main()
