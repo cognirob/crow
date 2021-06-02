@@ -60,7 +60,7 @@ class ControlLogic(Node):
         self.pclient.define("robot_failed", False) # If true, the robot had failed to perform the requested action.
         self.pclient.define("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
         self.pclient.define("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
-        self.pclient.declare("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
+        self.pclient.define("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
 
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
