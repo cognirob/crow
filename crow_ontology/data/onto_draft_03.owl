@@ -1125,6 +1125,7 @@
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#disabledId">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disabled_id</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1208,6 +1209,7 @@
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasFilterColor">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2000/01/rdf-schema#Literal"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">filter_color</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1244,10 +1246,41 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerDictAmount -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerDictAmount">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">marker_dict_amount</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerId -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerId">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">marker_id</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerSize -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasMarkerSize">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">marker_size</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasName -->
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasName">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">name</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -1292,11 +1325,52 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSeed -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSeed">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#int"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">seed</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSigma -->
 
     <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSigma">
         <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#LocalizedThing"/>
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">sigma</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSquareLength -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasSquareLength">
+        <rdfs:domain rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#float"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">square_length</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStartTimestamp -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStartTimestamp">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">stop_timestamp</owlr:python_name>
+    </owl:DatatypeProperty>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStopTimestamp -->
+
+    <owl:DatatypeProperty rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasStopTimestamp">
+        <rdfs:subPropertyOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#temporalProperty"/>
+        <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#string"/>
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">stop_timestamp</owlr:python_name>
     </owl:DatatypeProperty>
     
 
@@ -2758,6 +2832,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Screwdriver"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">plochý šroubovák</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">flat screwdriver</hasNlpNameEN>
+        <world_name>FLAT_SCREWDRIVER</world_name>
     </owl:Class>
     
 
@@ -3370,6 +3445,12 @@
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Magnetomotive_Force_Unit">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Electricity_And_Magnetism_Unit"/>
     </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
     
 
 
@@ -4018,6 +4099,7 @@
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ClampingTool"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kleště</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">pliers</hasNlpNameEN>
+        <world_name>PLIERS</world_name>
     </owl:Class>
     
 
@@ -5442,6 +5524,16 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#CurrentAction -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#CurrentAction">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Action"/>
+        <hasName rdf:datatype="http://www.w3.org/2001/XMLSchema#string"></hasName>
+        <hasStopTimestamp rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTimeStamp"></hasStopTimestamp>
+    </owl:NamedIndividual>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#EXCAVATORBUCKET -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#EXCAVATORBUCKET">
@@ -5528,6 +5620,24 @@
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#LOOSE_CONNECTION">
         <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ConnectionStrength"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#MARKER_GROUP_BLUE -->
+
+    <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#MARKER_GROUP_BLUE">
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#MarkerGroup"/>
+        <hasMarkerDictAmount rdf:datatype="http://www.w3.org/2001/XMLSchema#int">54</hasMarkerDictAmount>
+        <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">0</hasMarkerId>
+        <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1</hasMarkerId>
+        <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">2</hasMarkerId>
+        <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">3</hasMarkerId>
+        <hasMarkerSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int">4</hasMarkerSize>
+        <hasSeed rdf:datatype="http://www.w3.org/2001/XMLSchema#int">66</hasSeed>
+        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.03</hasSquareLength>
+        <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">modrá</hasNlpNameCZ>
+        <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">blue</hasNlpNameEN>
     </owl:NamedIndividual>
     
 
@@ -7311,14 +7421,6 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
@@ -7327,7 +7429,7 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7336,10 +7438,6 @@
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7361,6 +7459,32 @@
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotations
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#hasDisabledId">
+        <owlr:python_name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">disabled_id</owlr:python_name>
     </rdf:Description>
     
 

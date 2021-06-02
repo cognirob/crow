@@ -6,12 +6,14 @@ import yaml
 from importlib.util import find_spec
 import os
 from uuid import uuid4
+from crow_control.utils import ParamServer
 try:
     import rclpy
     from rclpy.node import ParameterDescriptor
     from rcl_interfaces.msg import ParameterType
 except:  # noqa
     pass  # TODO make nicer
+
 
 DB_PARAM_NAMES = ["database_host", "database_port", "database_uri", "database_name"]
 DB_PARAM_MAP = {
@@ -44,7 +46,7 @@ class CrowtologyServer():
             self.__cfg = yaml.safe_load(file)
 
         self.__onto = OntologyAPI(config_path)
-
+        self.__node = None
         try:
             if len(self.onto) > 0:  # try to make a backup
                 bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
@@ -65,7 +67,7 @@ class CrowtologyServer():
             base_onto_path = os.path.join(modulePath, "..", "data", "onto_draft_03.owl")
         self.onto.mergeFileIntoDB(base_onto_path)
 
-    def start_param_server(self):
+    def start_onto_server(self):
         self.__node = rclpy.create_node(node_name="ontology_server")
         self.node.get_logger().info("Setting up 'ontology_server' node.")
         invmap = {v: k for k, v in DB_PARAM_MAP.items()}
@@ -82,6 +84,9 @@ class CrowtologyServer():
         for k, v, d in parameters:
             self.node.get_logger().info(f"\t{k}: {v}")
 
+    def start_param_server(self):
+        self.pserver = ParamServer()
+
     @property
     def onto(self):
         return self.__onto
@@ -90,20 +95,27 @@ class CrowtologyServer():
     def node(self):
         return self.__node
 
+    def destroy(self):
+        self.pclient.destroy()
+        if self.node is not None:
+            self.node.destroy_node()
+
 
 def main_ros(args=[]):
     rclpy.init()
 
     cs = CrowtologyServer()
     cs.start_param_server()
+    cs.start_onto_server()
 
     rclpy.spin(cs.node)
-    cs.node.destroy_node()
+    cs.destroy()
 
 def main():  # run from console as standalone python script
     # TODO Process args
     cs = CrowtologyServer()
     input("Hit enter to exit (makes sense, right?)...")  # so that the script does not exit
+    cs.destroy()
 
 
 if __name__ == "__main__":

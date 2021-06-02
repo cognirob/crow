@@ -1,0 +1,39 @@
+[
+    {
+    "action": "string:crow_msgs/CommandType",
+    "<additional_fields": "<some_data>"
+    },
+
+    {
+        "action": 64,  # CommandType.POINT
+        "target": {
+            "reference": "reference string",
+            "type": "ref type"
+        }
+    },
+    {
+        "action": 80,  # CommandType.PICK
+        "target": {
+            "reference": "reference string",
+            "type": "ref type"
+        }
+    },
+    {
+        "action": 128,  # CommandType.PLACE
+        "location": {
+            "reference": "reference string",
+            "type": "ref type"
+        }
+    },
+    {
+        "action": 208,  # CommandType.PNP
+        "target": {
+            "reference": "reference string",
+            "type": "ref type"
+        },
+        "location": {
+            "reference": "reference string",
+            "type": "ref type"
+        }
+    }
+]

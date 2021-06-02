@@ -11,12 +11,12 @@ import re
 # %%ArgParser
 parser = argparse.ArgumentParser()
 #parser.add_argument("names_file")
-parser.add_argument("--onto_file", "-o", default="./src/crow/ontology/onto_draft_02.owl")
+parser.add_argument("--onto_file", "-o", default="./crow/crow_ontology/data/onto_draft_03.owl")
 args = parser.parse_args()
 
 # %%Initialization
 #names_file = args.names_file
-names_file = "./src/crow/ontology/assembly/properties_python_names.yaml"
+names_file = "./crow/ontology/assembly/properties_python_names.yaml"
 onto_file = args.onto_file
 print(onto_file)
 split_name_re = re.compile(r"([\w\/]+)\.?")
@@ -55,11 +55,20 @@ def buildGraph(names_file, onto, recipe_name=None):
             if len(list(onto.objects(sub, python_name))) < 1:
                 onto.add((sub, python_name, Literal(v, datatype=XSD.string)))
 
+    # Add world names to objects
+    if 'objects' in names_defs:
+        for k, v in iter(names_defs['objects'].items()):
+            kns = k.rsplit('#')[0]
+            kNS = Namespace(f"{kns}#")
+            sub = kNS[k.rsplit('#')[-1]]
+            if len(list(onto.objects(sub, CROW.world_name))) < 1:
+                onto.add((sub, CROW.world_name, Literal(v, datatype=XSD.string)))
+
 
 # %% Do
 buildGraph(names_file, onto)
 # %% Draw
-outonto_file = "./src/crow/ontology/onto_draft_02.owl"
+outonto_file = "./crow/crow_ontology/data/onto_draft_03.owl"
 #utonto_file = onto_file
 
 onto.serialize(outonto_file)
