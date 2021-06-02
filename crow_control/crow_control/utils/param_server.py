@@ -102,10 +102,14 @@ class ParamServer():
                 msg = self.publisher.recv()
                 sub, param = msg[0], msg[1:].decode()
                 if sub == 1:
-                    if param in self.__params:
-                        self.__broadcast_param(param)
+                    if param == "":
+                        for p in self.__params:
+                            self.__broadcast_param(p)
                     else:
-                        self.__params[param] = None
+                        if param in self.__params:
+                            self.__broadcast_param(param)
+                        else:
+                            self.__params[param] = None
                 print(f"Someone {'' if sub == 1 else 'un'}subscribed on {param}")
 
             if self.changer in socks:  # handle param changes

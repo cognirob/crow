@@ -36,8 +36,8 @@ class ParamClient():
 
         # subscirbe to parameter changes
         self.__addr_pub = f"{protocol}://{addr}:{str(start_port)}"
-        self.__subscriber = self.__context.socket(zmq.SUB)
-        self.__subscriber.connect(self.__addr_pub)
+        self._subscriber = self.__context.socket(zmq.SUB)
+        self._subscriber.connect(self.__addr_pub)
 
         # socket for param change requests
         self.__addr_ch = f"{protocol}://{addr}:{str(start_port + 3)}"
@@ -49,10 +49,10 @@ class ParamClient():
         self.__definer = self.__context.socket(zmq.REQ)
         self.__definer.connect(self.__addr_def)
 
-        self.__params = {}
+        self._params = {}
         self.active = True
 
-        self.poller_thread = Thread(target=self.__poll, daemon=True)
+        self.poller_thread = Thread(target=self._poll, daemon=True)
         self.poller_thread.start()
 
     def wait_for_param(self, param, timeout=0):
@@ -64,16 +64,16 @@ class ParamClient():
 
     def wait_receive_param(self, param, timeout=0):
         # timeout DOES NOT WORK, yet
-        self.__subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
+        self._subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
         start = time.time()
         msg = None
         while True:
-            rcv_param, data = self.__subscriber.recv_multipart()
+            rcv_param, data = self._subscriber.recv_multipart()
             if rcv_param.decode() == param:
                 msg = cpl.loads(data)
                 print(param, msg)
                 break
-        self.__subscriber.setsockopt(zmq.UNSUBSCRIBE, param.encode('utf-8'))
+        self._subscriber.setsockopt(zmq.UNSUBSCRIBE, param.encode('utf-8'))
         if msg is not None:
             return msg
 
@@ -89,15 +89,15 @@ class ParamClient():
         Args:
             param (str): The name of the parameter
         """
-        if param in self.__params:
+        if param in self._params:
             return
 
-        self.__params[param] = None
+        self._params[param] = None
         setattr(ParamClient, param, property(
-                lambda self, param=param: self.__params[param],
+                lambda self, param=param: self._params[param],
                 lambda self, value, param=param: self.__set_param(param, value)
             ))
-        self.__subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
+        self._subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
 
     def declare(self, param, default_value=None, type=None, description=""):
         """Subsribes to parameter updates. This does roughly the same as
@@ -132,12 +132,12 @@ class ParamClient():
         """Stops the updates and closes all connection.
         """
         self.active = False
-        self.__subscriber.close()
+        self._subscriber.close()
         self.__changer.close()
         self.__definer.close()
 
     def __send_definition(self, param, value, overwrite):
-        if param in self.__params:
+        if param in self._params:
             return
 
         self.__definer.send_multipart([param.encode('utf-8'), cpl.dumps(value), asbytes(chr(overwrite))])
@@ -152,14 +152,36 @@ class ParamClient():
         response = self.__changer.recv().decode()
         # print(response)
         if response == "true":
-            self.__params[param] = value
+            self._params[param] = value
 
-    def __poll(self):
+    def _poll(self):
         while self.active:
-            param, msg = self.__subscriber.recv_multipart()
+            param, msg = self._subscriber.recv_multipart()
             # print(param, msg)
-            self.__params[param.decode()] = cpl.loads(msg)
+            self._params[param.decode()] = cpl.loads(msg)
 
 
+class UniversalParamClient(ParamClient):
 
+    def __init__(self, start_port=25652, addr="127.0.0.1", protocol="tcp"):
+        super().__init__(start_port, addr, protocol)
+        self._cb = None
 
+        # Subscribe to all
+        self._subscriber.setsockopt(zmq.SUBSCRIBE, b"")
+
+    def set_callback(self, cb):
+        self._cb = cb
+
+    def get_all(self):
+        return self._params
+
+    def _poll(self):
+        while self.active:
+            rcv_param, data = self._subscriber.recv_multipart()
+            msg = cpl.loads(data)
+            param = rcv_param.decode()
+            print(param, msg)
+            self._params[param] = msg
+            if self._cb is not None:
+                self._cb(param, msg)
