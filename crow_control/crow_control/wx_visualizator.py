@@ -27,9 +27,10 @@ import yaml
 import os
 from importlib.util import find_spec
 import pynput
-from crow_control.utils import ParamClient, QueueClient
+from crow_control.utils import ParamClient, QueueClient, UniversalParamClient
 from concurrent import futures
 import functools
+from collections import OrderedDict
 
 
 thread_pool_executor = futures.ThreadPoolExecutor(max_workers=1)
@@ -156,17 +157,6 @@ class Visualizator(wx.Frame):
         self.object_properties = self.crowracle.get_filter_object_properties()
         self.INVERSE_OBJ_MAP = {v["name"]: i for i, v in enumerate(self.object_properties.values())}
 
-        # >>> params
-        self.pclient = ParamClient()
-        self.pclient.declare("det_obj", default_value="-")
-        self.pclient.declare("det_command", default_value="-")
-        self.pclient.declare("det_obj_name", default_value="-")
-        self.pclient.declare("det_obj_in_ws", default_value="-")
-        self.pclient.declare("status", default_value="-")
-        self.pclient.declare("halt_nlp", default_value=False)
-        # self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
-        self.qclient = QueueClient(queue_name="commands")
-
         if not self.DEBUG:
             try:
                 # >>> Cameras
@@ -241,7 +231,6 @@ class Visualizator(wx.Frame):
         self.mainVBox.Add(toolbar, flag=wx.EXPAND)
 
         # NOTEBOOK
-        # nb_panel = wx.Panel(self)
         self.notebook = wx.Notebook(self)
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onNBPageChange)
 
@@ -265,7 +254,7 @@ class Visualizator(wx.Frame):
 
         # NOTEBOOK - OBJECTS
         self.nb_page_obj = wx.grid.Grid(self.notebook)
-        self.nb_page_obj.CreateGrid(20, 3)
+        self.nb_page_obj.CreateGrid(30, 3)
         self.nb_page_obj.EnableEditing(False)
         self.nb_page_obj.SetColSize(0, int(self.WIDTH * 0.5))
         self.nb_page_obj.SetColLabelValue(0, "object")
@@ -273,11 +262,21 @@ class Visualizator(wx.Frame):
         self.nb_page_obj.SetColLabelValue(1, "location")
         self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.3))
         self.nb_page_obj.SetColLabelValue(2, "id")
-        self.table_attr = wx.grid.GridCellAttr(wx.BLACK, wx.LIGHT_GREY, wx.Font(), 0, 0)
-        # self.nb_page_obj = wx.TextCtrl(self.notebook)
+        self.table_attr = wx.grid.GridCellAttr(wx.BLACK, wx.WHITE, wx.Font(), 0, 0)
         self.notebook.AddPage(self.nb_page_obj, "objects")
 
-        # self.mainVBox.Add(nb_panel, flag=wx.EXPAND)
+        # NOTEBOOK - PARAMS
+        self.nb_page_param = wx.grid.Grid(self.notebook)
+        self.nb_page_param.CreateGrid(30, 2)
+        self.nb_page_param.EnableEditing(False)
+        self.nb_page_param.SetColSize(0, int(self.WIDTH * 0.2))
+        self.nb_page_param.SetColLabelValue(0, "parameter")
+        self.nb_page_param.SetColSize(1, int(self.WIDTH * 0.8))
+        self.nb_page_param.SetColLabelValue(1, "value")
+        self.notebook.AddPage(self.nb_page_param, "parameters")
+        self.current_parameters = OrderedDict()
+
+        # Adding NOTEBOOK
         self.mainVBox.Add(self.notebook, flag=wx.EXPAND)
 
         self.SetSizerAndFit(self.mainVBox)
@@ -286,6 +285,28 @@ class Visualizator(wx.Frame):
 
         # self.Bind(wx.EVT_BUTTON, self.onButton)
         # self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
+
+        # >>> PARAMS
+        self.pclient = UniversalParamClient()
+        self.pclient.set_callback(self.update_params)
+        self.pclient.declare("det_obj", default_value="-")
+        self.pclient.declare("det_command", default_value="-")
+        self.pclient.declare("det_obj_name", default_value="-")
+        self.pclient.declare("det_obj_in_ws", default_value="-")
+        self.pclient.declare("status", default_value="-")
+        self.pclient.declare("halt_nlp", default_value=False)
+        # self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
+        self.qclient = QueueClient(queue_name="commands")
+
+    def update_params(self, param, msg):
+        if param in self.current_parameters:
+            idx = list(self.current_parameters).index(param)
+        else:
+            idx = len(self.current_parameters)
+            self.nb_page_param.SetCellValue(idx, 0, param)
+            self.current_parameters[param] = msg
+
+        self.nb_page_param.SetCellValue(idx, 1, str(msg))
 
     def onNBPageChange(self, evt):
         self.notebook_tab = self.notebook.GetPageText(evt.Selection)
