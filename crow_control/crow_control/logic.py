@@ -54,7 +54,7 @@ class ControlLogic(Node):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
-        
+
         self.pclient = ParamClient()
         self.pclient.define("robot_done", True) # If true, the robot has received a goal and completed it.
         self.pclient.define("robot_failed", False) # If true, the robot had failed to perform the requested action.
@@ -320,8 +320,8 @@ class ControlLogic(Node):
 
 def main():
     rclpy.init()
+    cl = ControlLogic()
     try:
-        cl = ControlLogic()
         n_threads = 4 # nr of callbacks in group, +1 as backup
         mte = rclpy.executors.MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
         rclpy.spin_once(cl, executor=mte)

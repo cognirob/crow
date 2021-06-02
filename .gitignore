@@ -6,3 +6,4 @@ install/
 crow_ontology/data/backup/*.owl
 crow_ontology/config/db_config.yaml
 rosbag2_*/
+.directory
