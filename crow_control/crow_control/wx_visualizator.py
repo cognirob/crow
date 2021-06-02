@@ -19,9 +19,7 @@ import numpy as np
 import time
 import open3d as o3d
 from PIL import Image, ImageFont, ImageDraw
-from pyquaternion import Quaternion
 from unicodedata import normalize
-import subprocess
 import wx
 from datetime import datetime
 import yaml
@@ -29,9 +27,42 @@ import os
 from importlib.util import find_spec
 import pynput
 from crow_control.utils import ParamClient, QueueClient
+from concurrent import futures
+import functools
 
 
+thread_pool_executor = futures.ThreadPoolExecutor(max_workers=1)
 print("WX Version (should be 4+): {}".format(wx.__version__))
+
+
+def wx_call_after(target):
+
+    @functools.wraps(target)
+    def wrapper(self, *args, **kwargs):
+        args = (self,) + args
+        wx.CallAfter(target, *args, **kwargs)
+
+    return wrapper
+
+
+def submit_to_pool_executor(executor):
+    '''Decorates a method to be sumbitted to the passed in executor'''
+    def decorator(target):
+
+        @functools.wraps(target)
+        def wrapper(*args, **kwargs):
+            result = executor.submit(target, *args, **kwargs)
+            result.add_done_callback(executor_done_call_back)
+            return result
+        return wrapper
+
+    return decorator
+
+
+def executor_done_call_back(future):
+    exception = future.exception()
+    if exception:
+        raise exception
 
 
 class ImageViewPanel(wx.Panel):
@@ -82,7 +113,13 @@ class ImageViewPanel(wx.Panel):
         dc.DrawBitmap(bitmap, margin, margin, useMask=True)
 
 
-class VizGUI(wx.Frame):
+class Visualizator(wx.Frame):
+    TIMER_FREQ = 10 # milliseconds
+    LANGUAGE = 'CZ' #language of the visualization
+    COLOR_GRAY = (128, 128, 128)
+    CONFIG_PATH = "../config/gui.yaml"
+
+    DEBUG = False
 
     def __init__(self):
         super().__init__(None, title="Visualizator", size=(1024, 768))
@@ -91,36 +128,6 @@ class VizGUI(wx.Frame):
         self.keyDaemon.daemon = True
         self.keyDaemon.start()
 
-    def onKeyDown(self, key):
-        # Pynput is great but captures events when window is not focused. The following condition prevents that.
-        if not self.IsActive():
-            return
-
-        if type(key) is pynput.keyboard.KeyCode:
-            if key.char == "f":
-                print(self.GetWindowStyleFlag())
-                if self.maxed:
-                    # self.SetWindowStyleFlag(wx.BORDER_SIMPLE)
-                    self.Hide()
-                    self.Show(True)
-                else:
-                    # self.SetWindowStyleFlag(wx.MAXIMIZE | wx.BORDER_NONE)
-                    self.ShowFullScreen(True, style=wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOBORDER)
-                self.maxed = not self.maxed
-                self.Refresh()
-
-
-class Visualizator(wx.App):
-    TIMER_FREQ = 10 # milliseconds
-    LANGUAGE = 'CZ' #language of the visualization
-    COLOR_GRAY = (128, 128, 128)
-    CONFIG_PATH = "config/gui.yaml"
-
-    DEBUG = True
-
-    def OnInit(self):
-        super().OnInit()
-
         # >>> ROS initialization
         self.node = rclpy.create_node("visualizator")
         self.executor = rclpy.executors.MultiThreadedExecutor(num_threads=2)
@@ -128,7 +135,12 @@ class Visualizator(wx.App):
 
         # >>> load config
         spec = find_spec("crow_control")
-        self.config = yaml.safe_load(os.path.join(spec.submodule_search_locations[0], "config", self.CONFIG_PATH))
+        with open(os.path.join(spec.submodule_search_locations[0], self.CONFIG_PATH), "r") as f:
+            self.config = yaml.safe_load(f)
+        lang_idx = self.config["languages"].index(self.LANGUAGE)
+        # self.translator = [t for f, t in self.config.items()]
+        # self.translator = {f: {k: v[lang_idx] for k, v in t} for f, t in self.config.items()}
+        # print(self.translator)
 
         # >>> spinning
         self.spinTimer = wx.Timer()
@@ -193,15 +205,15 @@ class Visualizator(wx.App):
             self.cameras = []
 
         # >>> Initialize GUI frame
-        self.frame = VizGUI()
-        self.frame.Bind(wx.EVT_CLOSE, self.destroy)
+        self.Bind(wx.EVT_CLOSE, self.destroy)
 
         self.mainVBox = wx.BoxSizer(wx.VERTICAL)
 
         # Toolbar
-        toolbar = wx.ToolBar(self.frame, -1)
+        toolbar = wx.ToolBar(self, -1)
         toolbar.SetToolSeparation(20)
-        button = wx.Button(toolbar, -1, 'Maximize', name="buttonMaximize")
+        button = wx.Button(toolbar, -1, "Pozastav NLP", name="buttonMaximize")
+        # button = wx.Button(toolbar, -1, self.translator["fields"]["nlp_suspend"], name="buttonMaximize")
         toolbar.AddControl(button)
         # toolbar.AddSeparator()
         # button = wx.Button(toolbar, -1, 'Save setup', name="buttonSaveSetup")
@@ -216,7 +228,7 @@ class Visualizator(wx.App):
         # button = wx.Button(toolbar, -1, 'Tracking calibration', name="buttonTrackingCalib")
         # toolbar.AddControl(button)
         toolbar.Realize()
-        self.frame.SetToolBar(toolbar)
+        self.SetToolBar(toolbar)
         self.mainVBox.Add(toolbar, flag=wx.EXPAND)
 
         # self.box = wx.GridBagSizer(vgap=5, hgap=10)
@@ -225,30 +237,56 @@ class Visualizator(wx.App):
         self.mainVBox.Add(imageAndControlBox, flag=wx.EXPAND)
 
         # Image view
-        self.imageView = ImageViewPanel(self.frame)
+        self.imageView = ImageViewPanel(self)
         if self.cameras:
             self.imageView.setCurrentCamera(self.cameras[0])
         imageAndControlBox.Add(self.imageView, flag=wx.EXPAND)
 
         controlBox = wx.BoxSizer(wx.VERTICAL)
-        cameraSelector = wx.Choice(self.frame, choices=self.cameras)
+        cameraSelector = wx.Choice(self, choices=self.cameras)
         cameraSelector.Bind(wx.EVT_CHOICE, lambda event: self.imageView.setCurrentCamera(event.GetString()))
         cameraSelector.Select(0)
 
         controlBox.Add(cameraSelector, flag=wx.EXPAND)
         imageAndControlBox.Add(controlBox, flag=wx.EXPAND)
 
-        self.frame.SetSizerAndFit(self.mainVBox)
-        self.frame.ShowWithEffect(wx.SHOW_EFFECT_BLEND)
+        self.SetSizerAndFit(self.mainVBox)
+        self.ShowWithEffect(wx.SHOW_EFFECT_BLEND)
 #        self.vbox.ComputeFittingWindowSize()
 
-        # self.frame.Bind(wx.EVT_BUTTON, self.onButton)
-        # self.frame.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
+        # self.Bind(wx.EVT_BUTTON, self.onButton)
+        # self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
 
-        return True
+    def onKeyDown(self, key):
+        # Pynput is great but captures events when window is not focused. The following condition prevents that.
+        if not self.IsActive():
+            return
 
+        if type(key) is pynput.keyboard.KeyCode:
+            if key.char == "f":
+                print(self.GetWindowStyleFlag())
+                if self.maxed:
+                    # self.SetWindowStyleFlag(wx.BORDER_SIMPLE)
+                    self.Hide()
+                    self.Show(True)
+                else:
+                    # self.SetWindowStyleFlag(wx.MAXIMIZE | wx.BORDER_NONE)
+                    self.ShowFullScreen(True, style=wx.FULLSCREEN_NOCAPTION | wx.FULLSCREEN_NOBORDER)
+                self.maxed = not self.maxed
+                self.Refresh()
+            elif key.char == "q":
+                self.Close()
+
+    @submit_to_pool_executor(thread_pool_executor)
     def HandleROS(self, _=None):
-        wx.CallAfter(rclpy.spin_once, self.node, executor=self.executor)
+        rclpy.spin_once(self.node, executor=self.executor)
+        print(self.pclient.det_obj)
+        print(self.pclient.det_command)
+        print(self.pclient.det_obj_name)
+        print(self.pclient.det_obj_in_ws)
+        print(self.pclient.status)
+        # wx.CallAfter(rclpy.spin_once, self.node, executor=self.executor)
+        # pass
 
     def toggle_nlp_halting(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
@@ -323,9 +361,8 @@ class Visualizator(wx.App):
 
     def destroy(self, something=None):
         self.spinTimer.Stop()
-        self.ExitMainLoop()
         try:
-            self.frame.Destroy()
+            super().Destroy()
             self.node.destroy_node()
         except BaseException:
             self.logger.warn("Could not destroy node or frame, probably already destroyed.")
@@ -333,8 +370,9 @@ class Visualizator(wx.App):
 
 def main():
     rclpy.init()
+    app = wx.App(False)
     visualizator = Visualizator()
-    visualizator.MainLoop()
+    app.MainLoop()
     visualizator.destroy()
 
 if __name__ == "__main__":
