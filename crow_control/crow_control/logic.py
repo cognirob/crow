@@ -20,7 +20,7 @@ from rclpy.qos import QoSReliabilityPolicy
 from datetime import datetime
 import json
 import numpy as np
-
+from num2words import num2words
 import pkg_resources
 import time
 #from numba import jit
@@ -35,7 +35,7 @@ import time
 import subprocess
 from collections import deque
 from crow_control.utils.profiling import StatTimer
-from crow_control.utils import ParamClient
+from crow_control.utils import ParamClient, QueueServer
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
@@ -56,10 +56,10 @@ class ControlLogic(Node):
         self.onto = self.crowracle.onto
         
         self.pclient = ParamClient()
-        self.pclient.declare("robot_done", True) # If true, the robot has received a goal and completed it.
-        self.pclient.declare("robot_failed", False) # If true, the robot had failed to perform the requested action.
-        self.pclient.declare("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
-        self.pclient.declare("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
+        self.pclient.define("robot_done", True) # If true, the robot has received a goal and completed it.
+        self.pclient.define("robot_failed", False) # If true, the robot had failed to perform the requested action.
+        self.pclient.define("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
+        self.pclient.define("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
         self.pclient.declare("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
 
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -74,11 +74,13 @@ class ControlLogic(Node):
         self.status = self.STATUS_IDLE
         self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
-        self.command_main_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
+        self.command_main_buffer = QueueServer(maxlen=self.MAX_QUEUE_LENGTH, queue_name='main')
         self.command_meanwhile_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
-
+        self.main_buffer_count = 1
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
         self.marker_publisher = self.create_publisher(StorageMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
+        self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last, CommandType.REM_CMD_X: self.remove_command_x,
+                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendAction}
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -154,98 +156,78 @@ class ControlLogic(Node):
 
     def process_actions(self, data):
         for d in data:
-            buffer = d.get("command_buffer", 'main')
+            buffer = d.setdefault("command_buffer", 'main')
             op_name = d.get("action_type")
-            if d["action"] == CommandType.PNP:
-                target = self.processTarget(d["target"], d["target_type"])
-                if target is None:
-                    self.get_logger().error("Failed to issue Pick & Place action, target cannot be set!")
-                    self.pclient.define("robot_failed", True)
-                    self.pclient.define("ready_for_next_sentence", True)
-                    continue
-                location = self.processTarget(d["target"], d["target_type"])
-                if target is None:
-                    self.get_logger().error("Failed to issue Pick & Place action, location cannot be set!")
-                    self.pclient.define("robot_failed", True)
-                    self.pclient.define("ready_for_next_sentence", True)
-                    continue
-                self.get_logger().info(f"Target set to {target} and location is {location}.")
-            elif d["action"] == CommandType.POINT:
-                if self.DEBUG:
-                    self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
-                else:
-                    # self.sendAction(target)
-                    #self.push_actions(self.sendAction, target=target)
-                    StatTimer.enter("pushing action into queue")
-                    self.push_actions(self.sendAction, buffer, data_target=d["target"], data_target_type=d["target_type"])
-                    StatTimer.exit("pushing action into queue")
-            elif d["action"] == CommandType.DEFINE_STORAGE:
-                self.push_actions(self.defineStorage, buffer, storage_name=d["storage_name"], marker_group_name=d["marker_group_name"])
-            elif d["action"] == CommandType.REM_CMD_LAST:
-                self.push_actions(self.remove_command_last, buffer)
-            elif d["action"] == CommandType.REM_CMD_X:
-                self.push_actions(self.remove_command_x, buffer, command_name=d["command_name"])
+            if self.DEBUG:
+                self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
+            else:
+                StatTimer.enter("pushing action into queue")
+                self.push_actions(**d)
+                StatTimer.exit("pushing action into queue")
             self.get_logger().info(f"Will perform {op_name}")
 
-    def push_actions(self, comand, buffer, **kwargs):
+    def push_actions(self, command_buffer='main', action_type=None, action=None, **kwargs):
         StatTimer.enter("pushing action into buffer", severity=Runtime.S_SINGLE_LINE)
-        if buffer == 'meanwhile':
-            print('append mw')
-            self.command_meanwhile_buffer.append((comand, kwargs))
-        else: 
-            self.command_main_buffer.append((comand, kwargs))
+        if command_buffer == 'meanwhile':
+            self.command_meanwhile_buffer.append((action_type, action, kwargs))
+        else:
+            command_name = num2words(self.main_buffer_count, lang='cz')
+            self.command_main_buffer.append((action_type, action, command_name, kwargs))
+            self.main_buffer_count += 1
         StatTimer.exit("pushing action into buffer")
         StatTimer.enter("setting param", severity=Runtime.S_SINGLE_LINE)
-        self.pclient.define("ready_for_next_sentence", True)
+        self.pclient.ready_for_next_sentence = True
         StatTimer.exit("setting param")
 
-    def prepare_command(self, data_target=None, data_target_type=None):
-        target = None
+    def prepare_command(self, target=None, target_type=None):
+        target_info = None
         start_time = datetime.now()
         duration = datetime.now() - start_time
-        #@TODO: data_target and data_target_type may be lists of candidates or as well dicts with constraints only
-        while (target is None) and (duration.seconds <= self.TARGET_BUFFERING_TIME):
-            target = self.processTarget(data_target, data_target_type)
+        #@TODO: target and target_type may be lists of candidates or as well dicts with constraints only
+        while (target_info is None) and (duration.seconds <= self.TARGET_BUFFERING_TIME):
+            target_info = self.processTarget(target, target_type)
             duration = datetime.now() - start_time
-        if target is None: #@TODO: try another target candidate
+        if target_info is None: #@TODO: try another target candidate
             self.get_logger().error("Failed to issue pointing action, target cannot be set!")
-            self.pclient.define("robot_failed", True)
-            self.pclient.define("robot_done", True)
+            self.pclient.robot_failed = True
+            self.pclient.robot_done = True
             return None
         else:
-            self.get_logger().info(f"Target set to {target}.")
-            return target
+            self.get_logger().info(f"Target set to {target_info}.")
+            return target_info
 
     def update_main_cb(self):
         if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
             try:
-                command, kwargs = self.command_main_buffer.pop()
+                disp_name, action, command_name, kwargs = self.command_main_buffer.pop()
             except IndexError as ie:  # no new commands to process
                 pass  # noqa
             else:
-                if 'data_target' in kwargs.keys():
-                    target = self.prepare_command(**kwargs) #multiple attempts to identify target
-                    if (self.status & self.STATUS_IDLE) and (target is not None):
+                command = self.COMMAND_DICT.get(action, self.command_error)
+                if 'target' in kwargs.keys():
+                    target_info = self.prepare_command(**kwargs) #multiple attempts to identify target
+                    kwargs['target_info'] = target_info
+                    if (self.status & self.STATUS_IDLE) and (target_info is not None):
                         try:
-                            command(target)
+                            command(**kwargs)
                         except Exception as e:
-                            self.get_logger().error(f"Error executing action {command} with args {str(target)}. The error was:\n{e}")
-                            self.pclient.define("robot_done", True)
-                            self.pclient.define("robot_failed", True)
+                            self.get_logger().error(f"Error executing action {disp_name} with args {str(target_info)}. The error was:\n{e}")
+                            self.pclient.robot_done = True
+                            self.pclient.robot_failed = True
                         finally:
                             self._set_status(self.STATUS_IDLE)
-                elif 'storage_name' in kwargs.keys():
+                else:
                     command(**kwargs)
             finally:
                 pass
 
     def update_meanwhile_cb(self):
         try:
-            command, kwargs = self.command_meanwhile_buffer.pop()
-            print('meanwhile', command)
+            disp_name, action, kwargs = self.command_meanwhile_buffer.pop()
         except IndexError as ie:  # no new commands to process
             pass  # noqa
         else:
+            command = self.COMMAND_DICT.get(action, self.command_error)
             command(**kwargs)
         finally:
                 pass
@@ -254,42 +236,53 @@ class ControlLogic(Node):
         self.status = status
         # print(self.status)
 
-    def remove_command_last(self):
-        print('removing last command')
+    def command_error(self, **kwargs):
+        self.get_logger().info("Command not implemented!")
 
-    def remove_command_x(self, command_name=None):
-        print(f'removing command {command_name}')
+    def remove_command_last(self, **kwargs):
+        if len(self.command_main_buffer) > 0:
+            self.command_main_buffer.remove(-1)
+            self.get_logger().info('Removing last command')
+        else:
+            self.get_logger().info('Can not remove last command, it is not in the queue anymore')
 
-    def defineStorage(self, storage_name=None, marker_group_name=None):
+    def remove_command_x(self, command_name=None, **kwargs):
+        idx = self.command_main_buffer.find_name_index(command_name)
+        if idx is not None:
+            self.command_main_buffer.remove(idx)
+            self.get_logger().info(f'Removing command {command_name}')
+        else:
+            self.get_logger().info('Can not remove command {command_name}, it is not in the queue')
+
+    def defineStorage(self, storage_name=None, marker_group_name=None, **kwargs):
         marker_msg = StorageMsg()
         marker_msg.group_name = marker_group_name
         marker_msg.storage_name = storage_name
         self.marker_publisher.publish(marker_msg)
 
-    def sendAction(self, target, location=None, obj=None):
+    def sendAction(self, target_info=None, location=None, obj=None, **kwargs):
         StatTimer.enter("Sending command")
-        self.pclient.define("robot_done", False)
+        self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = PickNPlace.Goal()
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
-        if target is not None:
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target[0]
-            if target[1] is None:
+        if target_info is not None:
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
+            if target_info[1] is None:
                 goal_msg.size = [0, 0, 0]
             else:
-                goal_msg.size = target[1]
-            # if target[2] is None:
+                goal_msg.size = target_info[1]
+            # if target_info[2] is None:
             #     goal_msg.object.type = -1
             # else:
-            #     goal_msg.object = ObjectType(type=target[2])
+            #     goal_msg.object = ObjectType(type=target_info[2])
         if location is None:
             goal_msg.place_pose = Pose()
         else:
             pass  # TODO
         # goal_msg.size = [0.1, 0.2, 0.3]
-        goal_msg.object_type = ObjectType(type=target[2])
-
+        goal_msg.object_type = ObjectType(type=target_info[2])
         self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
@@ -298,8 +291,8 @@ class ControlLogic(Node):
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
-            self.pclient.define("robot_failed", True)
-            self.pclient.define("robot_done", True)
+            self.pclient.robot_failed = True
+            self.pclient.robot_done = True
             self._set_status(self.STATUS_IDLE)
             return
 
@@ -314,10 +307,10 @@ class ControlLogic(Node):
         StatTimer.exit("robot action")
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
-        self.pclient.define("robot_done", True)
+        self.pclient.robot_done = True
         self._set_status(self.STATUS_IDLE)
         if not result.done:
-            self.pclient.define("robot_failed", True)
+            self.pclient.robot_failed = True
 
     def robot_feedback_cb(self, feedback_msg):
         self.get_logger().info('Got FB')
@@ -336,18 +329,18 @@ def main():
         #     print(p, " --- ", o)
         # time.sleep(1)
         cl.get_logger().info("ready")
-        # cl.push_actions(cl.sendAction, target=None)
-        # cl.push_actions(cl.sendAction, target=None)
-        # cl.push_actions(cl.sendAction, target=None)
-        # cl.push_actions(cl.sendAction, target=None)
+        # cl.push_actions(cl.sendAction, target_info=None)
+        # cl.push_actions(cl.sendAction, target_info=None)
+        # cl.push_actions(cl.sendAction, target_info=None)
+        # cl.push_actions(cl.sendAction, target_info=None)
         rclpy.spin(cl, executor=mte)
         cl.destroy_node()
     except Exception as e:
         print(f"Some error had occured: {e}")
     finally:
-        cl.pclient.define("robot_failed", False)
-        cl.pclient.define("robot_done", True)
-        cl.pclient.define("ready_for_next_sentence", False)
+        cl.pclient.robot_failed = False
+        cl.pclient.robot_done = True
+        cl.pclient.ready_for_next_sentence = False
 
 if __name__ == '__main__':
     main()

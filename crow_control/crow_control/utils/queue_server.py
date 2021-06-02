@@ -42,7 +42,13 @@ class QueueServer():
     def destroy(self):
         del self.buffer
         self.publisher.close()
-              
+
+    def find_name_index(self, name):
+        for pos, t in enumerate(self.buffer):
+            if t[2] == name:
+                return pos
+        return None
+
     def __broadcast(self):
         self.__publisher.send_multipart([self.__queue_name + b'.update', cpl.dumps(self.buffer)])
         
