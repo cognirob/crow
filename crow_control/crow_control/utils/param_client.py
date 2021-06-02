@@ -11,6 +11,7 @@ from threading import Thread
 from warnings import warn
 import cloudpickle as cpl
 from zmq.utils.strtypes import asbytes
+import time
 
 
 class ParamClient():
@@ -54,6 +55,28 @@ class ParamClient():
         self.poller_thread = Thread(target=self.__poll, daemon=True)
         self.poller_thread.start()
 
+    def wait_for_param(self, param, timeout=0):
+        # timeout DOES NOT WORK, yet
+        msg = self.wait_receive_param(param, timeout)
+        if msg is None:
+            return False
+        return True
+
+    def wait_receive_param(self, param, timeout=0):
+        # timeout DOES NOT WORK, yet
+        self.__subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
+        start = time.time()
+        msg = None
+        while True:
+            rcv_param, data = self.__subscriber.recv_multipart()
+            if rcv_param.decode() == param:
+                msg = cpl.loads(data)
+                print(param, msg)
+                break
+        self.__subscriber.setsockopt(zmq.UNSUBSCRIBE, param.encode('utf-8'))
+        if msg is not None:
+            return msg
+
     def subscribe(self, param):
         """Subscribe to parameter updates. This does not guarantee that the parameter
         exists and has any value. This only tells the server that this client
@@ -76,7 +99,7 @@ class ParamClient():
             ))
         self.__subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
 
-    def declare(self, param, default_value=None):
+    def declare(self, param, default_value=None, type=None, description=""):
         """Subsribes to parameter updates. This does roughly the same as
         subscribe but presents a default value to fill in if the parameter
         does not exist on the server. Use this if you want to always start with some
@@ -92,7 +115,7 @@ class ParamClient():
         """
         self.__send_definition(param, default_value, 0)
 
-    def define(self, param, value):
+    def define(self, param, value, type=None, description=""):
         """Subscribes to parameter updates. Unlike subscribe or declare, this method always
         overwrites the current parameter value. That is, whether the parameter exists on the server
         or not, after calling this method, it will have value set to "value".
