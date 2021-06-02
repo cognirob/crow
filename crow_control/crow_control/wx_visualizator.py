@@ -21,6 +21,7 @@ import open3d as o3d
 from PIL import Image, ImageFont, ImageDraw
 from unicodedata import normalize
 import wx
+import wx.grid
 from datetime import datetime
 import yaml
 import os
@@ -121,8 +122,11 @@ class Visualizator(wx.Frame):
 
     DEBUG = False
 
+    WIDTH = 1200
+    HEIGHT = 800
+
     def __init__(self):
-        super().__init__(None, title="Visualizator", size=(1024, 768))
+        super().__init__(None, title="Visualizator", size=(self.WIDTH, self.HEIGHT))
         self.maxed = False
         self.keyDaemon = pynput.keyboard.Listener(on_press=self.onKeyDown)
         self.keyDaemon.daemon = True
@@ -204,6 +208,10 @@ class Visualizator(wx.Frame):
         else:
             self.cameras = []
 
+        # >>> Helpers
+        self.old_objects = {}
+        self.notebook_tab = "cameras"
+
         # >>> Initialize GUI frame
         self.Bind(wx.EVT_CLOSE, self.destroy)
 
@@ -229,26 +237,48 @@ class Visualizator(wx.Frame):
         # toolbar.AddControl(button)
         toolbar.Realize()
         self.SetToolBar(toolbar)
+
         self.mainVBox.Add(toolbar, flag=wx.EXPAND)
 
-        # self.box = wx.GridBagSizer(vgap=5, hgap=10)
-        # self.mainVBox.Add(self.box, flag=wx.EXPAND)
-        imageAndControlBox = wx.BoxSizer(wx.HORIZONTAL)
-        self.mainVBox.Add(imageAndControlBox, flag=wx.EXPAND)
+        # NOTEBOOK
+        # nb_panel = wx.Panel(self)
+        self.notebook = wx.Notebook(self)
+        self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onNBPageChange)
 
-        # Image view
-        self.imageView = ImageViewPanel(self)
+        # NOTEBOOK - CAMERAS
+        nb_page1 = wx.Panel(self.notebook)
+        imageAndControlBox = wx.BoxSizer(wx.HORIZONTAL)
+        self.imageView = ImageViewPanel(nb_page1)  # Image view
         if self.cameras:
             self.imageView.setCurrentCamera(self.cameras[0])
         imageAndControlBox.Add(self.imageView, flag=wx.EXPAND)
 
         controlBox = wx.BoxSizer(wx.VERTICAL)
-        cameraSelector = wx.Choice(self, choices=self.cameras)
+        cameraSelector = wx.Choice(nb_page1, choices=self.cameras)
         cameraSelector.Bind(wx.EVT_CHOICE, lambda event: self.imageView.setCurrentCamera(event.GetString()))
         cameraSelector.Select(0)
-
         controlBox.Add(cameraSelector, flag=wx.EXPAND)
         imageAndControlBox.Add(controlBox, flag=wx.EXPAND)
+
+        nb_page1.SetSizerAndFit(imageAndControlBox)
+        self.notebook.AddPage(nb_page1, "cameras")
+
+        # NOTEBOOK - OBJECTS
+        self.nb_page_obj = wx.grid.Grid(self.notebook)
+        self.nb_page_obj.CreateGrid(20, 3)
+        self.nb_page_obj.EnableEditing(False)
+        self.nb_page_obj.SetColSize(0, int(self.WIDTH * 0.5))
+        self.nb_page_obj.SetColLabelValue(0, "object")
+        self.nb_page_obj.SetColSize(1, int(self.WIDTH * 0.2))
+        self.nb_page_obj.SetColLabelValue(1, "location")
+        self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.3))
+        self.nb_page_obj.SetColLabelValue(2, "id")
+        self.table_attr = wx.grid.GridCellAttr(wx.BLACK, wx.LIGHT_GREY, wx.Font(), 0, 0)
+        # self.nb_page_obj = wx.TextCtrl(self.notebook)
+        self.notebook.AddPage(self.nb_page_obj, "objects")
+
+        # self.mainVBox.Add(nb_panel, flag=wx.EXPAND)
+        self.mainVBox.Add(self.notebook, flag=wx.EXPAND)
 
         self.SetSizerAndFit(self.mainVBox)
         self.ShowWithEffect(wx.SHOW_EFFECT_BLEND)
@@ -256,6 +286,9 @@ class Visualizator(wx.Frame):
 
         # self.Bind(wx.EVT_BUTTON, self.onButton)
         # self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
+
+    def onNBPageChange(self, evt):
+        self.notebook_tab = self.notebook.GetPageText(evt.Selection)
 
     def onKeyDown(self, key):
         # Pynput is great but captures events when window is not focused. The following condition prevents that.
@@ -280,13 +313,65 @@ class Visualizator(wx.Frame):
     @submit_to_pool_executor(thread_pool_executor)
     def HandleROS(self, _=None):
         rclpy.spin_once(self.node, executor=self.executor)
-        print(self.pclient.det_obj)
-        print(self.pclient.det_command)
-        print(self.pclient.det_obj_name)
-        print(self.pclient.det_obj_in_ws)
-        print(self.pclient.status)
+        # print("aaaaa")
+        # print(self.pclient.det_obj)
+        # print(self.pclient.det_command)
+        # print(self.pclient.det_obj_name)
+        # print(self.pclient.det_obj_in_ws)
+        # print(self.pclient.status)
+        # print("bbbb")
+        if self.notebook_tab == "objects":
+            wx.CallAfter(self.refresh_objects)
+
         # wx.CallAfter(rclpy.spin_once, self.node, executor=self.executor)
         # pass
+
+    def refresh_objects(self):
+        new_objects = {}
+        for s in self.crowracle.getTangibleObjects_nocls():
+            uri = s
+            try:
+                loc = self.crowracle.get_location_of_obj(s)
+                id = self.crowracle.get_id_of_obj(s)
+            except Exception as e:
+                loc = e
+                id = "error"
+            finally:
+                new_objects[uri] = (loc, id)
+
+        combined_objects = {**self.old_objects, **new_objects}
+
+        self.nb_page_obj.ClearGrid()
+        if len(combined_objects) == 0:
+            return
+
+        for i, (uri, (loc, id)) in enumerate(combined_objects.items()):
+            attr = self.table_attr.Clone()
+            # grid.SetCellTextColour(3, 3, wx.GREEN)
+            # grid.SetCellBackgroundColour(3, 3, wx.LIGHT_GREY)
+            dead = False
+            if uri in self.old_objects:
+                if uri not in new_objects:
+                    dead = True
+                    attr.SetTextColour(wx.RED)
+                # else:
+                #     attr.SetTextColour(wx.BLACK)
+            elif uri in new_objects:
+                attr.SetTextColour(wx.GREEN)
+            else:
+                attr.SetTextColour(wx.MAGENTA)
+            if not dead and (id is None or "error" in id):
+                attr.SetBackgroundColour(wx.ORANGE)
+                # attr.SetTextColour(wx.ORANGE)
+
+            self.nb_page_obj.SetRowAttr(i, attr)
+            self.nb_page_obj.SetCellValue(i, 0, f"{uri}")
+            if not dead:
+                self.nb_page_obj.SetCellValue(i, 1, f"loc: {loc}")
+                self.nb_page_obj.SetCellValue(i, 2, f"ID: {id}")
+
+
+        self.old_objects = new_objects
 
     def toggle_nlp_halting(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
