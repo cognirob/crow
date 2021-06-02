@@ -6,7 +6,7 @@ import message_filters
 from rclpy.action import ActionClient
 
 from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
-from trio3_ros2_interfaces.msg import RobotStatus, ObjectType
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
 # from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
@@ -60,7 +60,7 @@ class ControlLogic(Node):
         self.pclient.define("robot_failed", False) # If true, the robot had failed to perform the requested action.
         self.pclient.define("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
         self.pclient.define("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
-        self.pclient.declare("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
+        self.pclient.define("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
 
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
@@ -296,6 +296,7 @@ class ControlLogic(Node):
             self._set_status(self.STATUS_IDLE)
             return
 
+        StatTimer.exit("speech2robot", severity=Runtime.S_MAIN)
         StatTimer.enter("robot action")
         self.get_logger().info('Goal accepted :)')
         self._set_status(self.STATUS_EXECUTING)
@@ -304,7 +305,8 @@ class ControlLogic(Node):
         self._get_result_future.add_done_callback(self.robot_done_cb)
 
     def robot_done_cb(self, future):
-        StatTimer.exit("robot action")
+        StatTimer.try_exit("robot action")
+        StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
         self.pclient.robot_done = True
@@ -314,6 +316,9 @@ class ControlLogic(Node):
 
     def robot_feedback_cb(self, feedback_msg):
         self.get_logger().info('Got FB')
+        if feedback_msg.core_action_phase == CoreActionPhase.ROBOTIC_ACTION:
+            StatTimer.try_exit("robot action")
+            StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
         feedback = feedback_msg.feedback
         self.get_logger().info(f'Received feedback: {[(k, getattr(feedback, k)) for k in feedback.get_fields_and_field_types()]}')
 
