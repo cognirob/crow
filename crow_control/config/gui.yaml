@@ -1,14 +1,34 @@
 languages: ["CZ", "EN"]
-fields:
+tab:
+  detection:
+    - "detekce"
+    - "detections"
+  cmd_queue:
+    - "příkazová fronta"
+    - "command queue"
+  camera:
+    - "kamery"
+    - "cameras"
+  parameter:
+    - "parametry"
+    - "parameters"
+  object:
+    - "objekty"
+    - "objects"
+input:
   select_camera:
     - "vyberte kameru"
     - "select camera"
-  nlp_mode:
-    - "Režim NLP"
-    - "NLP mode"
   nlp_suspend:
     - "Pozastavit NLP"
     - "Suspend NLP"
+  cmd_cancel:
+    - "Zrušit příkaz"
+    - "Cancel command"
+field:
+  nlp_mode:
+    - "Režim NLP"
+    - "NLP mode"
   detected_cmd:
     - "Detekovany prikaz"
     - "Detected command"
@@ -27,16 +47,14 @@ fields:
   cmd_queue:
     - "Příkazy v pořadí"
     - "Command queue"
-  cmd_cancel:
-    - "Zrušit příkaz"
-    - "Cancel command"
-options:
+option:
   yes:
     - "ano"
     - "yes"
   no:
     - "ne"
     - "no"
-infoText:
-  - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"
-  - "Commands\nPoint at <OBJECT>\nPoint at <COLOR> <OBJECT>\nPick up <OBJECT>"
+info:
+  infoText:
+    - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"
+    - "Commands\nPoint at <OBJECT>\nPoint at <COLOR> <OBJECT>\nPick up <OBJECT>"

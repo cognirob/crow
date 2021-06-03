@@ -112,7 +112,7 @@ runcmd "ros2 run crow_ontology server"
 if [ "$O_VIZ" = true ]; then
     new_tab $WID
     runcmd "echo -ne '\033]30;GViz\007'"
-    runcmd "ros2 run crow_vision_ros2 visualizator"
+    runcmd "ros2 run crow_control wxvis"
 fi
 
 new_tab $WID

@@ -117,6 +117,7 @@ class ImageViewPanel(wx.Panel):
 
 class Visualizator(wx.Frame):
     TIMER_FREQ = 10 # milliseconds
+    UPDATE_FREQ = 200 # milliseconds
     LANGUAGE = 'CZ' #language of the visualization
     COLOR_GRAY = (128, 128, 128)
     CONFIG_PATH = "../config/gui.yaml"
@@ -143,14 +144,15 @@ class Visualizator(wx.Frame):
         with open(os.path.join(spec.submodule_search_locations[0], self.CONFIG_PATH), "r") as f:
             self.config = yaml.safe_load(f)
         lang_idx = self.config["languages"].index(self.LANGUAGE)
-        # self.translator = [t for f, t in self.config.items()]
-        # self.translator = {f: {k: v[lang_idx] for k, v in t} for f, t in self.config.items()}
-        # print(self.translator)
+        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input"]}
 
         # >>> spinning
         self.spinTimer = wx.Timer()
         self.spinTimer.Bind(wx.EVT_TIMER, self.HandleROS)
         self.spinTimer.Start(self.TIMER_FREQ)
+        self.updateTimer = wx.Timer()
+        self.updateTimer.Bind(wx.EVT_TIMER, self.updateParamAObjects)
+        self.updateTimer.Start(self.UPDATE_FREQ)
 
         # >>> Crowracle client
         self.crowracle = CrowtologyClient(node=self.node)
@@ -200,7 +202,8 @@ class Visualizator(wx.Frame):
 
         # >>> Helpers
         self.old_objects = {}
-        self.notebook_tab = "cameras"
+        self.notebook_tab = self.translator["tab"]["camera"]
+        self.cmd_notebook_tab = self.translator["tab"]["detection"]
 
         # >>> Initialize GUI frame
         self.Bind(wx.EVT_CLOSE, self.destroy)
@@ -210,8 +213,7 @@ class Visualizator(wx.Frame):
         # Toolbar
         toolbar = wx.ToolBar(self, -1)
         toolbar.SetToolSeparation(20)
-        button = wx.Button(toolbar, -1, "Pozastav NLP", name="buttonMaximize")
-        # button = wx.Button(toolbar, -1, self.translator["fields"]["nlp_suspend"], name="buttonMaximize")
+        button = wx.Button(toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
         toolbar.AddControl(button)
         # toolbar.AddSeparator()
         # button = wx.Button(toolbar, -1, 'Save setup', name="buttonSaveSetup")
@@ -235,22 +237,42 @@ class Visualizator(wx.Frame):
         self.notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onNBPageChange)
 
         # NOTEBOOK - CAMERAS
-        nb_page1 = wx.Panel(self.notebook)
+        nb_page_cam = wx.Panel(self.notebook)
+
+        cameraViewBox = wx.BoxSizer(wx.VERTICAL)
         imageAndControlBox = wx.BoxSizer(wx.HORIZONTAL)
-        self.imageView = ImageViewPanel(nb_page1)  # Image view
+        self.imageView = ImageViewPanel(nb_page_cam)  # Image view
         if self.cameras:
             self.imageView.setCurrentCamera(self.cameras[0])
         imageAndControlBox.Add(self.imageView, flag=wx.EXPAND)
 
         controlBox = wx.BoxSizer(wx.VERTICAL)
-        cameraSelector = wx.Choice(nb_page1, choices=self.cameras)
+        controlBox.Add(wx.StaticText(nb_page_cam, -1, self.translator["input"]["select_camera"]), flag=wx.EXPAND)
+        cameraSelector = wx.Choice(nb_page_cam, choices=self.cameras)
         cameraSelector.Bind(wx.EVT_CHOICE, lambda event: self.imageView.setCurrentCamera(event.GetString()))
         cameraSelector.Select(0)
         controlBox.Add(cameraSelector, flag=wx.EXPAND)
-        imageAndControlBox.Add(controlBox, flag=wx.EXPAND)
+        infoText = wx.StaticText(nb_page_cam, -1, self.translator["info"]["infoText"])
+        controlBox.Add(infoText, flag=wx.EXPAND)
 
-        nb_page1.SetSizerAndFit(imageAndControlBox)
-        self.notebook.AddPage(nb_page1, "cameras")
+        imageAndControlBox.Add(controlBox, flag=wx.EXPAND)
+        cameraViewBox.Add(imageAndControlBox, flag=wx.EXPAND)
+
+        # COMMAND QUEUE & PARAMS
+        self.command_notebook = wx.Notebook(nb_page_cam)
+        self.command_notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onCMD_NBPageChange)
+        self.cmd_detection_param_grid = wx.grid.Grid(self.command_notebook)
+        self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
+        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
+        self.command_notebook.AddPage(self.cmd_queue_grid, self.translator["tab"]["cmd_queue"])
+        f = wx.Font()
+        f.SetWeight(wx.FONTWEIGHT_SEMIBOLD)
+        self.table_blendin_attr = wx.grid.GridCellAttr(wx.BLACK, wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME), f, 0, 0)
+
+        cameraViewBox.Add(self.command_notebook, flag=wx.EXPAND)
+
+        nb_page_cam.SetSizerAndFit(cameraViewBox)
+        self.notebook.AddPage(nb_page_cam, self.translator["tab"]["camera"])
 
         # NOTEBOOK - OBJECTS
         self.nb_page_obj = wx.grid.Grid(self.notebook)
@@ -263,7 +285,7 @@ class Visualizator(wx.Frame):
         self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.3))
         self.nb_page_obj.SetColLabelValue(2, "id")
         self.table_attr = wx.grid.GridCellAttr(wx.BLACK, wx.WHITE, wx.Font(), 0, 0)
-        self.notebook.AddPage(self.nb_page_obj, "objects")
+        self.notebook.AddPage(self.nb_page_obj, self.translator["tab"]["object"])
 
         # NOTEBOOK - PARAMS
         self.nb_page_param = wx.grid.Grid(self.notebook)
@@ -273,7 +295,7 @@ class Visualizator(wx.Frame):
         self.nb_page_param.SetColLabelValue(0, "parameter")
         self.nb_page_param.SetColSize(1, int(self.WIDTH * 0.8))
         self.nb_page_param.SetColLabelValue(1, "value")
-        self.notebook.AddPage(self.nb_page_param, "parameters")
+        self.notebook.AddPage(self.nb_page_param, self.translator["tab"]["parameter"])
         self.current_parameters = OrderedDict()
 
         # Adding NOTEBOOK
@@ -283,7 +305,7 @@ class Visualizator(wx.Frame):
         self.ShowWithEffect(wx.SHOW_EFFECT_BLEND)
 #        self.vbox.ComputeFittingWindowSize()
 
-        # self.Bind(wx.EVT_BUTTON, self.onButton)
+        self.Bind(wx.EVT_BUTTON, self.onButton)
         # self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
 
         # >>> PARAMS
@@ -296,7 +318,13 @@ class Visualizator(wx.Frame):
         self.pclient.declare("status", default_value="-")
         self.pclient.declare("halt_nlp", default_value=False)
         # self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
-        self.qclient = QueueClient(queue_name="commands")
+        self.qclient = QueueClient(queue_name="main")
+
+    def onButton(self, event):
+        obj = event.GetEventObject()
+        if type(obj.GetParent()) is wx.ToolBar:
+            if obj.Name == 'buttHaltNLP':
+                self.toggle_nlp_halting()
 
     def update_params(self, param, msg):
         if param in self.current_parameters:
@@ -310,6 +338,9 @@ class Visualizator(wx.Frame):
 
     def onNBPageChange(self, evt):
         self.notebook_tab = self.notebook.GetPageText(evt.Selection)
+
+    def onCMD_NBPageChange(self, evt):
+        self.cmd_notebook_tab = self.command_notebook.GetPageText(evt.Selection)
 
     def onKeyDown(self, key):
         # Pynput is great but captures events when window is not focused. The following condition prevents that.
@@ -334,71 +365,79 @@ class Visualizator(wx.Frame):
     @submit_to_pool_executor(thread_pool_executor)
     def HandleROS(self, _=None):
         rclpy.spin_once(self.node, executor=self.executor)
-        # print("aaaaa")
-        # print(self.pclient.det_obj)
-        # print(self.pclient.det_command)
-        # print(self.pclient.det_obj_name)
-        # print(self.pclient.det_obj_in_ws)
-        # print(self.pclient.status)
-        # print("bbbb")
-        if self.notebook_tab == "objects":
-            wx.CallAfter(self.refresh_objects)
 
-        # wx.CallAfter(rclpy.spin_once, self.node, executor=self.executor)
-        # pass
+    @submit_to_pool_executor(thread_pool_executor)
+    def updateParamAObjects(self, _=None):
+        if self.notebook_tab == self.translator["tab"]["object"]:
+            self.refresh_objects()
+            # wx.CallAfter(self.refresh_objects)
+        if self.cmd_notebook_tab == self.translator["tab"]["detection"]:
+            self.refresh_detections()
+
+    def refresh_detections(self):
+        pass
 
     def refresh_objects(self):
-        new_objects = {}
-        for s in self.crowracle.getTangibleObjects_nocls():
-            uri = s
-            try:
-                loc = self.crowracle.get_location_of_obj(s)
-                id = self.crowracle.get_id_of_obj(s)
-            except Exception as e:
-                loc = e
-                id = "error"
-            finally:
-                new_objects[uri] = (loc, id)
+        combined_objects = {}
+        try:
+            new_objects = {}
+            for s in self.crowracle.getTangibleObjects_nocls():
+                uri = s
+                try:
+                    loc = self.crowracle.get_location_of_obj(s)
+                    id = self.crowracle.get_id_of_obj(s)
+                except Exception as e:
+                    loc = e
+                    id = "error"
+                finally:
+                    new_objects[uri] = (loc, id)
 
-        combined_objects = {**self.old_objects, **new_objects}
+            combined_objects = {**self.old_objects, **new_objects}
 
-        self.nb_page_obj.ClearGrid()
+            # if not (self.nb_page_obj.GetCellValue(0, 0) + self.nb_page_obj.GetCellValue(0, 1) + self.nb_page_obj.GetCellValue(0, 2)):
+            #     print("clearing")
+            #     self.nb_page_obj.ClearGrid()
+        except BaseException as e:
+            print(e)
+            return
+
         if len(combined_objects) == 0:
             return
 
-        for i, (uri, (loc, id)) in enumerate(combined_objects.items()):
-            attr = self.table_attr.Clone()
-            # grid.SetCellTextColour(3, 3, wx.GREEN)
-            # grid.SetCellBackgroundColour(3, 3, wx.LIGHT_GREY)
-            dead = False
-            if uri in self.old_objects:
-                if uri not in new_objects:
-                    dead = True
-                    attr.SetTextColour(wx.RED)
+        noUpdates = wx.grid.GridUpdateLocker(self.nb_page_obj)
+        try:
+            for i, (uri, (loc, id)) in enumerate(combined_objects.items()):
+                # attr = self.table_attr.Clone()
+                dead = False
+                # if uri in self.old_objects:
+                #     if uri not in new_objects:
+                #         dead = True
+                #         attr.SetTextColour(wx.RED)
+                #     # else:
+                #         attr.SetTextColour(wx.BLACK)
+                # elif uri in new_objects:
+                #     attr.SetTextColour(wx.GREEN)
                 # else:
-                #     attr.SetTextColour(wx.BLACK)
-            elif uri in new_objects:
-                attr.SetTextColour(wx.GREEN)
-            else:
-                attr.SetTextColour(wx.MAGENTA)
-            if not dead and (id is None or "error" in id):
-                attr.SetBackgroundColour(wx.ORANGE)
-                # attr.SetTextColour(wx.ORANGE)
+                #     attr.SetTextColour(wx.MAGENTA)
+                # if not dead and (id is None or "error" in id):
+                #     # attr.SetBackgroundColour(wx.ORANGE)
+                #     attr.SetTextColour(wx.ColourDatabase().Find("ORANGE"))
 
-            self.nb_page_obj.SetRowAttr(i, attr)
-            self.nb_page_obj.SetCellValue(i, 0, f"{uri}")
-            if not dead:
-                self.nb_page_obj.SetCellValue(i, 1, f"loc: {loc}")
-                self.nb_page_obj.SetCellValue(i, 2, f"ID: {id}")
+                # self.nb_page_obj.SetRowAttr(i, attr)
+                # self.nb_page_obj.SetCellValue(i, 0, f"{uri}")
+                # if not dead:
+                #     self.nb_page_obj.SetCellValue(i, 1, f"loc: {loc}")
+                #     self.nb_page_obj.SetCellValue(i, 2, f"ID: {id}")
+        except BaseException as e:
+            print(e)
+        finally:
+            self.old_objects = new_objects
 
+    def toggle_nlp_halting(self):
+        self.pclient.halt_nlp = not self.pclient.halt_nlp
 
-        self.old_objects = new_objects
-
-    def toggle_nlp_halting(self, event, x, y, flags, param):
-        if event == cv2.EVENT_LBUTTONDOWN:
-            self.pclient.halt_nlp = not self.pclient.halt_nlp
-
-    # def input_nlp_callback(self, status_array_msg):
+    def input_nlp_callback(self, status_array_msg):
+        pass
     #     if not status_array_msg.det_obj:
     #         self.get_logger().info("No nlp detections. Quitting early.")
     #         return  # no nlp detections received (for some reason)
