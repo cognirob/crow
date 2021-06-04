@@ -1,3 +1,4 @@
+from concurrent.futures import thread
 import rclpy
 from rclpy.node import Node
 from rcl_interfaces.srv import GetParameters
@@ -29,11 +30,12 @@ from importlib.util import find_spec
 import pynput
 from crow_control.utils import ParamClient, QueueClient, UniversalParamClient
 from concurrent import futures
+from threading import Lock
 import functools
 from collections import OrderedDict
 
 
-thread_pool_executor = futures.ThreadPoolExecutor(max_workers=1)
+thread_pool_executor = futures.ThreadPoolExecutor(max_workers=5)
 print("WX Version (should be 4+): {}".format(wx.__version__))
 
 
@@ -114,6 +116,17 @@ class ImageViewPanel(wx.Panel):
         dc.Clear()
         dc.DrawBitmap(bitmap, margin, margin, useMask=True)
 
+class Colors():
+
+    @classmethod
+    def initializeColors(cls):
+        colorDB = wx.ColourDatabase()
+        cls.OBJ_NORMAL = wx.BLACK
+        cls.OBJ_NEW = wx.GREEN
+        cls.OBJ_ERROR = colorDB.Find("ORANGE")
+        cls.OBJ_WEIRD = colorDB.Find("MAGENTA")
+        cls.OBJ_DEAD = wx.RED
+
 
 class Visualizator(wx.Frame):
     TIMER_FREQ = 10 # milliseconds
@@ -130,6 +143,12 @@ class Visualizator(wx.Frame):
     def __init__(self):
         super().__init__(None, title="Visualizator", size=(self.WIDTH, self.HEIGHT))
         self.maxed = False
+
+        # >>> Threading craziness
+        self.ros_spin_lock = Lock()
+        self.gui_update_lock = Lock()
+
+        # >>> Key monitor
         self.keyDaemon = pynput.keyboard.Listener(on_press=self.onKeyDown)
         self.keyDaemon.daemon = True
         self.keyDaemon.start()
@@ -174,27 +193,14 @@ class Visualizator(wx.Frame):
                 self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
                 # self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
 
-                self.nlp_topics = ["/nlp/status"] #nlp status (from our sentence_processor.py)
-                # response = str(subprocess.check_output("ros2 param get /sentence_processor halt_nlp".split()))
-                self.NLP_HALTED = False  #"False" in response
-
                 # create listeners
                 qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
                 for i, (cam, maskTopic) in enumerate(zip(self.cameras, self.mask_topics)):
-                    listener = self.node.create_subscription(msg_type=msg_image,
-                                                topic=maskTopic,
-                                                callback=lambda img_msg, cam=cam: wx.CallAfter(self.imageView.updateImage, img_msg, cam),
-                                                qos_profile=qos) #the listener QoS has to be =1, "keep last only".
-
+                    self.node.create_subscription(msg_type=msg_image,
+                                                  topic=maskTopic,
+                                                  callback=lambda img_msg, cam=cam: wx.CallAfter(self.imageView.updateImage, img_msg, cam),
+                                                  qos_profile=qos)
                     self.logger.info('Input listener created on topic: "%s"' % maskTopic)
-
-                self.node.create_subscription(msg_type=NlpStatus,
-                                                    topic=self.nlp_topics[0],
-                                                    # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                                    callback=lambda status_array_msg: self.input_nlp_callback(status_array_msg),
-                                                    qos_profile=qos) #the listener QoS has to be =1, "keep last only".
-
-                self.logger.info('Input listener created on topic: "%s"' % self.nlp_topics[0])
             except BaseException:
                 self.cameras = []
         else:
@@ -215,18 +221,6 @@ class Visualizator(wx.Frame):
         toolbar.SetToolSeparation(20)
         button = wx.Button(toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
         toolbar.AddControl(button)
-        # toolbar.AddSeparator()
-        # button = wx.Button(toolbar, -1, 'Save setup', name="buttonSaveSetup")
-        # toolbar.AddControl(button)
-        # toolbar.AddSeparator()
-        # button = wx.Button(toolbar, -1, 'Load setup', name="buttonLoad")
-        # toolbar.AddControl(button)
-        # toolbar.AddSeparator()
-        # button = wx.Button(toolbar, -1, 'Load last setup', name="buttonLoadLast")
-        # toolbar.AddControl(button)
-        # toolbar.AddStretchableSpace()
-        # button = wx.Button(toolbar, -1, 'Tracking calibration', name="buttonTrackingCalib")
-        # toolbar.AddControl(button)
         toolbar.Realize()
         self.SetToolBar(toolbar)
 
@@ -247,7 +241,7 @@ class Visualizator(wx.Frame):
         imageAndControlBox.Add(self.imageView, flag=wx.EXPAND)
 
         controlBox = wx.BoxSizer(wx.VERTICAL)
-        controlBox.Add(wx.StaticText(nb_page_cam, -1, self.translator["input"]["select_camera"]), flag=wx.EXPAND)
+        controlBox.Add(wx.StaticText(nb_page_cam, -1, f'{self.translator["input"]["select_camera"]}:'), flag=wx.EXPAND)
         cameraSelector = wx.Choice(nb_page_cam, choices=self.cameras)
         cameraSelector.Bind(wx.EVT_CHOICE, lambda event: self.imageView.setCurrentCamera(event.GetString()))
         cameraSelector.Select(0)
@@ -261,13 +255,37 @@ class Visualizator(wx.Frame):
         # COMMAND QUEUE & PARAMS
         self.command_notebook = wx.Notebook(nb_page_cam)
         self.command_notebook.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onCMD_NBPageChange)
+        # detection grid
         self.cmd_detection_param_grid = wx.grid.Grid(self.command_notebook)
-        self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
-        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
-        self.command_notebook.AddPage(self.cmd_queue_grid, self.translator["tab"]["cmd_queue"])
+        self.cmd_detection_param_grid.CreateGrid(5, 2)
+        self.cmd_detection_param_grid.SetColSize(0, int(self.WIDTH * 0.3))
+        self.cmd_detection_param_grid.SetColSize(1, int(self.WIDTH * 0.7))
+        self.cmd_detection_param_grid.SetColLabelSize(0)
+        self.cmd_detection_param_grid.EnableDragGridSize(False)
+        self.cmd_detection_param_grid.EnableGridLines(False)
+        self.cmd_detection_param_grid.EnableHidingColumns(False)
+        self.cmd_detection_param_grid.SetRowLabelSize(0)
         f = wx.Font()
         f.SetWeight(wx.FONTWEIGHT_SEMIBOLD)
         self.table_blendin_attr = wx.grid.GridCellAttr(wx.BLACK, wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOWFRAME), f, 0, 0)
+        self.cmd_detection_param_grid.SetCellValue(0, 0, self.translator["field"]["detected_cmd"])
+        self.cmd_detection_param_grid.SetRowAttr(0, self.table_blendin_attr)
+        self.cmd_detection_param_grid.SetCellValue(1, 0, self.translator["field"]["detected_object"])
+        self.cmd_detection_param_grid.SetRowAttr(1, self.table_blendin_attr)
+        self.cmd_detection_param_grid.SetCellValue(2, 0, self.translator["field"]["detected_name"])
+        self.cmd_detection_param_grid.SetRowAttr(2, self.table_blendin_attr)
+        self.cmd_detection_param_grid.SetCellValue(3, 0, self.translator["field"]["detected_is_present"])
+        self.cmd_detection_param_grid.SetRowAttr(3, self.table_blendin_attr)
+        self.cmd_detection_param_grid.SetCellValue(4, 0, self.translator["field"]["state"])
+        self.cmd_detection_param_grid.SetRowAttr(4, self.table_blendin_attr)
+        self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
+        # queue grid
+        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
+        self.cmd_queue_grid.CreateGrid(1, 3)
+        self.cmd_queue_grid.SetRowLabelSize(0)
+        self.cmd_queue_grid.EnableDragGridSize(False)
+        self.cmd_queue_grid.EnableHidingColumns(False)
+        self.command_notebook.AddPage(self.cmd_queue_grid, self.translator["tab"]["cmd_queue"])
 
         cameraViewBox.Add(self.command_notebook, flag=wx.EXPAND)
 
@@ -278,19 +296,23 @@ class Visualizator(wx.Frame):
         self.nb_page_obj = wx.grid.Grid(self.notebook)
         self.nb_page_obj.CreateGrid(30, 3)
         self.nb_page_obj.EnableEditing(False)
-        self.nb_page_obj.SetColSize(0, int(self.WIDTH * 0.5))
+        self.nb_page_obj.EnableDragGridSize(False)
+        self.nb_page_obj.EnableHidingColumns(False)
+        self.nb_page_obj.SetColSize(0, int(self.WIDTH * 0.45))
         self.nb_page_obj.SetColLabelValue(0, "object")
-        self.nb_page_obj.SetColSize(1, int(self.WIDTH * 0.2))
+        self.nb_page_obj.SetColSize(1, int(self.WIDTH * 0.3))
         self.nb_page_obj.SetColLabelValue(1, "location")
-        self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.3))
+        self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.25))
         self.nb_page_obj.SetColLabelValue(2, "id")
-        self.table_attr = wx.grid.GridCellAttr(wx.BLACK, wx.WHITE, wx.Font(), 0, 0)
+        self.table_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, wx.Font(), 0, 0)
         self.notebook.AddPage(self.nb_page_obj, self.translator["tab"]["object"])
 
         # NOTEBOOK - PARAMS
         self.nb_page_param = wx.grid.Grid(self.notebook)
         self.nb_page_param.CreateGrid(30, 2)
         self.nb_page_param.EnableEditing(False)
+        self.nb_page_param.EnableDragGridSize(False)
+        self.nb_page_param.EnableHidingColumns(False)
         self.nb_page_param.SetColSize(0, int(self.WIDTH * 0.2))
         self.nb_page_param.SetColLabelValue(0, "parameter")
         self.nb_page_param.SetColSize(1, int(self.WIDTH * 0.8))
@@ -301,6 +323,11 @@ class Visualizator(wx.Frame):
         # Adding NOTEBOOK
         self.mainVBox.Add(self.notebook, flag=wx.EXPAND)
 
+        # STATUSBAR
+        self.statbar = self.CreateStatusBar(number=2, style=wx.STB_SHOW_TIPS | wx.STB_ELLIPSIZE_END | wx.FULL_REPAINT_ON_RESIZE)
+        # self.mainVBox.Add(self.statbar, flag=wx.EXPAND)
+
+        # Finalizing
         self.SetSizerAndFit(self.mainVBox)
         self.ShowWithEffect(wx.SHOW_EFFECT_BLEND)
 #        self.vbox.ComputeFittingWindowSize()
@@ -309,16 +336,24 @@ class Visualizator(wx.Frame):
         # self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
 
         # >>> PARAMS
+        from time import sleep
+        sleep(10)
         self.pclient = UniversalParamClient()
         self.pclient.set_callback(self.update_params)
-        self.pclient.declare("det_obj", default_value="-")
-        self.pclient.declare("det_command", default_value="-")
-        self.pclient.declare("det_obj_name", default_value="-")
-        self.pclient.declare("det_obj_in_ws", default_value="-")
-        self.pclient.declare("status", default_value="-")
-        self.pclient.declare("halt_nlp", default_value=False)
-        # self.params = {'det_obj': '-', 'det_command': '-', 'det_obj_name': '-', 'det_obj_in_ws': '-', 'status': '-'}
+        self.pclient.attach("det_obj", default_value="-")
+        self.pclient.attach("det_command", default_value="-")
+        self.pclient.attach("det_obj_name", default_value="-")
+        self.pclient.attach("det_obj_in_ws", default_value="-")
+        self.pclient.attach("status", default_value="-")
+        self.pclient.attach("silent_mode")
+        self.pclient.attach("halt_nlp", default_value=False)
         self.qclient = QueueClient(queue_name="main")
+        # self.qclient.hook_on_update(self.update_cmd_queue)
+        # self.qclient.hook_on_pop(self.update_cmd_pop)
+
+        # >>> SET STATUS
+        self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(self.pclient.silent_mode)]}', 0)
+        self.statbar.SetStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(self.pclient.halt_nlp)]}', 1)
 
     def onButton(self, event):
         obj = event.GetEventObject()
@@ -327,14 +362,23 @@ class Visualizator(wx.Frame):
                 self.toggle_nlp_halting()
 
     def update_params(self, param, msg):
+        # print(self.pclient.get_all())
         if param in self.current_parameters:
             idx = list(self.current_parameters).index(param)
         else:
             idx = len(self.current_parameters)
             self.nb_page_param.SetCellValue(idx, 0, param)
             self.current_parameters[param] = msg
-
         self.nb_page_param.SetCellValue(idx, 1, str(msg))
+
+        # if "halt_nlp" in param:
+        #     # self.statbar
+        #     self.statbar.PopStatusText()
+        #     self.statbar.PushStatusText("Halal")
+            # self.statbar.PushStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(msg)]}', 1)
+        # elif "silent_mode" in param:
+        # #     self.statbar.PopStatusText(0)
+        #     self.statbar.PushStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(msg)]}', 0)
 
     def onNBPageChange(self, evt):
         self.notebook_tab = self.notebook.GetPageText(evt.Selection)
@@ -364,18 +408,51 @@ class Visualizator(wx.Frame):
 
     @submit_to_pool_executor(thread_pool_executor)
     def HandleROS(self, _=None):
+        self.ros_spin_lock.acquire()
         rclpy.spin_once(self.node, executor=self.executor)
+        self.ros_spin_lock.release()
 
-    @submit_to_pool_executor(thread_pool_executor)
+    # @submit_to_pool_executor(thread_pool_executor)
+    @wx_call_after
     def updateParamAObjects(self, _=None):
+        self.gui_update_lock.acquire()
         if self.notebook_tab == self.translator["tab"]["object"]:
             self.refresh_objects()
-            # wx.CallAfter(self.refresh_objects)
+
         if self.cmd_notebook_tab == self.translator["tab"]["detection"]:
             self.refresh_detections()
+        # elif self.cmd_notebook_tab == self.translator["tab"]["cmd_queue"]:
+        #     self.refresh_commands()
+        self.gui_update_lock.release()
 
     def refresh_detections(self):
-        pass
+        self.cmd_detection_param_grid.SetCellValue(0, 1, str(self.pclient.det_command))
+        self.cmd_detection_param_grid.SetCellValue(1, 1, str(self.pclient.det_obj))
+        self.cmd_detection_param_grid.SetCellValue(2, 1, str(self.pclient.det_obj_name))
+        self.cmd_detection_param_grid.SetCellValue(3, 1, self.translator["option"][str(self.pclient.det_obj_in_ws)])
+        self.cmd_detection_param_grid.SetCellValue(4, 1, str(self.pclient.status))
+
+    def update_cmd_queue(self, cache):
+        try:
+            noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
+            print(cache)
+            if self.cmd_queue_grid.GetCellValue(0, 0):
+                self.cmd_queue_grid.ClearGrid()
+            for i, cmd in enumerate(self.qclient.last_value_cache):
+                self.cmd_queue_grid.SetCellValue(i, 0, cmd["disp_name"])
+        except BaseException as e:
+            print(e)
+
+    def update_cmd_pop(self, poped):
+        try:
+            noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
+            print(poped)
+            # if self.cmd_queue_grid.GetCellValue(0, 0):
+            #     self.cmd_queue_grid.ClearGrid()
+            # for i, cmd in enumerate(self.qclient.last_value_cache):
+            #     self.cmd_queue_grid.SetCellValue(i, 0, cmd["disp_name"])
+        except BaseException as e:
+            print(e)
 
     def refresh_objects(self):
         combined_objects = {}
@@ -383,6 +460,7 @@ class Visualizator(wx.Frame):
             new_objects = {}
             for s in self.crowracle.getTangibleObjects_nocls():
                 uri = s
+                loc, id = "N/A", "N/A"
                 try:
                     loc = self.crowracle.get_location_of_obj(s)
                     id = self.crowracle.get_id_of_obj(s)
@@ -394,40 +472,38 @@ class Visualizator(wx.Frame):
 
             combined_objects = {**self.old_objects, **new_objects}
 
-            # if not (self.nb_page_obj.GetCellValue(0, 0) + self.nb_page_obj.GetCellValue(0, 1) + self.nb_page_obj.GetCellValue(0, 2)):
-            #     print("clearing")
-            #     self.nb_page_obj.ClearGrid()
         except BaseException as e:
             print(e)
             return
 
-        if len(combined_objects) == 0:
-            return
-
-        noUpdates = wx.grid.GridUpdateLocker(self.nb_page_obj)
         try:
-            for i, (uri, (loc, id)) in enumerate(combined_objects.items()):
-                # attr = self.table_attr.Clone()
-                dead = False
-                # if uri in self.old_objects:
-                #     if uri not in new_objects:
-                #         dead = True
-                #         attr.SetTextColour(wx.RED)
-                #     # else:
-                #         attr.SetTextColour(wx.BLACK)
-                # elif uri in new_objects:
-                #     attr.SetTextColour(wx.GREEN)
-                # else:
-                #     attr.SetTextColour(wx.MAGENTA)
-                # if not dead and (id is None or "error" in id):
-                #     # attr.SetBackgroundColour(wx.ORANGE)
-                #     attr.SetTextColour(wx.ColourDatabase().Find("ORANGE"))
+            noUpdates = wx.grid.GridUpdateLocker(self.nb_page_obj)  # pauses grid update until this scope is exited
+            if (self.nb_page_obj.GetCellValue(0, 0) + self.nb_page_obj.GetCellValue(0, 1) + self.nb_page_obj.GetCellValue(0, 2)):
+                self.nb_page_obj.ClearGrid()
+            if len(combined_objects) == 0:  # quit early if there are no objects
+                return
 
-                # self.nb_page_obj.SetRowAttr(i, attr)
-                # self.nb_page_obj.SetCellValue(i, 0, f"{uri}")
-                # if not dead:
-                #     self.nb_page_obj.SetCellValue(i, 1, f"loc: {loc}")
-                #     self.nb_page_obj.SetCellValue(i, 2, f"ID: {id}")
+            for i, (uri, (loc, id)) in enumerate(combined_objects.items()):
+                attr = self.table_attr.Clone()
+                dead = False
+                if uri in self.old_objects:
+                    if uri not in new_objects:
+                        dead = True
+                        attr.SetTextColour(Colors.OBJ_DEAD)
+                    # else:
+                        attr.SetTextColour(Colors.OBJ_NORMAL)
+                elif uri in new_objects:
+                    attr.SetTextColour(Colors.OBJ_NEW)
+                else:
+                    attr.SetTextColour(Colors.OBJ_WEIRD)
+                if not dead and (id is None or "error" in id):
+                    attr.SetTextColour(Colors.OBJ_ERROR)
+
+                self.nb_page_obj.SetRowAttr(i, attr)
+                self.nb_page_obj.SetCellValue(i, 0, f"{uri}")
+                if not dead:
+                    self.nb_page_obj.SetCellValue(i, 1, f"{loc}")
+                    self.nb_page_obj.SetCellValue(i, 2, f"{id}")
         except BaseException as e:
             print(e)
         finally:
@@ -436,89 +512,26 @@ class Visualizator(wx.Frame):
     def toggle_nlp_halting(self):
         self.pclient.halt_nlp = not self.pclient.halt_nlp
 
-    def input_nlp_callback(self, status_array_msg):
-        pass
-    #     if not status_array_msg.det_obj:
-    #         self.get_logger().info("No nlp detections. Quitting early.")
-    #         return  # no nlp detections received (for some reason)
-
-    #     obj_str = status_array_msg.det_obj
-    #     obj_uri = self.crowracle.get_uri_from_str(obj_str)
-    #     nlp_name = self.crowracle.get_nlp_from_uri(obj_uri)
-    #     if len(nlp_name) > 0:
-    #         nlp_name = nlp_name[0]
-    #     else:
-    #         nlp_name = '-'
-
-    #     if status_array_msg.found_in_ws:
-    #         obj_in_ws = 'ano'
-    #     else:
-    #         obj_in_ws = 'ne'
-
-    #     self.params['det_obj'] = status_array_msg.det_obj
-    #     self.params['det_command'] = status_array_msg.det_command
-    #     self.params['det_obj_name'] = nlp_name
-    #     self.params['det_obj_in_ws'] = obj_in_ws
-    #     self.params['status'] = status_array_msg.status
-    #     wx.CallAfter(self.update_detection)
-
-    # def _get_obj_color(self, obj_name):
-    #     return self.object_properties[self.INVERSE_OBJ_MAP[obj_name]]["color"]
-
-    # def update_detection(self):
-    #     if self.LANGUAGE == 'CZ':
-    #         scoreScreen = self.__putText(scoreScreen, "Detekovany prikaz: {}".format(self.params['det_command']), (xp, yp*1), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Detekovany objekt: {}".format(self.params['det_obj']), (xp, yp*2), color=self.COLOR_GRAY, size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Detekovany objekt (jmeno): {}".format(self.params['det_obj_name']), (xp, yp*3), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Objekt je na pracovisti: {}".format(self.params['det_obj_in_ws']), (xp, yp*4), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Stav: {}".format(self.params['status']), (xp, yp*5 + 10), color=(255, 224, 200), size=0.7, thickness=2)
-    #         if self.NLP_HALTED:
-    #             scoreScreen = self.__putText(scoreScreen, "STOP", (im_shape[1] - 70, yp), color=(0, 0, 255), size=0.7, thickness=2)
-
-    #         for cam, img in self.cv_image.items():
-    #             up_image = np.hstack((self.infoPanel, np.vstack((img, scoreScreen))))
-    #             cv2.imshow('Detekce{}'.format(cam), up_image)
-    #             key = cv2.waitKey(10) & 0xFF
-    #             if key == ord("f"):
-    #                 print(cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN))
-    #                 print(cv2.WINDOW_FULLSCREEN)
-    #                 print(cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN) == cv2.WINDOW_FULLSCREEN)
-    #                 if cv2.getWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN) == cv2.WINDOW_FULLSCREEN:
-    #                     cv2.setWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_AUTOSIZE)
-    #                 else:
-    #                     cv2.setWindowProperty('Detekce{}'.format(cam), cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    #             if key == ord(" "):
-    #                 self.window_click(cv2.EVENT_LBUTTONDOWN, None, None, None, None)
-    #             if key == ord("q"):
-    #                 rclpy.utilities.try_shutdown()
-
-    #     else:
-    #         scoreScreen = self.__putText(scoreScreen, "Detected this command: {}".format(self.params['det_command']), (xp, yp*1), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Detected this object: {}".format(self.params['det_obj']), (xp, yp*2), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Detected object name: {}".format(self.params['det_obj_name']), (xp, yp*3), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Object in the workspace: {}".format(self.params['det_obj_in_ws']), (xp, yp*4), color=(255, 255, 255), size=0.5, thickness=1)
-    #         scoreScreen = self.__putText(scoreScreen, "Status: {}".format(self.params['status']), (xp, yp*5), color=(255, 255, 255), size=0.5, thickness=1)
-
-    #         for cam, img in self.cv_image.items():
-    #             up_image = np.hstack((self.infoPanel, np.vstack((img, scoreScreen))))
-    #             cv2.imshow('Detections{}'.format(cam), up_image)
-    #             cv2.waitKey(10)
-
     def destroy(self, something=None):
         self.spinTimer.Stop()
-        try:
-            super().Destroy()
-            self.node.destroy_node()
-        except BaseException:
-            self.logger.warn("Could not destroy node or frame, probably already destroyed.")
+        self.updateTimer.Stop()
+        self.pclient.destroy()
+        self.qclient.destroy()
+        self.node.destroy_node()
+        super().Destroy()
 
 
 def main():
     rclpy.init()
     app = wx.App(False)
+    Colors.initializeColors()
     visualizator = Visualizator()
     app.MainLoop()
-    visualizator.destroy()
+    try:
+        visualizator.destroy()
+    except BaseException:
+        print("Could not destroy node or frame, probably already destroyed.")
+    thread_pool_executor.shutdown()
 
 if __name__ == "__main__":
     main()

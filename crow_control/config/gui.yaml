@@ -26,9 +26,15 @@ input:
     - "Zrušit příkaz"
     - "Cancel command"
 field:
+  nlp_suspended:
+    - "NLP pozastaveno"
+    - "NLP suspended"
   nlp_mode:
     - "Režim NLP"
     - "NLP mode"
+  silent_mode:
+    - "Tichý režim"
+    - "Silent mode"
   detected_cmd:
     - "Detekovany prikaz"
     - "Detected command"
@@ -54,6 +60,15 @@ option:
   no:
     - "ne"
     - "no"
+  "True":
+    - "ano"
+    - "yes"
+  "False":
+    - "ne"
+    - "no"
+  "None":
+    - "N/A"
+    - "N/A"
 info:
   infoText:
     - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"
