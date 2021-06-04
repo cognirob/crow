@@ -89,13 +89,13 @@ class ParamClient():
         Args:
             param (str): The name of the parameter
         """
-        if param in self._params:
+        if hasattr(self, param):
             return
 
         self._params[param] = None
-        setattr(ParamClient, param, property(
+        setattr(self.__class__, param, property(
                 lambda self, param=param: self._params[param],
-                lambda self, value, param=param: self.__set_param(param, value)
+                lambda self, value, param=param: self._set_param(param, value)
             ))
         self._subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
 
@@ -137,9 +137,6 @@ class ParamClient():
         self.__definer.close()
 
     def __send_definition(self, param, value, overwrite):
-        if param in self._params:
-            return
-
         self.__definer.send_multipart([param.encode('utf-8'), cpl.dumps(value), asbytes(chr(overwrite))])
         response = self.__definer.recv().decode()
         if response == "false":
@@ -147,7 +144,7 @@ class ParamClient():
 
         self.subscribe(param)
 
-    def __set_param(self, param, value):
+    def _set_param(self, param, value):
         self.__changer.send_multipart([param.encode('utf-8'), cpl.dumps(value)])
         response = self.__changer.recv().decode()
         # print(response)
@@ -176,12 +173,20 @@ class UniversalParamClient(ParamClient):
     def get_all(self):
         return self._params
 
+    def attach(self, param, default_value=None):
+        # just adds the param to the class
+        self._params[param] = default_value
+        setattr(self.__class__, param, property(
+                lambda self, param=param: self._params[param],
+                lambda self, value, param=param: self._set_param(param, value)
+            ))
+
     def _poll(self):
         while self.active:
             rcv_param, data = self._subscriber.recv_multipart()
             msg = cpl.loads(data)
             param = rcv_param.decode()
-            print(param, msg)
+            # print(param, msg)
             self._params[param] = msg
             if self._cb is not None:
                 self._cb(param, msg)
