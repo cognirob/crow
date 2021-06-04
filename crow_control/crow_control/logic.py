@@ -171,7 +171,7 @@ class ControlLogic(Node):
         if command_buffer == 'meanwhile':
             self.command_meanwhile_buffer.append((action_type, action, kwargs))
         else:
-            command_name = num2words(self.main_buffer_count, lang='cz')
+            command_name = str(self.main_buffer_count)#num2words(self.main_buffer_count, lang='cz')
             self.command_main_buffer.append((action_type, action, command_name, kwargs))
             self.main_buffer_count += 1
         StatTimer.exit("pushing action into buffer")
