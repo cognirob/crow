@@ -127,6 +127,8 @@ class Colors():
         cls.OBJ_WEIRD = colorDB.Find("MAGENTA")
         cls.OBJ_DEAD = wx.RED
 
+        cls.CMD_CURRENT = colorDB.Find("MEDIUM SPRING GREEN")
+
 
 class Visualizator(wx.Frame):
     TIMER_FREQ = 10 # milliseconds
@@ -261,6 +263,7 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.SetColSize(0, int(self.WIDTH * 0.3))
         self.cmd_detection_param_grid.SetColSize(1, int(self.WIDTH * 0.7))
         self.cmd_detection_param_grid.SetColLabelSize(0)
+        self.cmd_detection_param_grid.EnableEditing(False)
         self.cmd_detection_param_grid.EnableDragGridSize(False)
         self.cmd_detection_param_grid.EnableGridLines(False)
         self.cmd_detection_param_grid.EnableHidingColumns(False)
@@ -281,10 +284,26 @@ class Visualizator(wx.Frame):
         self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
         # queue grid
         self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
-        self.cmd_queue_grid.CreateGrid(1, 3)
+        n_cmd_rows = 10
+        self.cmd_queue_grid.CreateGrid(n_cmd_rows, 3)
         self.cmd_queue_grid.SetRowLabelSize(0)
+        self.cmd_queue_grid.SetColSize(0, int(self.WIDTH * 0.35))
+        self.cmd_queue_grid.SetColLabelValue(0, self.translator["field"]["command"])
+        self.cmd_queue_grid.SetColSize(1, int(self.WIDTH * 0.3))
+        self.cmd_queue_grid.SetColLabelValue(1, self.translator["field"]["info"])
+        self.cmd_queue_grid.SetColSize(2, int(self.WIDTH * 0.35))
+        self.cmd_queue_grid.SetColLabelValue(2, self.translator["field"]["command_name"])
+        self.cmd_queue_grid.EnableEditing(False)
         self.cmd_queue_grid.EnableDragGridSize(False)
         self.cmd_queue_grid.EnableHidingColumns(False)
+        f_cmd = wx.Font()
+        f_cmd.SetPointSize(18)
+        self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, 0, 0)
+        self.table_cmd_current_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, Colors.CMD_CURRENT, f_cmd, 0, 0)
+        self.cmd_queue_grid.SetRowAttr(0, self.table_cmd_current_attr)
+        for i in range(1, n_cmd_rows + 1):
+            self.cmd_queue_grid.SetRowAttr(i, self.table_cmd_normal_attr)
+
         self.command_notebook.AddPage(self.cmd_queue_grid, self.translator["tab"]["cmd_queue"])
 
         cameraViewBox.Add(self.command_notebook, flag=wx.EXPAND)
@@ -299,11 +318,11 @@ class Visualizator(wx.Frame):
         self.nb_page_obj.EnableDragGridSize(False)
         self.nb_page_obj.EnableHidingColumns(False)
         self.nb_page_obj.SetColSize(0, int(self.WIDTH * 0.45))
-        self.nb_page_obj.SetColLabelValue(0, "object")
+        self.nb_page_obj.SetColLabelValue(0, self.translator["field"]["object"])
         self.nb_page_obj.SetColSize(1, int(self.WIDTH * 0.3))
-        self.nb_page_obj.SetColLabelValue(1, "location")
+        self.nb_page_obj.SetColLabelValue(1, self.translator["field"]["location"])
         self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.25))
-        self.nb_page_obj.SetColLabelValue(2, "id")
+        self.nb_page_obj.SetColLabelValue(2, self.translator["field"]["id"])
         self.table_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, wx.Font(), 0, 0)
         self.notebook.AddPage(self.nb_page_obj, self.translator["tab"]["object"])
 
@@ -324,7 +343,15 @@ class Visualizator(wx.Frame):
         self.mainVBox.Add(self.notebook, flag=wx.EXPAND)
 
         # STATUSBAR
-        self.statbar = self.CreateStatusBar(number=2, style=wx.STB_SHOW_TIPS | wx.STB_ELLIPSIZE_END | wx.FULL_REPAINT_ON_RESIZE)
+        # self.statbar = self.CreateStatusBar(number=2, style=wx.STB_SHOW_TIPS | wx.STB_ELLIPSIZE_END | wx.FULL_REPAINT_ON_RESIZE)
+        self.statbar = wx.StatusBar()
+        # self.statbar = wx.StatusBar(style=wx.STB_SHOW_TIPS | wx.STB_ELLIPSIZE_END | wx.FULL_REPAINT_ON_RESIZE)
+        self.statbar.Create(self, id=1, name="status bar")
+        stat_n_fields = 2
+        self.statbar.SetFieldsCount(number=stat_n_fields, widths=[int(self.WIDTH / stat_n_fields) for i in range(stat_n_fields)])
+        self.SetStatusBar(self.statbar)
+        self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: -', 0)
+        self.statbar.SetStatusText(f'{self.translator["field"]["nlp_suspended"]}: -', 1)
         # self.mainVBox.Add(self.statbar, flag=wx.EXPAND)
 
         # Finalizing
@@ -336,8 +363,8 @@ class Visualizator(wx.Frame):
         # self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggle)
 
         # >>> PARAMS
-        from time import sleep
-        sleep(10)
+        # from time import sleep
+        # sleep(10)
         self.pclient = UniversalParamClient()
         self.pclient.set_callback(self.update_params)
         self.pclient.attach("det_obj", default_value="-")
@@ -346,10 +373,10 @@ class Visualizator(wx.Frame):
         self.pclient.attach("det_obj_in_ws", default_value="-")
         self.pclient.attach("status", default_value="-")
         self.pclient.attach("silent_mode")
-        self.pclient.attach("halt_nlp", default_value=False)
+        self.pclient.attach("halt_nlp", default_value=False, force=True)
         self.qclient = QueueClient(queue_name="main")
-        # self.qclient.hook_on_update(self.update_cmd_queue)
-        # self.qclient.hook_on_pop(self.update_cmd_pop)
+        self.qclient.hook_on_update(self.update_cmd_queue)
+        self.qclient.hook_on_pop(self.update_cmd_pop)
 
         # >>> SET STATUS
         self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(self.pclient.silent_mode)]}', 0)
@@ -373,12 +400,18 @@ class Visualizator(wx.Frame):
 
         # if "halt_nlp" in param:
         #     # self.statbar
-        #     self.statbar.PopStatusText()
-        #     self.statbar.PushStatusText("Halal")
-            # self.statbar.PushStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(msg)]}', 1)
+        #     try:
+        #         # self.statbar.GetStatusText(1)
+        #         self.statbar.PopStatusText(1)
+        #     except BaseException:
+        #         pass
+        #     try:
+        #         self.statbar.PushStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(msg)]}', 1)
+        #     except BaseException:
+        #         pass
         # elif "silent_mode" in param:
-        # #     self.statbar.PopStatusText(0)
-        #     self.statbar.PushStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(msg)]}', 0)
+            # self.statbar.PopStatusText(0)
+            # self.statbar.PushStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(msg)]}', 0)
 
     def onNBPageChange(self, evt):
         self.notebook_tab = self.notebook.GetPageText(evt.Selection)
@@ -429,17 +462,23 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.SetCellValue(0, 1, str(self.pclient.det_command))
         self.cmd_detection_param_grid.SetCellValue(1, 1, str(self.pclient.det_obj))
         self.cmd_detection_param_grid.SetCellValue(2, 1, str(self.pclient.det_obj_name))
-        self.cmd_detection_param_grid.SetCellValue(3, 1, self.translator["option"][str(self.pclient.det_obj_in_ws)])
+        if self.pclient.det_obj_in_ws == "-":
+            self.cmd_detection_param_grid.SetCellValue(3, 1, str(self.pclient.det_obj_in_ws))
+        else:
+            self.cmd_detection_param_grid.SetCellValue(3, 1, self.translator["option"][str(self.pclient.det_obj_in_ws)])
         self.cmd_detection_param_grid.SetCellValue(4, 1, str(self.pclient.status))
 
     def update_cmd_queue(self, cache):
         try:
             noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
-            print(cache)
-            if self.cmd_queue_grid.GetCellValue(0, 0):
+            # print(cache)
+            if self.cmd_queue_grid.GetCellValue(1, 0) + self.cmd_queue_grid.GetCellValue(0, 0):
                 self.cmd_queue_grid.ClearGrid()
             for i, cmd in enumerate(self.qclient.last_value_cache):
-                self.cmd_queue_grid.SetCellValue(i, 0, cmd["disp_name"])
+                self.cmd_queue_grid.SetCellValue(i + 1, 0, cmd[0])
+                self.cmd_queue_grid.SetCellValue(i + 1, 1, str(cmd[1]))
+                self.cmd_queue_grid.SetCellValue(i + 1, 2, cmd[2])
+                # self.cmd_queue_grid.SetRowAttr(i + 1, self.table_attr)
         except BaseException as e:
             print(e)
 
@@ -447,10 +486,19 @@ class Visualizator(wx.Frame):
         try:
             noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
             print(poped)
-            # if self.cmd_queue_grid.GetCellValue(0, 0):
-            #     self.cmd_queue_grid.ClearGrid()
-            # for i, cmd in enumerate(self.qclient.last_value_cache):
-            #     self.cmd_queue_grid.SetCellValue(i, 0, cmd["disp_name"])
+            # found = False
+            # idx = -1
+            action, action_type, disp_name, *d = poped
+            self.cmd_queue_grid.SetCellValue(0, 0, action)
+            self.cmd_queue_grid.SetCellValue(0, 1, str(action_type))
+            self.cmd_queue_grid.SetCellValue(0, 2, disp_name)
+            # for idx in range(self.cmd_queue_grid.GetNumberRows()):
+            #     if self.cmd_queue_grid.GetCellValue(idx, 2) == disp_name:
+            #         if self.cmd_queue_grid.GetCellValue(idx, 0) == action:
+            #             found = True
+            #             break
+            # if found:
+            #     self.cmd_queue_grid.SetRowAttr(idx, self.table_current_cmd_attr)
         except BaseException as e:
             print(e)
 
@@ -510,6 +558,9 @@ class Visualizator(wx.Frame):
             self.old_objects = new_objects
 
     def toggle_nlp_halting(self):
+        # print("aaaaa")
+        print(self.pclient.halt_nlp)
+        # self.pclient.halt_nlp = True
         self.pclient.halt_nlp = not self.pclient.halt_nlp
 
     def destroy(self, something=None):

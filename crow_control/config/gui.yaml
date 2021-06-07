@@ -53,6 +53,24 @@ field:
   cmd_queue:
     - "Příkazy v pořadí"
     - "Command queue"
+  object:
+    - "objekt"
+    - "object"
+  location:
+    - "lokace"
+    - "location"
+  id:
+    - "id"
+    - "id"
+  command:
+    - "příkaz"
+    - "command"
+  command_name:
+    - "jméno příkazu"
+    - "command name"
+  info:
+    - "info"
+    - "info"
 option:
   yes:
     - "ano"
