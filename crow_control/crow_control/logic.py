@@ -80,7 +80,8 @@ class ControlLogic(Node):
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
         self.marker_publisher = self.create_publisher(StorageMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
         self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last, CommandType.REM_CMD_X: self.remove_command_x,
-                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendAction}
+                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendAction, 
+                                CommandType.PICK: self.sendPNPAction, CommandType.FETCH: self.sendPNPAction, CommandType.FETCH_TO: self.sendPNPAction}
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -179,7 +180,7 @@ class ControlLogic(Node):
         self.pclient.ready_for_next_sentence = True
         StatTimer.exit("setting param")
 
-    def prepare_command(self, target=None, target_type=None):
+    def prepare_command(self, target=None, target_type=None, **kwargs):
         target_info = None
         start_time = datetime.now()
         duration = datetime.now() - start_time
@@ -188,7 +189,7 @@ class ControlLogic(Node):
             target_info = self.processTarget(target, target_type)
             duration = datetime.now() - start_time
         if target_info is None: #@TODO: try another target candidate
-            self.get_logger().error("Failed to issue pointing action, target cannot be set!")
+            self.get_logger().error("Failed to issue action, target cannot be set!")
             self.pclient.robot_failed = True
             self.pclient.robot_done = True
             return None
@@ -207,15 +208,15 @@ class ControlLogic(Node):
                 if 'target' in kwargs.keys():
                     target_info = self.prepare_command(**kwargs) #multiple attempts to identify target
                     kwargs['target_info'] = target_info
-                    if (self.status & self.STATUS_IDLE) and (target_info is not None):
-                        try:
-                            command(**kwargs)
-                        except Exception as e:
-                            self.get_logger().error(f"Error executing action {disp_name} with args {str(target_info)}. The error was:\n{e}")
-                            self.pclient.robot_done = True
-                            self.pclient.robot_failed = True
-                        finally:
-                            self._set_status(self.STATUS_IDLE)
+                if (self.status & self.STATUS_IDLE) and ((kwargs.get('target_info') or kwargs.get('location')) is not None):
+                    try:
+                        command(**kwargs)
+                    except Exception as e:
+                        self.get_logger().error(f"Error executing action {disp_name} with args {str(target_info)}. The error was:\n{e}")
+                        self.pclient.robot_done = True
+                        self.pclient.robot_failed = True
+                    finally:
+                        self._set_status(self.STATUS_IDLE)
                 else:
                     command(**kwargs)
             finally:
@@ -262,11 +263,11 @@ class ControlLogic(Node):
         marker_msg.storage_name = storage_name
         self.marker_publisher.publish(marker_msg)
 
-    def sendAction(self, target_info=None, location=None, obj=None, **kwargs):
+    def sendAction(self, target_info=None, location=None, obj=None, **kwargs): #@TODO: sendPointAction
         StatTimer.enter("Sending command")
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = PickNPlace.Goal()
+        goal_msg = PickNPlace.Goal() #@TODO: 
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
         if target_info is not None:
@@ -285,6 +286,34 @@ class ControlLogic(Node):
             pass  # TODO
         # goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object_type = ObjectType(type=target_info[2])
+        self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future.add_done_callback(self.robot_response_cb)
+        StatTimer.exit("Sending command")
+
+    def sendPNPAction(self, target_info=None, location=None, obj=None, **kwargs):
+        StatTimer.enter("Sending command")
+        self.pclient.robot_done = False
+        self._set_status(self.STATUS_PROCESSING)
+        goal_msg = PickNPlace.Goal()
+        goal_msg.frame_id = "camera1_color_optical_frame"
+        goal_msg.pick_pose = Pose()
+        goal_msg.place_pose = Pose()
+        if target_info is not None: # perform pick
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
+            if target_info[1] is None:
+                goal_msg.size = [0, 0, 0]
+            else:
+                goal_msg.size = target_info[1]
+            if target_info[2] is None:
+                goal_msg.object.type = -1
+            else:
+                goal_msg.object = ObjectType(type=target_info[2])
+        else:
+            pass # @TODO set something, None defaults to 0.0
+        if location is not None: #perform place
+            goal_msg.place_pose.position.x, goal_msg.place_pose.position.y, goal_msg.place_pose.position.z = location
+        else:
+            pass # @TODO set something, None defaults to 0.0
         self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
