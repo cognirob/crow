@@ -41,13 +41,13 @@ class ParamClient():
 
         # socket for param change requests
         self.__addr_ch = f"{protocol}://{addr}:{str(start_port + 3)}"
-        self.__changer = self.__context.socket(zmq.REQ)
-        self.__changer.connect(self.__addr_ch)
+        self._changer = self.__context.socket(zmq.REQ)
+        self._changer.connect(self.__addr_ch)
 
         # socket for param definition
         self.__addr_def = f"{protocol}://{addr}:{str(start_port + 7)}"
-        self.__definer = self.__context.socket(zmq.REQ)
-        self.__definer.connect(self.__addr_def)
+        self._definer = self.__context.socket(zmq.REQ)
+        self._definer.connect(self.__addr_def)
 
         self._params = {}
         self.active = True
@@ -133,20 +133,20 @@ class ParamClient():
         """
         self.active = False
         self._subscriber.close()
-        self.__changer.close()
-        self.__definer.close()
+        self._changer.close()
+        self._definer.close()
 
     def __send_definition(self, param, value, overwrite):
-        self.__definer.send_multipart([param.encode('utf-8'), cpl.dumps(value), asbytes(chr(overwrite))])
-        response = self.__definer.recv().decode()
+        self._definer.send_multipart([param.encode('utf-8'), cpl.dumps(value), asbytes(chr(overwrite))])
+        response = self._definer.recv().decode()
         if response == "false":
             raise AttributeError(f"Could not declare the parameter {param} (value={value}).")
 
         self.subscribe(param)
 
     def _set_param(self, param, value):
-        self.__changer.send_multipart([param.encode('utf-8'), cpl.dumps(value)])
-        response = self.__changer.recv().decode()
+        self._changer.send_multipart([param.encode('utf-8'), cpl.dumps(value)])
+        response = self._changer.recv().decode()
         # print(response)
         if response == "true":
             self._params[param] = value
@@ -173,13 +173,18 @@ class UniversalParamClient(ParamClient):
     def get_all(self):
         return self._params
 
-    def attach(self, param, default_value=None):
+    def attach(self, param, default_value=None, force=False):
         # just adds the param to the class
         self._params[param] = default_value
         setattr(self.__class__, param, property(
                 lambda self, param=param: self._params[param],
                 lambda self, value, param=param: self._set_param(param, value)
             ))
+        if force:
+            self._definer.send_multipart([param.encode('utf-8'), cpl.dumps(default_value), asbytes(chr(0))])
+            response = self._definer.recv().decode()
+            if response == "false":
+                raise AttributeError(f"Could not declare the parameter {param} (value={default_value}).")
 
     def _poll(self):
         while self.active:
