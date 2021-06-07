@@ -238,6 +238,8 @@ class ControlLogic(Node):
 
     def command_error(self, **kwargs):
         self.get_logger().info("Command not implemented!")
+        self.pclient.robot_done = True
+        self.pclient.robot_failed = True
 
     def remove_command_last(self, **kwargs):
         if len(self.command_main_buffer) > 0:
@@ -334,6 +336,12 @@ def main():
         #     print(p, " --- ", o)
         # time.sleep(1)
         cl.get_logger().info("ready")
+        # cl.push_actions(command_buffer='main', action_type="ukaž", action=CommandType.POINT)
+        # time.sleep(2)
+        # cl.push_actions(command_buffer='main', action_type="seber", action=CommandType.PNP)
+        # time.sleep(3)
+        # rclpy.spin_once(cl, executor=mte)
+
         # cl.push_actions(cl.sendAction, target_info=None)
         # cl.push_actions(cl.sendAction, target_info=None)
         # cl.push_actions(cl.sendAction, target_info=None)
