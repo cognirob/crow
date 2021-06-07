@@ -118,7 +118,7 @@ class ControlLogic(Node):
             typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
             StatTimer.exit("onto data retrieval id")
             if ('None' not in xyz) and (None not in xyz):
-                return (np.array(xyz), np.array(size), typ)
+                return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
             else:
                 return None
         elif target_type == "onto_uri":
@@ -134,7 +134,7 @@ class ControlLogic(Node):
                 return None
             else:
                 if ('None' not in xyz) and (None not in xyz):
-                    return (np.array(xyz), np.array(size), typ)
+                    return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
                 else:
                     return None
         else:
