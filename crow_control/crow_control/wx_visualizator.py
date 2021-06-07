@@ -8,12 +8,13 @@ from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from sensor_msgs.msg import Image as msg_image
-from crow_msgs.msg import FilteredPose, NlpStatus, ObjectPointcloud
+from crow_msgs.msg import FilteredPose, NlpStatus, ObjectPointcloud, StampedString
 from geometry_msgs.msg import PoseArray
 from cv_bridge import CvBridge
 import message_filters
 from crow_ontology.crowracle_client import CrowtologyClient
 from crow_vision_ros2.utils import ftl_pcl2numpy
+from crow_nlp.nlp_crow.templates.actions.RemoveCommandX import RemoveCommandX
 
 import cv2
 import numpy as np
@@ -207,6 +208,10 @@ class Visualizator(wx.Frame):
                 self.cameras = []
         else:
             self.cameras = []
+
+        # >>> Publisher for remove command
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        self.rem_cmd_publisher = self.create_publisher(StampedString, "/nlp/command", qos)
 
         # >>> Helpers
         self.old_objects = {}
@@ -572,6 +577,21 @@ class Visualizator(wx.Frame):
         print(self.pclient.halt_nlp)
         # self.pclient.halt_nlp = True
         self.pclient.halt_nlp = not self.pclient.halt_nlp
+
+    def remove_command(self, disp_name):
+        # click on command in GUI, identify its disp_name, call this function remove_command(disp_name)
+        data = []
+        template = RemoveCommandX()
+        template.command_name = disp_name #string
+        dict1 = template.get_inputs()
+        data.append(dict1)
+        actions = json.dumps(data)
+        msg = StampedString()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.data = actions
+
+        print(f'GUI will publish {msg.data}')
+        self.rem_cmd_publisher.publish()
 
     def destroy(self, something=None):
         self.spinTimer.Stop()
