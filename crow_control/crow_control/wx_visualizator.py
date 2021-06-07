@@ -281,6 +281,7 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.SetRowAttr(3, self.table_blendin_attr)
         self.cmd_detection_param_grid.SetCellValue(4, 0, self.translator["field"]["state"])
         self.cmd_detection_param_grid.SetRowAttr(4, self.table_blendin_attr)
+        self.cmd_detection_param_grid.ClearSelection()
         self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
         # queue grid
         self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
@@ -296,6 +297,7 @@ class Visualizator(wx.Frame):
         self.cmd_queue_grid.EnableEditing(False)
         self.cmd_queue_grid.EnableDragGridSize(False)
         self.cmd_queue_grid.EnableHidingColumns(False)
+        self.cmd_queue_grid.ClearSelection()
         f_cmd = wx.Font()
         f_cmd.SetPointSize(18)
         self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, 0, 0)
@@ -323,6 +325,7 @@ class Visualizator(wx.Frame):
         self.nb_page_obj.SetColLabelValue(1, self.translator["field"]["location"])
         self.nb_page_obj.SetColSize(2, int(self.WIDTH * 0.25))
         self.nb_page_obj.SetColLabelValue(2, self.translator["field"]["id"])
+        self.nb_page_obj.ClearSelection()
         self.table_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, wx.Font(), 0, 0)
         self.notebook.AddPage(self.nb_page_obj, self.translator["tab"]["object"])
 
@@ -336,6 +339,7 @@ class Visualizator(wx.Frame):
         self.nb_page_param.SetColLabelValue(0, "parameter")
         self.nb_page_param.SetColSize(1, int(self.WIDTH * 0.8))
         self.nb_page_param.SetColLabelValue(1, "value")
+        self.nb_page_param.ClearSelection()
         self.notebook.AddPage(self.nb_page_param, self.translator["tab"]["parameter"])
         self.current_parameters = OrderedDict()
 
@@ -398,7 +402,13 @@ class Visualizator(wx.Frame):
             self.current_parameters[param] = msg
         self.nb_page_param.SetCellValue(idx, 1, str(msg))
 
-        # if "halt_nlp" in param:
+        if "robot_done" in param and msg:
+            # print(msg)
+            if self.cmd_queue_grid.GetCellValue(0, 0):
+                self.cmd_queue_grid.SetCellValue(0, 0, "")
+                self.cmd_queue_grid.SetCellValue(0, 1, "")
+                self.cmd_queue_grid.SetCellValue(0, 2, "")
+        # elif "halt_nlp" in param:
         #     # self.statbar
         #     try:
         #         # self.statbar.GetStatusText(1)
