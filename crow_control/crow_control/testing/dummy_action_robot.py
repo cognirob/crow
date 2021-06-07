@@ -6,7 +6,7 @@ from rclpy.action import ActionServer
 import message_filters
 
 from crow_msgs.msg import StampedString, CommandType
-from trio3_ros2_interfaces.msg import RobotStatus
+from trio3_ros2_interfaces.msg import RobotStatus, CoreActionPhase
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
 
@@ -33,6 +33,7 @@ class DummyActionRobot(Node):
 
         feedback_msg = PickNPlace.Feedback()
         feedback_msg.status = "status message"
+        feedback_msg.core_action_phase = CoreActionPhase(phase=CoreActionPhase.ROBOTIC_ACTION)
 
         for i in range(10):
             time.sleep(1)
