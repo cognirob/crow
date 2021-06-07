@@ -288,11 +288,11 @@ class Visualizator(wx.Frame):
         n_cmd_rows = 10
         self.cmd_queue_grid.CreateGrid(n_cmd_rows, 3)
         self.cmd_queue_grid.SetRowLabelSize(0)
-        self.cmd_queue_grid.SetColSize(0, int(self.WIDTH * 0.35))
+        self.cmd_queue_grid.SetColSize(0, int(self.WIDTH * 0.3))
         self.cmd_queue_grid.SetColLabelValue(0, self.translator["field"]["command"])
-        self.cmd_queue_grid.SetColSize(1, int(self.WIDTH * 0.3))
+        self.cmd_queue_grid.SetColSize(1, int(self.WIDTH * 0.55))
         self.cmd_queue_grid.SetColLabelValue(1, self.translator["field"]["info"])
-        self.cmd_queue_grid.SetColSize(2, int(self.WIDTH * 0.35))
+        self.cmd_queue_grid.SetColSize(2, int(self.WIDTH * 0.15))
         self.cmd_queue_grid.SetColLabelValue(2, self.translator["field"]["command_name"])
         self.cmd_queue_grid.EnableEditing(False)
         self.cmd_queue_grid.EnableDragGridSize(False)
@@ -478,39 +478,39 @@ class Visualizator(wx.Frame):
             self.cmd_detection_param_grid.SetCellValue(3, 1, self.translator["option"][str(self.pclient.det_obj_in_ws)])
         self.cmd_detection_param_grid.SetCellValue(4, 1, str(self.pclient.status))
 
+    def display_command_in_grid(self, row, data):
+        print("data ", data)
+        if len(data) == 3:
+            action, action_type, disp_name, kwargs = *data, {}
+        else:
+            action, action_type, disp_name, kwargs = data
+        print("kwargs ", kwargs)
+        self.cmd_queue_grid.SetCellValue(row, 0, action)
+        if "target" in kwargs:
+            self.cmd_queue_grid.SetCellValue(row, 1, str(kwargs["target"]))
+        else:
+            self.cmd_queue_grid.SetCellValue(row, 1, str(action_type))
+        self.cmd_queue_grid.SetCellValue(row, 2, disp_name)
+
     def update_cmd_queue(self, cache):
-        try:
-            noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
-            # print(cache)
-            if self.cmd_queue_grid.GetCellValue(1, 0) + self.cmd_queue_grid.GetCellValue(0, 0):
-                self.cmd_queue_grid.ClearGrid()
-            for i, cmd in enumerate(self.qclient.last_value_cache):
-                self.cmd_queue_grid.SetCellValue(i + 1, 0, cmd[0])
-                self.cmd_queue_grid.SetCellValue(i + 1, 1, str(cmd[1]))
-                self.cmd_queue_grid.SetCellValue(i + 1, 2, cmd[2])
-                # self.cmd_queue_grid.SetRowAttr(i + 1, self.table_attr)
-        except BaseException as e:
-            print(e)
+        noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
+        # print(cache)
+        if self.cmd_queue_grid.GetCellValue(1, 0):
+            bkp = []
+            if self.cmd_queue_grid.GetCellValue(0, 0):  # backup the current command
+                bkp = [self.cmd_queue_grid.GetCellValue(0, i) for i in range(3)]
+            self.cmd_queue_grid.ClearGrid()
+            if bkp:
+                print("bkp ", bkp)
+                for i, f in enumerate(bkp):
+                    self.cmd_queue_grid.SetCellValue(0, i, f)
+        for i, cmd in enumerate(cache):
+            self.display_command_in_grid(i + 1, cmd)
 
     def update_cmd_pop(self, poped):
-        try:
-            noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
-            print(poped)
-            # found = False
-            # idx = -1
-            action, action_type, disp_name, *d = poped
-            self.cmd_queue_grid.SetCellValue(0, 0, action)
-            self.cmd_queue_grid.SetCellValue(0, 1, str(action_type))
-            self.cmd_queue_grid.SetCellValue(0, 2, disp_name)
-            # for idx in range(self.cmd_queue_grid.GetNumberRows()):
-            #     if self.cmd_queue_grid.GetCellValue(idx, 2) == disp_name:
-            #         if self.cmd_queue_grid.GetCellValue(idx, 0) == action:
-            #             found = True
-            #             break
-            # if found:
-            #     self.cmd_queue_grid.SetRowAttr(idx, self.table_current_cmd_attr)
-        except BaseException as e:
-            print(e)
+        noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
+        # print(poped)
+        self.display_command_in_grid(0, poped)
 
     def refresh_objects(self):
         combined_objects = {}
