@@ -6,7 +6,7 @@ import message_filters
 from rclpy.action import ActionClient
 
 from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
-from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
 # from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
@@ -40,7 +40,8 @@ from crow_control.utils import ParamClient, QueueServer
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     STORAGE_TOPIC = "/new_storage"
-    ROBOT_ACTION = 'pick_n_place'
+    ROBOT_ACTION_POINT = 'point'
+    ROBOT_ACTION_PNP = 'pick_n_place'
     DEBUG = False
     UPDATE_INTERVAL = 0.1
     MAX_QUEUE_LENGTH = 10
@@ -68,8 +69,10 @@ class ControlLogic(Node):
                                  callback=self.command_cb,
                                  callback_group=rclpy.callback_groups.ReentrantCallbackGroup(),
                                  qos_profile=qos)
-        self.robot_action_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION)
-        self.get_logger().info(f"Connected to robot: {self.robot_action_client.wait_for_server()}")
+        self.robot_point_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_POINT)
+        self.robot_pnp_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_PNP)
+        self.get_logger().info(f"Connected to robot: {self.robot_point_client.wait_for_server()}")
+        self.get_logger().info(f"Connected to robot: {self.robot_pnp_client.wait_for_server()}")
 
         self.status = self.STATUS_IDLE
         self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
@@ -80,8 +83,8 @@ class ControlLogic(Node):
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
         self.marker_publisher = self.create_publisher(StorageMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
         self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last, CommandType.REM_CMD_X: self.remove_command_x,
-                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendAction, 
-                                CommandType.PICK: self.sendPNPAction, CommandType.FETCH: self.sendPNPAction, CommandType.FETCH_TO: self.sendPNPAction}
+                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendAction,
+                                CommandType.PICK: self.sendPickAction, CommandType.FETCH: self.sendFetchAction, CommandType.FETCH_TO: self.sendPNPAction}
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -265,9 +268,10 @@ class ControlLogic(Node):
 
     def sendAction(self, target_info=None, location=None, obj=None, **kwargs): #@TODO: sendPointAction
         StatTimer.enter("Sending command")
+        self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = PickNPlace.Goal() #@TODO: 
+        goal_msg = PickNPlace.Goal() #@TODO:
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
         if target_info is not None:
@@ -286,12 +290,13 @@ class ControlLogic(Node):
             pass  # TODO
         # goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object_type = ObjectType(type=target_info[2])
-        self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
     def sendPNPAction(self, target_info=None, location=None, obj=None, **kwargs):
         StatTimer.enter("Sending command")
+        self.get_logger().info("Performing PNP action")
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = PickNPlace.Goal()
@@ -314,9 +319,65 @@ class ControlLogic(Node):
             goal_msg.place_pose.position.x, goal_msg.place_pose.position.y, goal_msg.place_pose.position.z = location
         else:
             pass # @TODO set something, None defaults to 0.0
-        self._send_goal_future = self.robot_action_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
+
+    def sendPickAction(self, target_info=None, location=None, obj=None, **kwargs):
+        StatTimer.enter("Sending command")
+        self.get_logger().info("Performing Pick action")
+        self.pclient.robot_done = False
+        self._set_status(self.STATUS_PROCESSING)
+        goal_msg = self.composePNPMessage(
+                target_xyz=target_info[0],
+                target_size=target_info[1],
+                target_type=target_info[2],
+                location_xyz=[0.53381, 0.18881, 0.22759]  # temporary "robot default" position
+            )
+        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future.add_done_callback(self.robot_response_cb)
+        StatTimer.exit("Sending command")
+
+    def sendFetchAction(self, target_info=None, location=None, obj=None, **kwargs):
+        StatTimer.enter("Sending command")
+        self.get_logger().info("Performing Fetch action")
+        self.pclient.robot_done = False
+        self._set_status(self.STATUS_PROCESSING)
+        goal_msg = self.composePNPMessage(
+                target_xyz=target_info[0],
+                target_size=target_info[1],
+                target_type=target_info[2],
+                location_xyz=[0.03914, 0.56487, 0.22759]  # temporary storage location
+            )
+        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future.add_done_callback(self.robot_response_cb)
+        StatTimer.exit("Sending command")
+
+    def composePNPMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None):
+        goal_msg = PickNPlace.Goal()
+        goal_msg.frame_id = "global"
+        # goal_msg.frame_id = "camera1_color_optical_frame"  # old camera frame
+        goal_msg.request_units = Units(unit_type=Units.METERS)
+
+        goal_msg.pick_pose = Pose()
+        goal_msg.place_pose = Pose()
+        if target_xyz is not None:
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_xyz
+            if target_size is None:
+                goal_msg.size = [0, 0, 0]
+            else:
+                goal_msg.size = target_size
+            if target_type is None:
+                goal_msg.object.type = -1
+            else:
+                goal_msg.object = ObjectType(type=target_type)
+        else:
+            pass # @TODO set something, None defaults to 0.0
+        if location_xyz is not None:
+            goal_msg.place_pose.position.x, goal_msg.place_pose.position.y, goal_msg.place_pose.position.z = location_xyz
+        else:
+            pass # @TODO set something, None defaults to 0.0
+        return goal_msg
 
     def robot_response_cb(self, future):
         goal_handle = future.result()
