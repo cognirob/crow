@@ -98,12 +98,7 @@ if [ "$O_NO_VISION" != true ]; then
     # stty -echo
     runcmd "echo -ne '\033]30;Cameras\007'"
     # stty -echo
-    runcmd "ros2 launch crow_vision_ros2 all_cameras.launch.py"
-
-    new_tab $WID
-    sleep 15
-    runcmd "echo -ne '\033]30;Detection\007'"
-    runcmd "ros2 launch crow_vision_ros2 crow_object.launch.py"
+    runcmd "ros2 launch crow_vision_ros2 full_crow_object.launch.py"
 
     new_tab $WID
     runcmd "echo -ne '\033]30;Filter\007'"
@@ -164,7 +159,7 @@ if [ "$O_NO_NLP" != true ]; then
 
     new_tab $WID
     runcmd "echo -ne '\033]30;NL Input\007'"
-    runcmd "ros2 run crow_nlp nl_cont"
+    runcmd "ros2 run crow_nlp nl_mic"
 fi
 
 wmctrl -i -a $WID
