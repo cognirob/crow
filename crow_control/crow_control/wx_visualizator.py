@@ -211,7 +211,7 @@ class Visualizator(wx.Frame):
 
         # >>> Publisher for remove command
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-        self.rem_cmd_publisher = self.create_publisher(StampedString, "/nlp/command", qos)
+        self.rem_cmd_publisher = self.node.create_publisher(StampedString, "/nlp/command", qos)
 
         # >>> Helpers
         self.old_objects = {}
@@ -388,7 +388,7 @@ class Visualizator(wx.Frame):
         self.qclient.hook_on_pop(self.update_cmd_pop)
 
         # >>> SET STATUS
-        self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(self.pclient.silent_mode)]}', 0)
+        # self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(self.pclient.silent_mode)]}', 0)
         self.statbar.SetStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(self.pclient.halt_nlp)]}', 1)
 
     def onButton(self, event):
