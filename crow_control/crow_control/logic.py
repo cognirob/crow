@@ -37,6 +37,25 @@ from collections import deque
 from crow_control.utils.profiling import StatTimer
 from crow_control.utils import ParamClient, QueueServer
 
+
+# QuickNDirty solutions inc. (but temporary)
+global_2_robot = np.array(
+    [0.7071068, 0.7071068, 0, 0,
+     -0.7071068, 0.7071068, 0, 0,
+     0, 0, 1, 233,
+     0, 0, 0, 1]
+).reshape(4, 4)
+robot_2_global = np.linalg.inv(global_2_robot)
+realsense_2_robot = np.array(
+    [6.168323755264282227e-01, 3.375786840915679932e-01, -7.110263705253601074e-01, 1.405695068359375000e+03,
+     7.858521938323974609e-01, -
+     3.148722648620605469e-01, 5.322515964508056641e-01, -3.209410400390625000e+02,
+     -4.420567303895950317e-02, -8.870716691017150879e-01, -
+     4.595103561878204346e-01, 6.574929809570312500e+02,
+     0.000000000000000000e+00, 0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00]
+).reshape(4, 4)
+
+
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     STORAGE_TOPIC = "/new_storage"
@@ -304,7 +323,7 @@ class ControlLogic(Node):
         goal_msg.pick_pose = Pose()
         goal_msg.place_pose = Pose()
         if target_info is not None: # perform pick
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = self._transform_cam2global(target_info[0])
             if target_info[1] is None:
                 goal_msg.size = [0, 0, 0]
             else:
@@ -329,7 +348,7 @@ class ControlLogic(Node):
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = self.composePNPMessage(
-                target_xyz=target_info[0],
+                target_xyz=self._transform_cam2global(target_info[0]),
                 target_size=target_info[1],
                 target_type=target_info[2],
                 location_xyz=[0.53381, 0.18881, 0.22759]  # temporary "robot default" position
@@ -344,7 +363,7 @@ class ControlLogic(Node):
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = self.composePNPMessage(
-                target_xyz=target_info[0],
+                target_xyz=self._transform_cam2global(target_info[0]),
                 target_size=target_info[1],
                 target_type=target_info[2],
                 location_xyz=[0.03914, 0.56487, 0.22759]  # temporary storage location
@@ -413,6 +432,37 @@ class ControlLogic(Node):
             StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
         feedback = feedback_msg.feedback
         self.get_logger().info(f'Received feedback: {[(k, getattr(feedback, k)) for k in feedback.get_fields_and_field_types()]}')
+
+    def _transform_cam2global(self, point, return_homogeneous=False, return_as_list=True, ravel=True, auto_transpose=True) -> list:
+        if type(point) is list:
+            point = np.array(point)
+        if point.ndim == 1:
+            point = point[:, np.newaxis]
+        if auto_transpose:
+            shape = point.shape
+            if not 1 in shape:
+                self.get_logger().warn(f"Danger!!! Sending multiple points might cause problems with auto transposition!\n{str(point)}\n.")
+            if 3 in shape:  # non-homogeneous point
+                xyz_dir = shape.index(3)
+                if xyz_dir == 1:  # row vector, not good, needs column vector
+                    point = point.T
+                point = np.pad(point, ((0, 1), (0, 0)), "constant", constant_values=1)  # pad to make homogeneous
+            elif 4 in shape:  # homogeneous point
+                xyzw_dir = shape.index(4)
+                if xyzw_dir == 1:  # row vector, not good, needs column vector
+                    point = point.T
+            else:
+                self.get_logger().error(f"Asked to convert a point but the point has an odd shape:\n{str(point)}\n.")
+                return []  # return empty list to raise an error
+        global_point = robot_2_global @ realsense_2_robot @ point
+        if ravel:
+            global_point = global_point.ravel()
+        if return_as_list:
+            global_point = global_point.tolist()
+        if return_homogeneous:
+            return global_point
+        else:
+            return global_point[:3]
 
 
 def main():
