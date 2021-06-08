@@ -42,17 +42,15 @@ from crow_control.utils import ParamClient, QueueServer
 global_2_robot = np.array(
     [0.7071068, 0.7071068, 0, 0,
      -0.7071068, 0.7071068, 0, 0,
-     0, 0, 1, 233,
+     0, 0, 1, 0.233,
      0, 0, 0, 1]
 ).reshape(4, 4)
 robot_2_global = np.linalg.inv(global_2_robot)
 realsense_2_robot = np.array(
-    [6.168323755264282227e-01, 3.375786840915679932e-01, -7.110263705253601074e-01, 1.405695068359375000e+03,
-     7.858521938323974609e-01, -
-     3.148722648620605469e-01, 5.322515964508056641e-01, -3.209410400390625000e+02,
-     -4.420567303895950317e-02, -8.870716691017150879e-01, -
-     4.595103561878204346e-01, 6.574929809570312500e+02,
-     0.000000000000000000e+00, 0.000000000000000000e+00, 0.000000000000000000e+00, 1.000000000000000000e+00]
+    [6.168323755264282227e-01, 3.375786840915679932e-01, -7.110263705253601074e-01, 1.405695068359375000,
+     7.858521938323974609e-01, -3.148722648620605469e-01, 5.322515964508056641e-01, -0.3209410400390625000,
+     -4.420567303895950317e-02, -8.870716691017150879e-01, -4.595103561878204346e-01, 0.6574929809570312500,
+     0, 0, 0, 1]
 ).reshape(4, 4)
 
 
@@ -329,9 +327,9 @@ class ControlLogic(Node):
             else:
                 goal_msg.size = target_info[1]
             if target_info[2] is None:
-                goal_msg.object.type = -1
+                goal_msg.object_type.type = -1
             else:
-                goal_msg.object = ObjectType(type=target_info[2])
+                goal_msg.object_type = ObjectType(type=target_info[2])
         else:
             pass # @TODO set something, None defaults to 0.0
         if location is not None: #perform place
@@ -353,6 +351,7 @@ class ControlLogic(Node):
                 target_type=target_info[2],
                 location_xyz=[0.53381, 0.18881, 0.22759]  # temporary "robot default" position
             )
+        print(goal_msg)
         self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
@@ -387,9 +386,9 @@ class ControlLogic(Node):
             else:
                 goal_msg.size = target_size
             if target_type is None:
-                goal_msg.object.type = -1
+                goal_msg.object_type.type = -1
             else:
-                goal_msg.object = ObjectType(type=target_type)
+                goal_msg.object_type = ObjectType(type=target_type)
         else:
             pass # @TODO set something, None defaults to 0.0
         if location_xyz is not None:
