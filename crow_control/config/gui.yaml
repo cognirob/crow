@@ -87,6 +87,19 @@ option:
   "None":
     - "N/A"
     - "N/A"
+nlp_mode:
+  "None":
+    - "-"
+    - "N/A"
+  "1":
+    - "Tichý"
+    - "Silent"
+  "2":
+    - "Mluvení"
+    - "Speaking"
+  "3":
+    - "Plné mluvení"
+    - "Full speach"
 info:
   infoText:
     - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"

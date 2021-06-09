@@ -166,7 +166,7 @@ class Visualizator(wx.Frame):
         with open(os.path.join(spec.submodule_search_locations[0], self.CONFIG_PATH), "r") as f:
             self.config = yaml.safe_load(f)
         lang_idx = self.config["languages"].index(self.LANGUAGE)
-        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input"]}
+        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode"]}
 
         # >>> spinning
         self.spinTimer = wx.Timer()
@@ -228,6 +228,14 @@ class Visualizator(wx.Frame):
         toolbar.SetToolSeparation(20)
         button = wx.Button(toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
         toolbar.AddControl(button)
+        toolbar.AddSeparator()
+        self.nlp_mode_label = wx.StaticText(toolbar, size=wx.Size(200, 20), style=wx.ALIGN_LEFT)
+        toolbar.AddControl(self.nlp_mode_label)
+        self.nlp_mode_slider = wx.Slider(toolbar, value=1, minValue=1, maxValue=3, name="nlp_mode_slider")
+        self.nlp_mode_slider.Disable()
+        toolbar.AddControl(self.nlp_mode_slider)
+        toolbar.AddSeparator()
+
         toolbar.Realize()
         self.SetToolBar(toolbar)
 
@@ -382,7 +390,7 @@ class Visualizator(wx.Frame):
         self.pclient.attach("det_obj_in_ws", default_value="-")
         self.pclient.attach("status", default_value="-")
         self.pclient.attach("silent_mode")
-        self.pclient.attach("halt_nlp", default_value=False, force=True)
+        self.pclient.attach("halt_nlp", default_value=2, force=True)
         self.qclient = QueueClient(queue_name="main")
         self.qclient.hook_on_update(self.update_cmd_queue)
         self.qclient.hook_on_pop(self.update_cmd_pop)
@@ -390,6 +398,12 @@ class Visualizator(wx.Frame):
         # >>> SET STATUS
         # self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(self.pclient.silent_mode)]}', 0)
         self.statbar.SetStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(self.pclient.halt_nlp)]}', 1)
+        self._display_silent_mode()
+
+    def _display_silent_mode(self):
+        wx.CallAfter(self.nlp_mode_label.SetLabel, f'{self.translator["field"]["silent_mode"]}: {self.translator["nlp_mode"][str(self.pclient.silent_mode)]}')
+        wx.CallAfter(self.nlp_mode_slider.SetValue, True and self.pclient.silent_mode or 0)
+        wx.CallAfter(self.nlp_mode_slider.Update)
 
     def onButton(self, event):
         obj = event.GetEventObject()
@@ -424,7 +438,8 @@ class Visualizator(wx.Frame):
         #         self.statbar.PushStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(msg)]}', 1)
         #     except BaseException:
         #         pass
-        # elif "silent_mode" in param:
+        elif "silent_mode" in param:
+            self._display_silent_mode()
             # self.statbar.PopStatusText(0)
             # self.statbar.PushStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(msg)]}', 0)
 
