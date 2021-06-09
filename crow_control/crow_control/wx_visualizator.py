@@ -166,7 +166,7 @@ class Visualizator(wx.Frame):
         with open(os.path.join(spec.submodule_search_locations[0], self.CONFIG_PATH), "r") as f:
             self.config = yaml.safe_load(f)
         lang_idx = self.config["languages"].index(self.LANGUAGE)
-        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode"]}
+        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode", "action"]}
 
         # >>> spinning
         self.spinTimer = wx.Timer()
@@ -298,6 +298,7 @@ class Visualizator(wx.Frame):
         self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
         # queue grid
         self.cmd_queue_grid = wx.grid.Grid(self.command_notebook, size=wx.Size(self.WIDTH, 300))
+        self.cmd_queue_grid.SetDefaultRowSize(40)
         n_cmd_rows = 10
         self.cmd_queue_grid.CreateGrid(n_cmd_rows, 3)
         self.cmd_queue_grid.SetRowLabelSize(0)
@@ -312,12 +313,18 @@ class Visualizator(wx.Frame):
         self.cmd_queue_grid.EnableHidingColumns(False)
         self.cmd_queue_grid.ClearSelection()
         f_cmd = wx.Font()
-        f_cmd.SetPointSize(18)
-        self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, 0, 0)
-        self.table_cmd_current_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, Colors.CMD_CURRENT, f_cmd, 0, 0)
+        f_cmd.SetPointSize(22)
+        f_cmd_small = wx.Font()
+        f_cmd_small.SetPointSize(9)
+        self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+        self.table_cmd_current_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, Colors.CMD_CURRENT, f_cmd, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         self.cmd_queue_grid.SetRowAttr(0, self.table_cmd_current_attr)
+        self.cmd_queue_grid.SetCellAlignment(0, 1, wx.ALIGN_LEFT, 0)
+        self.cmd_queue_grid.SetCellFont(0, 1, f_cmd_small)
         for i in range(1, n_cmd_rows + 1):
             self.cmd_queue_grid.SetRowAttr(i, self.table_cmd_normal_attr)
+            self.cmd_queue_grid.SetCellAlignment(i, 1, wx.ALIGN_LEFT, 0)
+            self.cmd_queue_grid.SetCellFont(i, 1, f_cmd_small)
 
         self.command_notebook.AddPage(self.cmd_queue_grid, self.translator["tab"]["cmd_queue"])
 
@@ -507,11 +514,18 @@ class Visualizator(wx.Frame):
         else:
             action, action_type, disp_name, kwargs = data
         print("kwargs ", kwargs)
-        self.cmd_queue_grid.SetCellValue(row, 0, action)
+        self.cmd_queue_grid.SetCellValue(row, 0, self.translator["action"][action])
+        infoText = ''
         if "target" in kwargs:
-            self.cmd_queue_grid.SetCellValue(row, 1, str(kwargs["target"]))
+            infoText += str(kwargs["target"])
         else:
-            self.cmd_queue_grid.SetCellValue(row, 1, str(action_type))
+            infoText += str(action_type)
+        if "location" in kwargs:
+            if "target" in kwargs:
+                infoText += '\n'
+            infoText += str(kwargs["location"])
+        self.cmd_queue_grid.SetCellValue(row, 1, infoText)
+
         self.cmd_queue_grid.SetCellValue(row, 2, disp_name)
 
     def update_cmd_queue(self, cache):
