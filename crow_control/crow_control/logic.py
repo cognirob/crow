@@ -292,7 +292,7 @@ class ControlLogic(Node):
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
         if target_info is not None:
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = self._transform_cam2global(target_info[0])
             if target_info[1] is None:
                 goal_msg.size = [0, 0, 0]
             else:
