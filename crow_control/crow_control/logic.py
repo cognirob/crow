@@ -307,6 +307,7 @@ class ControlLogic(Node):
             pass  # TODO
         # goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object_type = ObjectType(type=target_info[2])
+        print(goal_msg)
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
