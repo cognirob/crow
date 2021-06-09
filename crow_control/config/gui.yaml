@@ -113,6 +113,10 @@ action:
   fetch:
    - "podej"
    - "fetch"
+button:
+  command_rm:
+    - "Odstraň příkaz"
+    - "Remove command"
 info:
   infoText:
     - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"
