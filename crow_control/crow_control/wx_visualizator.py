@@ -1,4 +1,5 @@
 from concurrent.futures import thread
+from numpy.core.fromnumeric import size
 import rclpy
 from rclpy.node import Node
 from rcl_interfaces.srv import GetParameters
@@ -8,7 +9,7 @@ from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from sensor_msgs.msg import Image as msg_image
-from crow_msgs.msg import FilteredPose, NlpStatus, ObjectPointcloud, StampedString
+from crow_msgs.msg import FilteredPose, NlpStatus, ObjectPointcloud, StampedString, SentenceProgram
 from geometry_msgs.msg import PoseArray
 from cv_bridge import CvBridge
 import message_filters
@@ -76,8 +77,10 @@ def executor_done_call_back(future):
 class ImageViewPanel(wx.Panel):
     """ class ImageViewPanel creates a panel with an image on it, inherits wx.Panel """
     def __init__(self, parent):
-        self.width = 848
-        self.height = 480
+        self.width = int(848 / 1.5)
+        self.height = int(480 / 1.5)
+        # self.width = 848
+        # self.height = 480
         super(ImageViewPanel, self).__init__(parent, id=-1, size=wx.Size(self.width, self.height))
         self.bitmaps = {}
         self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -171,7 +174,7 @@ class Visualizator(wx.Frame):
         with open(os.path.join(spec.submodule_search_locations[0], self.CONFIG_PATH), "r") as f:
             self.config = yaml.safe_load(f)
         lang_idx = self.config["languages"].index(self.LANGUAGE)
-        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode", "action"]}
+        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode", "action", "button"]}
 
         # >>> spinning
         self.spinTimer = wx.Timer()
@@ -216,6 +219,9 @@ class Visualizator(wx.Frame):
         # >>> Publisher for remove command
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.rem_cmd_publisher = self.node.create_publisher(StampedString, "/nlp/command", qos)
+        listener = self.node.create_subscription(msg_type=SentenceProgram,
+                                          topic='nl_input',
+                                          callback=self.sentence_callback, qos_profile=qos) #the listener QoS has to be =1, "keep last only".
 
         # >>> Helpers
         self.old_objects = {}
@@ -242,8 +248,14 @@ class Visualizator(wx.Frame):
 
         self.toolbar.Realize()
         self.SetToolBar(self.toolbar)
-
         self.mainVBox.Add(self.toolbar, flag=wx.EXPAND)
+
+        # NL TEXT
+        self.text_recognized = wx.StaticText(self, style=wx.ALIGN_CENTER, size=wx.Size(self.WIDTH, 20))
+        f = wx.Font()
+        f.SetPointSize(14)
+        self.text_recognized.SetFont(f)
+        self.mainVBox.Add(self.text_recognized, flag=wx.EXPAND)
 
         # NOTEBOOK
         self.notebook = wx.Notebook(self)
@@ -267,6 +279,10 @@ class Visualizator(wx.Frame):
         controlBox.Add(cameraSelector, flag=wx.EXPAND)
         infoText = wx.StaticText(nb_page_cam, -1, self.translator["info"]["infoText"])
         controlBox.Add(infoText, flag=wx.EXPAND)
+        self.button_command_rm = wx.Button(nb_page_cam, label=self.translator["button"]["command_rm"])
+        self.button_command_rm.Disable()
+        self.button_command_rm.Bind(wx.EVT_BUTTON, self.onCMD_RM_button)
+        controlBox.Add(self.button_command_rm, flag=wx.EXPAND)
 
         imageAndControlBox.Add(controlBox, flag=wx.EXPAND)
         cameraViewBox.Add(imageAndControlBox, flag=wx.EXPAND)
@@ -301,8 +317,9 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.ClearSelection()
         self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
         # queue grid
-        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook, size=wx.Size(self.WIDTH, 300))
+        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook, size=wx.Size(self.WIDTH, 100))
         self.cmd_queue_grid.SetDefaultRowSize(40)
+        self.cmd_queue_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.onCmdQueueClick)
         n_cmd_rows = 10
         self.cmd_queue_grid.CreateGrid(n_cmd_rows, 3)
         self.cmd_queue_grid.SetRowLabelSize(0)
@@ -319,7 +336,7 @@ class Visualizator(wx.Frame):
         f_cmd = wx.Font()
         f_cmd.SetPointSize(22)
         f_cmd_small = wx.Font()
-        f_cmd_small.SetPointSize(9)
+        f_cmd_small.SetPointSize(10)
         self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         self.table_cmd_current_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, Colors.CMD_CURRENT, f_cmd, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         self.cmd_queue_grid.SetRowAttr(0, self.table_cmd_current_attr)
@@ -409,7 +426,9 @@ class Visualizator(wx.Frame):
         # >>> SET STATUS
         # self.statbar.SetStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(self.pclient.silent_mode)]}', 0)
         self.statbar.SetStatusText(f'{self.translator["field"]["nlp_suspended"]}: {self.translator["option"][str(self.pclient.halt_nlp)]}', 1)
-        self._display_silent_mode()
+        wx.CallAfter(self._display_silent_mode)
+        # wx.CallAfter(self.update_cmd_queue)
+        # wx.CallAfter(self.update_cmd_pop)
 
     def _display_silent_mode(self):
         wx.CallAfter(self.nlp_mode_label.SetLabel, f'{self.translator["field"]["silent_mode"]}: {self.translator["nlp_mode"][str(self.pclient.silent_mode)]}')
@@ -423,6 +442,18 @@ class Visualizator(wx.Frame):
         if type(obj.GetParent()) is wx.ToolBar:
             if obj.Name == 'buttHaltNLP':
                 self.toggle_nlp_halting()
+
+    def onCMD_RM_button(self, evt):
+        srows = self.cmd_queue_grid.GetSelectedRows()
+        if len(srows) != 1:
+            self.button_command_rm.Disable()
+            return
+        row = srows[0]
+        cmd_disp_name = self.cmd_queue_grid.GetCellValue(row, 2)
+        if row > 0 and cmd_disp_name:
+            self.remove_command(cmd_disp_name)
+        self.button_command_rm.Disable()
+        self.cmd_queue_grid.ClearSelection()
 
     def update_params(self, param, msg):
         # print(self.pclient.get_all())
@@ -455,6 +486,15 @@ class Visualizator(wx.Frame):
             self._display_silent_mode()
             # self.statbar.PopStatusText(0)
             # self.statbar.PushStatusText(f'{self.translator["field"]["silent_mode"]}: {self.translator["option"][str(msg)]}', 0)
+
+    def onCmdQueueClick(self, evt):
+        row = evt.GetRow()
+        cmd_disp_name = self.cmd_queue_grid.GetCellValue(row, 2)
+        # print(cmd_disp_name)
+        if cmd_disp_name and row > 0:
+            self.cmd_queue_grid.ClearSelection()
+            self.cmd_queue_grid.SelectRow(row)
+            self.button_command_rm.Enable()
 
     def onNBPageChange(self, evt):
         self.notebook_tab = self.notebook.GetPageText(evt.Selection)
@@ -501,6 +541,9 @@ class Visualizator(wx.Frame):
         #     self.refresh_commands()
         self.gui_update_lock.release()
 
+    def sentence_callback(self, msg):
+        wx.CallAfter(self.text_recognized.SetLabel, str(msg.data))
+
     def refresh_detections(self):
         self.cmd_detection_param_grid.SetCellValue(0, 1, str(self.pclient.det_command))
         self.cmd_detection_param_grid.SetCellValue(1, 1, str(self.pclient.det_obj))
@@ -512,45 +555,53 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.SetCellValue(4, 1, str(self.pclient.status))
 
     def display_command_in_grid(self, row, data):
-        print("data ", data)
+        # print("data ", data)
         if len(data) == 3:
             action, action_type, disp_name, kwargs = *data, {}
         else:
             action, action_type, disp_name, kwargs = data
-        print("kwargs ", kwargs)
-        self.cmd_queue_grid.SetCellValue(row, 0, self.translator["action"][action])
+        # print("kwargs ", kwargs)
+        if action in self.translator["action"]:
+            self.cmd_queue_grid.SetCellValue(row, 0, self.translator["action"][action])
+        else:
+            self.cmd_queue_grid.SetCellValue(row, 0, str(action))
+
         infoText = ''
         if "target" in kwargs:
-            infoText += str(kwargs["target"])
+            infoText += f'{self.translator["field"]["target"]} = {str(kwargs["target"])}'
         else:
             infoText += str(action_type)
         if "location" in kwargs:
-            if "target" in kwargs:
-                infoText += '\n'
-            infoText += str(kwargs["location"])
+            sep = "\n" if "target" in kwargs else ""
+            infoText += f'{sep}{self.translator["field"]["location"]} = {str(kwargs["location"])}'
         self.cmd_queue_grid.SetCellValue(row, 1, infoText)
 
         self.cmd_queue_grid.SetCellValue(row, 2, disp_name)
 
-    def update_cmd_queue(self, cache):
+    def update_cmd_queue(self, _=None):
         noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
-        # print(cache)
+        vcache = self.qclient.last_value_cache
+        # print(vcache)
+        self.cmd_queue_grid.ClearSelection()
+        self.button_command_rm.Disable()
         if self.cmd_queue_grid.GetCellValue(1, 0):
             bkp = []
             if self.cmd_queue_grid.GetCellValue(0, 0):  # backup the current command
                 bkp = [self.cmd_queue_grid.GetCellValue(0, i) for i in range(3)]
             self.cmd_queue_grid.ClearGrid()
             if bkp:
-                print("bkp ", bkp)
                 for i, f in enumerate(bkp):
                     self.cmd_queue_grid.SetCellValue(0, i, f)
-        for i, cmd in enumerate(cache):
-            self.display_command_in_grid(i + 1, cmd)
+        if vcache is not None:
+            for i, cmd in enumerate(vcache):
+                self.display_command_in_grid(i + 1, cmd)
 
-    def update_cmd_pop(self, poped):
+    def update_cmd_pop(self, _=None):
         noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
-        # print(poped)
-        self.display_command_in_grid(0, poped)
+        popped = self.qclient.last_pop_cache
+        # print(popped)
+        if popped is not None:
+            self.display_command_in_grid(0, popped)
 
     def refresh_objects(self):
         combined_objects = {}
@@ -609,7 +660,7 @@ class Visualizator(wx.Frame):
 
     def toggle_nlp_halting(self):
         # print("aaaaa")
-        print(self.pclient.halt_nlp)
+        # print(self.pclient.halt_nlp)
         # self.pclient.halt_nlp = True
         self.pclient.halt_nlp = not self.pclient.halt_nlp
 
@@ -622,7 +673,7 @@ class Visualizator(wx.Frame):
         data.append(dict1)
         actions = json.dumps(data)
         msg = StampedString()
-        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.stamp = self.node.get_clock().now().to_msg()
         msg.data = actions
 
         print(f'GUI will publish {msg.data}')
