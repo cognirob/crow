@@ -193,8 +193,8 @@ class Visualizator(wx.Frame):
                     time.sleep(2)
                     self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
 
-                self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
-                # self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+                # self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+                self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
 
                 # create listeners
                 qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -224,22 +224,22 @@ class Visualizator(wx.Frame):
         self.mainVBox = wx.BoxSizer(wx.VERTICAL)
 
         # Toolbar
-        toolbar = wx.ToolBar(self, -1)
-        toolbar.SetToolSeparation(20)
-        button = wx.Button(toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
-        toolbar.AddControl(button)
-        toolbar.AddSeparator()
-        self.nlp_mode_label = wx.StaticText(toolbar, size=wx.Size(200, 20), style=wx.ALIGN_LEFT)
-        toolbar.AddControl(self.nlp_mode_label)
-        self.nlp_mode_slider = wx.Slider(toolbar, value=1, minValue=1, maxValue=3, name="nlp_mode_slider")
-        self.nlp_mode_slider.Disable()
-        toolbar.AddControl(self.nlp_mode_slider)
-        toolbar.AddSeparator()
+        self.toolbar = wx.ToolBar(self, -1)
+        self.toolbar.SetToolSeparation(20)
+        button = wx.Button(self.toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
+        self.toolbar.AddControl(button)
+        self.toolbar.AddSeparator()
+        self.nlp_mode_label = wx.StaticText(self.toolbar, size=wx.Size(200, 20), style=wx.ALIGN_LEFT)
+        self.toolbar.AddControl(self.nlp_mode_label)
+        self.nlp_mode_slider = wx.Slider(self.toolbar, value=1, minValue=1, maxValue=3, name="nlp_mode_slider")
+        # self.nlp_mode_slider.Disable()
+        self.toolbar.AddControl(self.nlp_mode_slider)
+        self.toolbar.AddSeparator()
 
-        toolbar.Realize()
-        self.SetToolBar(toolbar)
+        self.toolbar.Realize()
+        self.SetToolBar(self.toolbar)
 
-        self.mainVBox.Add(toolbar, flag=wx.EXPAND)
+        self.mainVBox.Add(self.toolbar, flag=wx.EXPAND)
 
         # NOTEBOOK
         self.notebook = wx.Notebook(self)
@@ -297,7 +297,7 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.ClearSelection()
         self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
         # queue grid
-        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
+        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook, size=wx.Size(self.WIDTH, 300))
         n_cmd_rows = 10
         self.cmd_queue_grid.CreateGrid(n_cmd_rows, 3)
         self.cmd_queue_grid.SetRowLabelSize(0)
@@ -403,6 +403,8 @@ class Visualizator(wx.Frame):
     def _display_silent_mode(self):
         wx.CallAfter(self.nlp_mode_label.SetLabel, f'{self.translator["field"]["silent_mode"]}: {self.translator["nlp_mode"][str(self.pclient.silent_mode)]}')
         wx.CallAfter(self.nlp_mode_slider.SetValue, True and self.pclient.silent_mode or 0)
+        wx.CallAfter(self.toolbar.Refresh)
+        wx.CallAfter(self.nlp_mode_slider.Refresh)
         wx.CallAfter(self.nlp_mode_slider.Update)
 
     def onButton(self, event):
