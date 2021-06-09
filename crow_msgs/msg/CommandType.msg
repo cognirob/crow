@@ -11,6 +11,7 @@ int64 STORE=209  # pick an object an place it into a storage
 int64 STASH=210  # pick an object an place it into the robot storage (backstage)
 int64 FETCH=212  # take object from backstage and put it near the user
 int64 FETCH_TO=213  # take object from backstage and put it into a storage
+int64 TIDY=214 # take all objects from the front and put them into a storage
 
 int64 STOP=256  # stop the robot arm(s)
 int64 RETRACT=512  # retract to starting position
