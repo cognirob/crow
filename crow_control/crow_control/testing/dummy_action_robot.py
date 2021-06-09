@@ -24,6 +24,11 @@ class DummyActionRobot(Node):
         self._action_server = ActionServer(
             self,
             PickNPlace,
+            'point',
+            self.execute_callback)
+        self._action_server = ActionServer(
+            self,
+            PickNPlace,
             'pick_n_place',
             self.execute_callback)
 

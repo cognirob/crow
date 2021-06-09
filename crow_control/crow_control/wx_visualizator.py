@@ -167,7 +167,7 @@ class Visualizator(wx.Frame):
         with open(os.path.join(spec.submodule_search_locations[0], self.CONFIG_PATH), "r") as f:
             self.config = yaml.safe_load(f)
         lang_idx = self.config["languages"].index(self.LANGUAGE)
-        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode"]}
+        self.translator = {f: {k: v[lang_idx] for k, v in t.items()} for f, t in self.config.items() if f in ["field", "option", "info", "tab", "input", "nlp_mode", "action"]}
 
         # >>> spinning
         self.spinTimer = wx.Timer()
@@ -194,8 +194,8 @@ class Visualizator(wx.Frame):
                     time.sleep(2)
                     self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
 
-                self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
-                # self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+                # self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+                self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
 
                 # create listeners
                 qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -225,22 +225,22 @@ class Visualizator(wx.Frame):
         self.mainVBox = wx.BoxSizer(wx.VERTICAL)
 
         # Toolbar
-        toolbar = wx.ToolBar(self, -1)
-        toolbar.SetToolSeparation(20)
-        button = wx.Button(toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
-        toolbar.AddControl(button)
-        toolbar.AddSeparator()
-        self.nlp_mode_label = wx.StaticText(toolbar, size=wx.Size(200, 20), style=wx.ALIGN_LEFT)
-        toolbar.AddControl(self.nlp_mode_label)
-        self.nlp_mode_slider = wx.Slider(toolbar, value=1, minValue=1, maxValue=3, name="nlp_mode_slider")
-        self.nlp_mode_slider.Disable()
-        toolbar.AddControl(self.nlp_mode_slider)
-        toolbar.AddSeparator()
+        self.toolbar = wx.ToolBar(self, -1)
+        self.toolbar.SetToolSeparation(20)
+        button = wx.Button(self.toolbar, -1, self.translator["input"]["nlp_suspend"], name="buttHaltNLP")
+        self.toolbar.AddControl(button)
+        self.toolbar.AddSeparator()
+        self.nlp_mode_label = wx.StaticText(self.toolbar, size=wx.Size(200, 20), style=wx.ALIGN_LEFT)
+        self.toolbar.AddControl(self.nlp_mode_label)
+        self.nlp_mode_slider = wx.Slider(self.toolbar, value=1, minValue=1, maxValue=3, name="nlp_mode_slider")
+        # self.nlp_mode_slider.Disable()
+        self.toolbar.AddControl(self.nlp_mode_slider)
+        self.toolbar.AddSeparator()
 
-        toolbar.Realize()
-        self.SetToolBar(toolbar)
+        self.toolbar.Realize()
+        self.SetToolBar(self.toolbar)
 
-        self.mainVBox.Add(toolbar, flag=wx.EXPAND)
+        self.mainVBox.Add(self.toolbar, flag=wx.EXPAND)
 
         # NOTEBOOK
         self.notebook = wx.Notebook(self)
@@ -298,7 +298,8 @@ class Visualizator(wx.Frame):
         self.cmd_detection_param_grid.ClearSelection()
         self.command_notebook.AddPage(self.cmd_detection_param_grid, self.translator["tab"]["detection"])
         # queue grid
-        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook)
+        self.cmd_queue_grid = wx.grid.Grid(self.command_notebook, size=wx.Size(self.WIDTH, 300))
+        self.cmd_queue_grid.SetDefaultRowSize(40)
         n_cmd_rows = 10
         self.cmd_queue_grid.CreateGrid(n_cmd_rows, 3)
         self.cmd_queue_grid.SetRowLabelSize(0)
@@ -313,12 +314,18 @@ class Visualizator(wx.Frame):
         self.cmd_queue_grid.EnableHidingColumns(False)
         self.cmd_queue_grid.ClearSelection()
         f_cmd = wx.Font()
-        f_cmd.SetPointSize(18)
-        self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, 0, 0)
-        self.table_cmd_current_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, Colors.CMD_CURRENT, f_cmd, 0, 0)
+        f_cmd.SetPointSize(22)
+        f_cmd_small = wx.Font()
+        f_cmd_small.SetPointSize(9)
+        self.table_cmd_normal_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, wx.WHITE, f_cmd, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
+        self.table_cmd_current_attr = wx.grid.GridCellAttr(Colors.OBJ_NORMAL, Colors.CMD_CURRENT, f_cmd, wx.ALIGN_CENTRE, wx.ALIGN_CENTRE)
         self.cmd_queue_grid.SetRowAttr(0, self.table_cmd_current_attr)
+        self.cmd_queue_grid.SetCellAlignment(0, 1, wx.ALIGN_LEFT, 0)
+        self.cmd_queue_grid.SetCellFont(0, 1, f_cmd_small)
         for i in range(1, n_cmd_rows + 1):
             self.cmd_queue_grid.SetRowAttr(i, self.table_cmd_normal_attr)
+            self.cmd_queue_grid.SetCellAlignment(i, 1, wx.ALIGN_LEFT, 0)
+            self.cmd_queue_grid.SetCellFont(i, 1, f_cmd_small)
 
         self.command_notebook.AddPage(self.cmd_queue_grid, self.translator["tab"]["cmd_queue"])
 
@@ -404,6 +411,8 @@ class Visualizator(wx.Frame):
     def _display_silent_mode(self):
         wx.CallAfter(self.nlp_mode_label.SetLabel, f'{self.translator["field"]["silent_mode"]}: {self.translator["nlp_mode"][str(self.pclient.silent_mode)]}')
         wx.CallAfter(self.nlp_mode_slider.SetValue, True and self.pclient.silent_mode or 0)
+        wx.CallAfter(self.toolbar.Refresh)
+        wx.CallAfter(self.nlp_mode_slider.Refresh)
         wx.CallAfter(self.nlp_mode_slider.Update)
 
     def onButton(self, event):
@@ -506,11 +515,18 @@ class Visualizator(wx.Frame):
         else:
             action, action_type, disp_name, kwargs = data
         print("kwargs ", kwargs)
-        self.cmd_queue_grid.SetCellValue(row, 0, action)
+        self.cmd_queue_grid.SetCellValue(row, 0, self.translator["action"][action])
+        infoText = ''
         if "target" in kwargs:
-            self.cmd_queue_grid.SetCellValue(row, 1, str(kwargs["target"]))
+            infoText += str(kwargs["target"])
         else:
-            self.cmd_queue_grid.SetCellValue(row, 1, str(action_type))
+            infoText += str(action_type)
+        if "location" in kwargs:
+            if "target" in kwargs:
+                infoText += '\n'
+            infoText += str(kwargs["location"])
+        self.cmd_queue_grid.SetCellValue(row, 1, infoText)
+
         self.cmd_queue_grid.SetCellValue(row, 2, disp_name)
 
     def update_cmd_queue(self, cache):

@@ -71,6 +71,9 @@ field:
   info:
     - "info"
     - "info"
+  target:
+    - "cíl"
+    - "target"
 option:
   yes:
     - "ano"
@@ -100,6 +103,16 @@ nlp_mode:
   "3":
     - "Plné mluvení"
     - "Full speach"
+action:
+  point:
+    - "ukaž"
+    - "point"
+  pick:
+   - "seber"
+   - "pick"
+  fetch:
+   - "podej"
+   - "fetch"
 info:
   infoText:
     - "Prikazy\nUkaz na <OBJEKT>\nUkaz na <BARVA> <OBJEKT>\nSeber <OBJEKT>"

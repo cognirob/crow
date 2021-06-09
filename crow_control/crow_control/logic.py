@@ -36,7 +36,7 @@ import subprocess
 from collections import deque
 from crow_control.utils.profiling import StatTimer
 from crow_control.utils import ParamClient, QueueServer
-
+from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
 
 # QuickNDirty solutions inc. (but temporary)
 global_2_robot = np.array(
@@ -72,6 +72,10 @@ class ControlLogic(Node):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
+        
+        self.LANG = 'cs'
+        self.ui = UserInputManager(language = self.LANG)
+        self.guidance_file = self.ui.load_file('guidance_dialogue.json')
 
         self.pclient = ParamClient()
         self.pclient.define("robot_done", True) # If true, the robot has received a goal and completed it.
@@ -79,7 +83,8 @@ class ControlLogic(Node):
         self.pclient.define("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
         self.pclient.define("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
         self.pclient.define("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
-
+        self.pclient.declare("silent_mode", 1) # Set by the user (level of the talking - 1 Silence, 2 - Standard speech, 3 - Debug mode/Full speech)
+        
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
@@ -101,7 +106,7 @@ class ControlLogic(Node):
         self.marker_publisher = self.create_publisher(StorageMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
         self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last, CommandType.REM_CMD_X: self.remove_command_x,
                                 CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendAction,
-                                CommandType.PICK: self.sendPickAction, CommandType.FETCH: self.sendFetchAction, CommandType.FETCH_TO: self.sendPNPAction}
+                                CommandType.PICK: self.sendPickAction, CommandType.FETCH: self.sendFetchAction}#, CommandType.FETCH_TO: self.sendPNPAction}
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -221,6 +226,7 @@ class ControlLogic(Node):
         if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
             try:
                 disp_name, action, command_name, kwargs = self.command_main_buffer.pop()
+                kwargs['disp_name'] = disp_name
             except IndexError as ie:  # no new commands to process
                 pass  # noqa
             else:
@@ -232,7 +238,7 @@ class ControlLogic(Node):
                     try:
                         command(**kwargs)
                     except Exception as e:
-                        self.get_logger().error(f"Error executing action {disp_name} with args {str(target_info)}. The error was:\n{e}")
+                        self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. The error was:\n{e}")
                         self.pclient.robot_done = True
                         self.pclient.robot_failed = True
                     finally:
@@ -245,6 +251,7 @@ class ControlLogic(Node):
     def update_meanwhile_cb(self):
         try:
             disp_name, action, kwargs = self.command_meanwhile_buffer.pop()
+            kwargs['disp_name'] = disp_name
         except IndexError as ie:  # no new commands to process
             pass  # noqa
         else:
@@ -257,33 +264,43 @@ class ControlLogic(Node):
         self.status = status
         # print(self.status)
 
-    def command_error(self, **kwargs):
+    def command_error(self, disp_name='', **kwargs):
         self.get_logger().info("Command not implemented!")
+        self.ui.buffered_say(disp_name + self.guidance_file[self.LANG]["template_non_implemented"], say=2)
+        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
         self.pclient.robot_done = True
         self.pclient.robot_failed = True
 
-    def remove_command_last(self, **kwargs):
+    def remove_command_last(self, disp_name='', **kwargs):
         if len(self.command_main_buffer) > 0:
             self.command_main_buffer.remove(-1)
             self.get_logger().info('Removing last command')
+            self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         else:
             self.get_logger().info('Can not remove last command, it is not in the queue anymore')
+            self.ui.buffered_say(self.guidance_file[self.LANG]["command_not_in_queue"] + disp_name, say=2)
+            self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
 
-    def remove_command_x(self, command_name=None, **kwargs):
+    def remove_command_x(self, disp_name='', command_name=None, **kwargs):
         idx = self.command_main_buffer.find_name_index(command_name)
         if idx is not None:
             self.command_main_buffer.remove(idx)
             self.get_logger().info(f'Removing command {command_name}')
+            self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name + ' ' + command_name, say=2)
         else:
-            self.get_logger().info('Can not remove command {command_name}, it is not in the queue')
+            self.get_logger().info(f'Can not remove command {command_name}, it is not in the queue')
+            self.ui.buffered_say(self.guidance_file[self.LANG]["command_not_in_queue"] + disp_name + ' ' + command_name, say=2)
+            self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
 
-    def defineStorage(self, storage_name=None, marker_group_name=None, **kwargs):
+    def defineStorage(self, disp_name='', storage_name=None, marker_group_name=None, **kwargs):
         marker_msg = StorageMsg()
         marker_msg.group_name = marker_group_name
         marker_msg.storage_name = storage_name
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
         self.marker_publisher.publish(marker_msg)
 
-    def sendAction(self, target_info=None, location=None, obj=None, **kwargs): #@TODO: sendPointAction
+    def sendAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs): #@TODO: sendPointAction
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
@@ -292,7 +309,7 @@ class ControlLogic(Node):
         goal_msg.frame_id = "camera1_color_optical_frame"
         goal_msg.pick_pose = Pose()
         if target_info is not None:
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
+            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = self._transform_cam2global(target_info[0])
             if target_info[1] is None:
                 goal_msg.size = [0, 0, 0]
             else:
@@ -307,11 +324,14 @@ class ControlLogic(Node):
             pass  # TODO
         # goal_msg.size = [0.1, 0.2, 0.3]
         goal_msg.object_type = ObjectType(type=target_info[2])
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
+        print(goal_msg)
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
-    def sendPNPAction(self, target_info=None, location=None, obj=None, **kwargs):
+    def sendPNPAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing PNP action")
         self.pclient.robot_done = False
@@ -336,11 +356,13 @@ class ControlLogic(Node):
             goal_msg.place_pose.position.x, goal_msg.place_pose.position.y, goal_msg.place_pose.position.z = location
         else:
             pass # @TODO set something, None defaults to 0.0
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
         self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
-    def sendPickAction(self, target_info=None, location=None, obj=None, **kwargs):
+    def sendPickAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Pick action")
         self.pclient.robot_done = False
@@ -352,11 +374,13 @@ class ControlLogic(Node):
                 location_xyz=[0.53381, 0.18881, 0.22759]  # temporary "robot default" position
             )
         print(goal_msg)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
         self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
-    def sendFetchAction(self, target_info=None, location=None, obj=None, **kwargs):
+    def sendFetchAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Fetch action")
         self.pclient.robot_done = False
@@ -367,6 +391,8 @@ class ControlLogic(Node):
                 target_type=target_info[2],
                 location_xyz=[0.03914, 0.56487, 0.22759]  # temporary storage location
             )
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
         self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
