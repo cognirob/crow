@@ -34,6 +34,7 @@ from concurrent import futures
 from threading import Lock
 import functools
 from collections import OrderedDict
+import json
 
 
 thread_pool_executor = futures.ThreadPoolExecutor(max_workers=5)
@@ -606,7 +607,7 @@ class Visualizator(wx.Frame):
         msg.data = actions
 
         print(f'GUI will publish {msg.data}')
-        self.rem_cmd_publisher.publish()
+        self.rem_cmd_publisher.publish(msg)
 
     def destroy(self, something=None):
         self.spinTimer.Stop()
