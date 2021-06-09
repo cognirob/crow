@@ -29,12 +29,14 @@ import yaml
 import os
 from importlib.util import find_spec
 import pynput
-from crow_control.utils import ParamClient, QueueClient, UniversalParamClient
+from crow_control.utils import QueueClient, UniversalParamClient
 from concurrent import futures
 from threading import Lock
 import functools
 from collections import OrderedDict
 import json
+import sys
+import argparse
 
 
 thread_pool_executor = futures.ThreadPoolExecutor(max_workers=5)
@@ -144,6 +146,8 @@ class Visualizator(wx.Frame):
     WIDTH = 1200
     HEIGHT = 800
 
+    IMAGE_TOPIC = "/detections/image_annot"
+
     def __init__(self):
         super().__init__(None, title="Visualizator", size=(self.WIDTH, self.HEIGHT))
         self.maxed = False
@@ -194,8 +198,7 @@ class Visualizator(wx.Frame):
                     time.sleep(2)
                     self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self.node, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
 
-                # self.mask_topics = [cam + "/color/image_raw" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
-                self.mask_topics = [cam + "/detections/image_annot" for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
+                self.mask_topics = [cam + self.IMAGE_TOPIC for cam in self.cameras] #input masks from 2D rgb (from our detector.py)
 
                 # create listeners
                 qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
@@ -397,8 +400,8 @@ class Visualizator(wx.Frame):
         self.pclient.attach("det_obj_name", default_value="-")
         self.pclient.attach("det_obj_in_ws", default_value="-")
         self.pclient.attach("status", default_value="-")
-        self.pclient.attach("silent_mode")
-        self.pclient.attach("halt_nlp", default_value=2, force=True)
+        self.pclient.attach("silent_mode", default_value=1, force=True)
+        self.pclient.attach("halt_nlp", default_value=False, force=True)
         self.qclient = QueueClient(queue_name="main")
         self.qclient.hook_on_update(self.update_cmd_queue)
         self.qclient.hook_on_pop(self.update_cmd_pop)
@@ -635,6 +638,11 @@ class Visualizator(wx.Frame):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", "-d", action="store_true")
+    args, _ = parser.parse_known_args(sys.argv[1:])
+    if args.debug:
+        Visualizator.IMAGE_TOPIC = "/color/image_raw"
     rclpy.init()
     app = wx.App(False)
     Colors.initializeColors()
