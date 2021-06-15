@@ -4,7 +4,7 @@ from rcl_interfaces.msg import ParameterType
 from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
-
+import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units
 from trio3_ros2_interfaces.srv import GetRobotStatus
@@ -128,7 +128,7 @@ class ControlLogic(Node):
             tuple: (<position>, <size>, <type>) - None where not applicable.
         """
         if target_type == "xyz":
-            return (np.array(target), None, ObjectType.POINT)
+            return (np.array(target), [1e-9, 1e-9, 1e-9], ObjectType.POINT)
         elif target_type == "onto_id":
             try:
                 uri = next(self.onto.subjects(self.crowracle.CROW.hasId, target))
@@ -212,6 +212,8 @@ class ControlLogic(Node):
         start_time = datetime.now()
         duration = datetime.now() - start_time
         #@TODO: target and target_type may be lists of candidates or as well dicts with constraints only
+        if type(target) is not list:
+            target = [target]
         while (target_info is None) and (duration.seconds <= self.TARGET_BUFFERING_TIME):
             for t in target:
                 target_info = self.processTarget(t, target_type)
@@ -515,13 +517,29 @@ class ControlLogic(Node):
             pass # @TODO set something, None defaults to 0.0
         return goal_msg
 
+    def cancel_current_goal(self, wait=False):
+        """Requests cancellation of the current goal.
+
+        Returns:
+            bool: Returns True, if goal can be canceled
+        """
+        self.get_logger().info("Trying to cancel the current goal.")
+        if self.goal_handle is None:
+            return False
+        # self.get_logger().info(str(dir(self.goal_handle)))
+        if wait:
+            response = self.goal_handle.cancel_goal()
+            print(response)
+        else:
+            future = self.goal_handle.cancel_goal_async()
+            future.add_done_callback(self.robot_canceling_done)
+
+        return True
+
     def robot_response_cb(self, future):
-        goal_handle = future.result()
-        if not goal_handle.accepted:
-            self.get_logger().info('Goal rejected :(')
-            self.pclient.robot_failed = True
-            self.pclient.robot_done = True
-            self._set_status(self.STATUS_IDLE)
+        self.goal_handle = future.result()
+        if not self.goal_handle.accepted:
+            self.make_robot_fail_to_start()
             return
 
         StatTimer.exit("speech2robot", severity=Runtime.S_MAIN)
@@ -529,7 +547,7 @@ class ControlLogic(Node):
         self.get_logger().info('Goal accepted :)')
         self._set_status(self.STATUS_EXECUTING)
 
-        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future = self.goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.robot_done_cb)
 
     def robot_done_cb(self, future):
@@ -537,18 +555,37 @@ class ControlLogic(Node):
         StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
-        self.pclient.robot_done = True
-        self._set_status(self.STATUS_IDLE)
-        if not result.done:
-            self.pclient.robot_failed = True
+        if result.done:
+            self.make_robot_done()
+        else:
+            self.get_logger().info(f'Action failed because: {result.action_result_flag}')
+            self.make_robot_fail()
 
     def robot_feedback_cb(self, feedback_msg):
-        self.get_logger().info('Got FB')
-        if feedback_msg.core_action_phase == CoreActionPhase.ROBOTIC_ACTION:
+        feedback = feedback_msg.feedback
+        self.get_logger().info(f'Received feedback: {feedback.status}')
+        # self.get_logger().info(f'Received feedback: {feedback_msg}')
+        # self.get_logger().info(f'Received feedback: {[(k, getattr(feedback, k)) for k in feedback.get_fields_and_field_types()]}')
+        try:
+            sn = float(feedback.status)
+        except ValueError:
+            pass  # noqa
+        # else:
+        #     if sn > 0.7:
+        #         print(dir(self._get_result_future))
+        #         print(self.cancel_current_goal())
+
+        if feedback.core_action_phase == CoreActionPhase.ROBOTIC_ACTION:
             StatTimer.try_exit("robot action")
             StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
-        feedback = feedback_msg.feedback
-        self.get_logger().info(f'Received feedback: {[(k, getattr(feedback, k)) for k in feedback.get_fields_and_field_types()]}')
+
+    def robot_canceling_done(self, future):
+        cancel_response = future.result()
+        if len(cancel_response.goals_canceling) > 0:
+            self.get_logger().info('Goal successfully canceled')
+            self.make_robot_fail()
+        else:
+            self.get_logger().info('Goal failed to cancel')
 
     def _transform_cam2global(self, point, return_homogeneous=False, return_as_list=True, ravel=True, auto_transpose=True) -> list:
         if type(point) is list:
@@ -597,6 +634,30 @@ class ControlLogic(Node):
         self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
         self.pclient.can_start_talking = True
 
+    def make_robot_done(self):
+        """Call this when robot successfully completed the last task
+        """
+        self._cleanup_after_action()
+        self.pclient.robot_failed = False
+
+    def make_robot_fail(self):
+        """Call this when robot fails to complete an action
+        """
+        self._cleanup_after_action()
+        self.pclient.robot_failed = True
+
+    def make_robot_fail_to_start(self):
+        """Call this when robot fails to start an action (so far, the same as failing to complete)
+        """
+        self.get_logger().info('Goal rejected :(')
+        self._cleanup_after_action()
+        self.pclient.robot_failed = True
+
+    def _cleanup_after_action(self):
+        self.goal_handle = None
+        self.pclient.robot_done = True
+        self._set_status(self.STATUS_IDLE)
+
 def main():
     rclpy.init()
     cl = ControlLogic()
@@ -608,25 +669,11 @@ def main():
         #     print(p, " --- ", o)
         # time.sleep(1)
         cl.get_logger().info("ready")
-        if False:
-            cl.push_actions(command_buffer='main', action_type="point", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="point", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-            cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
-        # time.sleep(2)
-        # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.PNP)
-        # time.sleep(3)
+        if True:
+            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
+            # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
+            # cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
         # rclpy.spin_once(cl, executor=mte)
-
-        # cl.push_actions(cl.sendAction, target_info=None)
-        # cl.push_actions(cl.sendAction, target_info=None)
-        # cl.push_actions(cl.sendAction, target_info=None)
-        # cl.push_actions(cl.sendAction, target_info=None)
         rclpy.spin(cl, executor=mte)
         cl.destroy_node()
     except Exception as e:
