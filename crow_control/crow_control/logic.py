@@ -72,7 +72,7 @@ class ControlLogic(Node):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
-        
+
         self.LANG = 'cs'
         self.ui = UserInputManager(language = self.LANG)
         self.guidance_file = self.ui.load_file('guidance_dialogue.json')
@@ -84,7 +84,7 @@ class ControlLogic(Node):
         self.pclient.define("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
         self.pclient.define("ready_for_next_sentence", True) # If true, sentence processor can process and send next command
         self.pclient.declare("silent_mode", 1) # Set by the user (level of the talking - 1 Silence, 2 - Standard speech, 3 - Debug mode/Full speech)
-        
+
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
@@ -501,9 +501,18 @@ def main():
         #     print(p, " --- ", o)
         # time.sleep(1)
         cl.get_logger().info("ready")
-        # cl.push_actions(command_buffer='main', action_type="ukaž", action=CommandType.POINT)
+        if False:
+            cl.push_actions(command_buffer='main', action_type="point", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="point", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
+            cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.POINT, target=[1, 2, 3], target_type="xyz", location=[1, 2, 3], location_type="xyz", size=np.r_[2, 2, 2].astype(np.float))
         # time.sleep(2)
-        # cl.push_actions(command_buffer='main', action_type="seber", action=CommandType.PNP)
+        # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.PNP)
         # time.sleep(3)
         # rclpy.spin_once(cl, executor=mte)
 
