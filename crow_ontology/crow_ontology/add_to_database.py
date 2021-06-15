@@ -28,6 +28,20 @@ TIMER_FREQ = 0.5 # seconds
 def distance(entry):
     return entry[-1]
 
+# QuickNDirty solutions inc. (but temporary)
+global_2_robot = np.array(
+    [0.7071068, 0.7071068, 0, 0,
+     -0.7071068, 0.7071068, 0, 0,
+     0, 0, 1, 0.233,
+     0, 0, 0, 1]
+).reshape(4, 4)
+robot_2_global = np.linalg.inv(global_2_robot)
+realsense_2_robot = np.array(
+    [6.168323755264282227e-01, 3.375786840915679932e-01, -7.110263705253601074e-01, 1.405695068359375000,
+     7.858521938323974609e-01, -3.148722648620605469e-01, 5.322515964508056641e-01, -0.3209410400390625000,
+     -4.420567303895950317e-02, -8.870716691017150879e-01, -4.595103561878204346e-01, 0.6574929809570312500,
+     0, 0, 0, 1]
+).reshape(4, 4)
 
 class OntoAdder(Node):
 
@@ -93,7 +107,7 @@ class OntoAdder(Node):
             return  # no mask detections (for some reason)
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         for class_name, pose, size, uuid in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid):
-            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, timestamp)
+            self.process_detected_object(class_name, self._transform_cam2global([pose.position.x, pose.position.y, pose.position.z]), size.dimensions, uuid, timestamp)
 
     def input_action_callback(self, action_array_msg):
         if not action_array_msg.avg_class_name:
@@ -164,6 +178,37 @@ class OntoAdder(Node):
             self.id += 1
         else:
             self.get_logger().info("Object {} not added - there is no corresponding template in the ontology.".format(object_name))
+
+    def _transform_cam2global(self, point, return_homogeneous=False, return_as_list=True, ravel=True, auto_transpose=True) -> list:
+        if type(point) is list:
+            point = np.array(point)
+        if point.ndim == 1:
+            point = point[:, np.newaxis]
+        if auto_transpose:
+            shape = point.shape
+            if not 1 in shape:
+                self.get_logger().warn(f"Danger!!! Sending multiple points might cause problems with auto transposition!\n{str(point)}\n.")
+            if 3 in shape:  # non-homogeneous point
+                xyz_dir = shape.index(3)
+                if xyz_dir == 1:  # row vector, not good, needs column vector
+                    point = point.T
+                point = np.pad(point, ((0, 1), (0, 0)), "constant", constant_values=1)  # pad to make homogeneous
+            elif 4 in shape:  # homogeneous point
+                xyzw_dir = shape.index(4)
+                if xyzw_dir == 1:  # row vector, not good, needs column vector
+                    point = point.T
+            else:
+                self.get_logger().error(f"Asked to convert a point but the point has an odd shape:\n{str(point)}\n.")
+                return []  # return empty list to raise an error
+        global_point = robot_2_global @ realsense_2_robot @ point
+        if ravel:
+            global_point = global_point.ravel()
+        if return_as_list:
+            global_point = global_point.tolist()
+        if return_homogeneous:
+            return global_point
+        else:
+            return global_point[:3]
 
     #@TODO: assembly functions, update, move to client
     # def add_assembled_object(self, object_name, location):
