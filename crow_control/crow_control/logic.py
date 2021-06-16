@@ -117,7 +117,7 @@ class ControlLogic(Node):
         else:
             return -1
 
-    def processTarget(self, target, target_type):
+    def processTarget(self, target, target_type, target_ph_cls=None, target_ph_color=None, target_ph_loc=None, **kwargs):
         """Processes target according to its type.
 
         Args:
@@ -137,36 +137,31 @@ class ControlLogic(Node):
                 try:
                     uri = next(self.onto.subjects(self.crowracle.CROW.disabledId, target))
                 except StopIteration:
-                    self.get_logger().error(f"Action target was set to 'onto_id' but object with the ID '{target}' is not in the database!")
+                    self.get_logger().error(f"Action target was set to '{target_type}' but object with the ID '{target}' is not in the database!")
                     return None
+        elif target_type == "onto_uri":
+            uri = target
+        elif target_type == "properties":
+            uri = self.crowracle.get_obj_of_properties(target_ph_cls, {'color': target_ph_color, 'absolute_location': target_ph_loc}, all=False)
+        else:
+            self.get_logger().error(f"Unknown action target type '{target_type}'!")
+            return None
 
-            StatTimer.enter("onto data retrieval id")
+        try:
+            # xyz = np.array([-0.00334, 0.00232, 0.6905])
+            StatTimer.enter("onto data retrieval uri", severity=Runtime.S_MINOR)
             xyz = self.crowracle.get_location_of_obj(uri)
             size = self.crowracle.get_pcl_dimensions_of_obj(uri)
             typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
-            StatTimer.exit("onto data retrieval id")
+            StatTimer.exit("onto data retrieval uri")
+        except:
+            self.get_logger().error(f"Action target was set to '{target_type}' but object '{target}' is not in the database!")
+            return None
+        else:
             if ('None' not in xyz) and (None not in xyz):
                 return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
             else:
                 return None
-        elif target_type == "onto_uri":
-            try:
-                # xyz = np.array([-0.00334, 0.00232, 0.6905])
-                StatTimer.enter("onto data retrieval uri", severity=Runtime.S_MINOR)
-                xyz = self.crowracle.get_location_of_obj(target)
-                size = self.crowracle.get_pcl_dimensions_of_obj(target)
-                typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(target))
-                StatTimer.exit("onto data retrieval uri")
-            except:
-                self.get_logger().error(f"Action target was set to 'onto_uri' but object '{target}' is not in the database!")
-                return None
-            else:
-                if ('None' not in xyz) and (None not in xyz):
-                    return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
-                else:
-                    return None
-        else:
-            self.get_logger().error(f"Unknown action target type '{target_type}'!")
 
     def command_cb(self, msg):
         StatTimer.enter("command callback")
@@ -211,7 +206,7 @@ class ControlLogic(Node):
         target_info = None
         start_time = datetime.now()
         duration = datetime.now() - start_time
-        #@TODO: target and target_type may be lists of candidates or as well dicts with constraints only
+        # target and target_type may be lists of candidates or as well dicts with constraints only
         if type(target) is not list:
             target = [target]
         while (target_info is None) and (duration.seconds <= self.TARGET_BUFFERING_TIME):
@@ -220,7 +215,9 @@ class ControlLogic(Node):
                 if target_info:
                     break
             duration = datetime.now() - start_time
-        if target_info is None: #@TODO: try another target candidate
+        if target_info is None: # try to find another target candidate
+            target_info = self.processTarget(target, 'properties', **kwargs)
+        if target_info is None:
             self.get_logger().error("Failed to issue action, target cannot be set!")
             self.pclient.robot_failed = True
             self.pclient.robot_done = True
