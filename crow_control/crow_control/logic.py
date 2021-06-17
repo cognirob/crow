@@ -142,7 +142,14 @@ class ControlLogic(Node):
         elif target_type == "onto_uri":
             uri = target
         elif target_type == "properties":
-            uri = self.crowracle.get_obj_of_properties(target_ph_cls, {'color': target_ph_color, 'absolute_location': target_ph_loc}, all=False)
+            color = self.crowracle.get_uri_from_nlp(target_ph_color)
+            uri = (self.crowracle.get_obj_of_properties(target_ph_cls, {'color': color}, all=False))[0]
+            #TODO: check location - is within an area/storage?
+            # location = self.crowracle.get_location_of_obj(uri)
+            # dist = np.linalg.norm(np.asarray(location) - np.asarray(target_ph_loc))
+            # if dist > 0.1:
+            #     self.get_logger().error(f"Target location was set to '{target_ph_loc}' but object '{target_ph_class}' is not there!")
+            #     return None
         else:
             self.get_logger().error(f"Unknown action target type '{target_type}'!")
             return None
@@ -666,7 +673,7 @@ def main():
         #     print(p, " --- ", o)
         # time.sleep(1)
         cl.get_logger().info("ready")
-        if True:
+        if False:
             cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
