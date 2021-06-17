@@ -6,7 +6,7 @@ from ros2param.api import call_get_parameters
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from trio3_ros2_interfaces.msg import RobotStatus, CoreActionPhase, ActionResultFlag
+from trio3_ros2_interfaces.msg import RobotStatus, CoreActionPhase, ActionResultFlag, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace
 from rclpy.executors import MultiThreadedExecutor
@@ -20,8 +20,12 @@ import numpy as np
 
 class DummyActionRobot(Node):
     ACTION_TOPICS = ["point", "pick_n_place"]  # names of actions to be created
-    FAIL = False
-    RANDOMLY_FAIL = True
+    PNP_FAIL = False
+    PNP_RANDOMLY_FAIL = True  # will cause the PNP action (or any action using the PNP format) to fail 50% of the time
+    GRIP_ALWAYS_FULL = False
+    GRIP_RANDOMLY_FULL = True  # will result in the gripper to be closed 50% of the time
+    ROBOT_ALWAYS_NOT_READY = False
+    ROBOT_RANDOMLY_NOT_READY = True  # will return robot_is_ready=False 50% of the time (when asking for RobotStatus)
     FAIL_OPTIONS = [ActionResultFlag.NOK_ANOTHER_PROCESS_IN_PROGRESS,
                     ActionResultFlag.NOK_GRASP_POSITION_NOT_DETECTED,
                     ActionResultFlag.NOK_COORDINATE_OUT_OF_VALID_AREA,
@@ -47,6 +51,19 @@ class DummyActionRobot(Node):
                     callback_group=ReentrantCallbackGroup()
                 )
             )
+        # define robot status service
+        self.srv = self.create_service(GetRobotStatus, 'get_robot_status', self.get_robot_status)
+
+    def get_robot_status(self, request, response):
+        grip_full = self.GRIP_ALWAYS_FULL or self.GRIP_RANDOMLY_FULL and np.random.rand() > 0.5
+        robot_busy = self.ROBOT_ALWAYS_NOT_READY or self.ROBOT_RANDOMLY_NOT_READY and np.random.rand() > 0.5
+        self.get_logger().info(f'Got RobotStatus request for robot {request.robot_id}, sending response.{" Robot is holding something!" if grip_full else ""}')
+        if robot_busy:
+            self.get_logger().warn('Robot is busy!')
+        response.robot_is_ready = not robot_busy
+        response.gripper_status = GripperStatus(status=GripperStatus.GRIPPER_CLOSED if grip_full else GripperStatus.GRIPPER_OPENED)
+
+        return response
 
     def goal_callback(self, goal_request):
         """Accept or reject a client request to begin an action."""
@@ -68,7 +85,7 @@ class DummyActionRobot(Node):
         feedback_msg.core_action_phase = CoreActionPhase(phase=CoreActionPhase.ROBOTIC_ACTION)
 
         result = PickNPlace.Result()
-        will_fail = self.FAIL or self.RANDOMLY_FAIL and np.random.rand() > 0.5
+        will_fail = self.PNP_FAIL or self.PNP_RANDOMLY_FAIL and np.random.rand() > 0.5
         if will_fail:
             self.get_logger().warn("The action will fail!")
         for i in range(10):

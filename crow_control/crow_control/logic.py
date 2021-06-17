@@ -8,7 +8,7 @@ import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units
 from trio3_ros2_interfaces.srv import GetRobotStatus
-from trio3_ros2_interfaces.action import PickNPlace
+from trio3_ros2_interfaces.action import PickNPlace, ReleaseObject
 # from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
 # from crow_msgs.srv import GetRobotStatus
 # from crow_msgs.action import PickNPlace
@@ -59,6 +59,8 @@ class ControlLogic(Node):
     STORAGE_TOPIC = "/new_storage"
     ROBOT_ACTION_POINT = 'point'
     ROBOT_ACTION_PNP = 'pick_n_place'
+    GRIPPER_ACTION_OPEN = 'release_object'
+    ROBOT_SERVICE_STATUS = 'get_robot_status'
     DEBUG = False
     UPDATE_INTERVAL = 0.1
     MAX_QUEUE_LENGTH = 10
@@ -94,8 +96,12 @@ class ControlLogic(Node):
                                  qos_profile=qos)
         self.robot_point_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_POINT)
         self.robot_pnp_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_PNP)
-        self.get_logger().info(f"Connected to robot: {self.robot_point_client.wait_for_server()}")
-        self.get_logger().info(f"Connected to robot: {self.robot_pnp_client.wait_for_server()}")
+        # self.gripper_open_client = ActionClient(self, ReleaseObject, self.GRIPPER_ACTION_OPEN)
+        self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
+        self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
+        # self.get_logger().info(f"Connected to robot pnp action: {self.gripper_open_client.wait_for_server()}")
+        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS)
+        self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
         self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
@@ -520,6 +526,10 @@ class ControlLogic(Node):
         else:
             pass # @TODO set something, None defaults to 0.0
         return goal_msg
+
+    def get_robot_status(self):
+        # self.robot_status_client.call()
+        pass
 
     def cancel_current_goal(self, wait=False):
         """Requests cancellation of the current goal.
