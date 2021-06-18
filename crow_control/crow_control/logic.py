@@ -6,7 +6,7 @@ import message_filters
 from rclpy.action import ActionClient
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
-from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace, ReleaseObject
 # from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
@@ -54,6 +54,38 @@ realsense_2_robot = np.array(
 ).reshape(4, 4)
 #@TODO: TRANSFORM IS BE DONE IN ADDER (LOC IN DATABASE IS ALREADY IN GLOBAL)
 
+
+class UsefullRobotStatus():
+
+    def __init__(self, robot_ready, gripper_open=None, gripper_closed=None, robot_id=0) -> None:
+        self.__robot_id = robot_id
+        self.__robot_ready = robot_ready
+        if gripper_open is not None:
+            if gripper_closed is not None and not (gripper_closed ^ gripper_open):
+                raise ValueError("Cannot set both gripper_closed and gripper_open to the same value!!!")
+            self.__gripper_open, self.__gripper_closed = gripper_open, not gripper_open
+        elif gripper_closed is not None:
+            if gripper_open is not None and not (gripper_closed ^ gripper_open):
+                raise ValueError("Cannot set both gripper_closed and gripper_open to the same value!!!")
+            self.__gripper_open, self.__gripper_closed = not gripper_closed, gripper_closed
+
+    @property
+    def robot_id(self):
+        return self.__robot_id
+
+    @property
+    def robot_ready(self):
+        return self.__robot_ready
+
+    @property
+    def gripper_open(self):
+        return self.__gripper_open
+
+    @property
+    def gripper_closed(self):
+        return self.__gripper_closed
+
+
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     STORAGE_TOPIC = "/new_storage"
@@ -100,7 +132,7 @@ class ControlLogic(Node):
         self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
         self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
         # self.get_logger().info(f"Connected to robot pnp action: {self.gripper_open_client.wait_for_server()}")
-        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS)
+        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
@@ -527,9 +559,23 @@ class ControlLogic(Node):
             pass # @TODO set something, None defaults to 0.0
         return goal_msg
 
-    def get_robot_status(self):
-        # self.robot_status_client.call()
-        pass
+    def get_robot_status(self, robot_id=0):
+        future = self.robot_status_client.call_async(GetRobotStatus.Request(robot_id=robot_id))
+        response = None
+        while rclpy.ok():
+            rclpy.spin_once(self)
+            if future.done():
+                try:
+                    res = future.result()
+                except BaseException as e:
+                    self.get_logger().error(f"GetRobotStatus service fail: {e}")
+                else:
+                    print(res.robot_status.gripper_status)
+                    response = UsefullRobotStatus(robot_id=robot_id, robot_ready=res.robot_status.robot_is_ready,
+                                                  gripper_closed=res.robot_status.gripper_status.status == GripperStatus.GRIPPER_CLOSED)
+                finally:
+                    break
+        return response
 
     def cancel_current_goal(self, wait=False):
         """Requests cancellation of the current goal.
@@ -684,6 +730,7 @@ def main():
         # time.sleep(1)
         cl.get_logger().info("ready")
         if False:
+            print(cl.get_robot_status().__dict__)
             cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))

@@ -60,9 +60,8 @@ class DummyActionRobot(Node):
         self.get_logger().info(f'Got RobotStatus request for robot {request.robot_id}, sending response.{" Robot is holding something!" if grip_full else ""}')
         if robot_busy:
             self.get_logger().warn('Robot is busy!')
-        response.robot_is_ready = not robot_busy
-        response.gripper_status = GripperStatus(status=GripperStatus.GRIPPER_CLOSED if grip_full else GripperStatus.GRIPPER_OPENED)
-
+        response.robot_status.robot_is_ready = not robot_busy
+        response.robot_status.gripper_status = GripperStatus(status=GripperStatus.GRIPPER_CLOSED if grip_full else GripperStatus.GRIPPER_OPENED)
         return response
 
     def goal_callback(self, goal_request):
