@@ -679,12 +679,20 @@ class ControlLogic(Node):
             return global_point[:3]
 
     def hands_full(self):
-        # if check robot state - both hands full - return True
-        return False
+        status_0 = self.get_robot_status(robot_id=0)
+        status_1 = self.get_robot_status(robot_id=1)
+        if status_0.gripper_closed and status_1.gripper_closed:
+            return True
+        else:
+            return False
 
     def hands_empty(self):
-        # if check robot state - both hands empty - return True
-        return False
+        status_0 = self.get_robot_status(robot_id=0)
+        status_1 = self.get_robot_status(robot_id=1)
+        if status_0.gripper_open and status_1.gripper_open:
+            return True
+        else:
+            return False
 
     def wait_then_talk(self):
         if self.pclient.silent_mode > 1:
