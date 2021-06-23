@@ -52,7 +52,7 @@ realsense_2_robot = np.array(
      -4.420567303895950317e-02, -8.870716691017150879e-01, -4.595103561878204346e-01, 0.6574929809570312500,
      0, 0, 0, 1]
 ).reshape(4, 4)
-#@TODO: TRANSFORM IS BE DONE IN ADDER (LOC IN DATABASE IS ALREADY IN GLOBAL)
+#@TODO: TRANSFORM IS DONE IN ADDER (LOC IN DATABASE IS ALREADY IN GLOBAL)
 
 
 class UsefullRobotStatus():
@@ -128,10 +128,10 @@ class ControlLogic(Node):
                                  qos_profile=qos)
         self.robot_point_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_POINT)
         self.robot_pnp_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_PNP)
-        # self.gripper_open_client = ActionClient(self, ReleaseObject, self.GRIPPER_ACTION_OPEN)
+        self.gripper_open_client = ActionClient(self, ReleaseObject, self.GRIPPER_ACTION_OPEN)
         self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
         self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
-        # self.get_logger().info(f"Connected to robot pnp action: {self.gripper_open_client.wait_for_server()}")
+        self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
@@ -264,8 +264,7 @@ class ControlLogic(Node):
             target_info = self.processTarget(target, 'properties', **kwargs)
         if target_info is None:
             self.get_logger().error("Failed to issue action, target cannot be set!")
-            self.pclient.robot_failed = True
-            self.pclient.robot_done = True
+            self.make_robot_fail_to_start()
             return None
         else:
             self.get_logger().info(f"Target set to {target_info}.")
@@ -288,8 +287,7 @@ class ControlLogic(Node):
                         command(**kwargs)
                     except Exception as e:
                         self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. The error was:\n{e}")
-                        self.pclient.robot_done = True
-                        self.pclient.robot_failed = True
+                        self.make_robot_fail_to_start()
                     finally:
                         self._set_status(self.STATUS_IDLE)
                 else:
@@ -317,8 +315,7 @@ class ControlLogic(Node):
         self.get_logger().info("Command not implemented!")
         self.ui.buffered_say(disp_name + self.guidance_file[self.LANG]["template_non_implemented"], say=2)
         self.wait_then_talk()
-        self.pclient.robot_done = True
-        self.pclient.robot_failed = True
+        self.make_robot_fail_to_start()
 
     def remove_command_last(self, disp_name='', **kwargs):
         if len(self.command_main_buffer) > 0:
@@ -356,60 +353,15 @@ class ControlLogic(Node):
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = PickNPlace.Goal() #@TODO:
-        goal_msg.frame_id = "camera1_color_optical_frame"
-        goal_msg.pick_pose = Pose()
-        if target_info is not None:
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
-            if target_info[1] is None:
-                goal_msg.size = [0, 0, 0]
-            else:
-                goal_msg.size = target_info[1]
-            # if target_info[2] is None:
-            #     goal_msg.object.type = -1
-            # else:
-            #     goal_msg.object = ObjectType(type=target_info[2])
-        if location is None:
-            goal_msg.place_pose = Pose()
-        else:
-            pass  # TODO
-        # goal_msg.size = [0.1, 0.2, 0.3]
-        goal_msg.object_type = ObjectType(type=target_info[2])
+        goal_msg = self.composePNPMessage(
+                target_xyz=target_info[0],
+                target_size=target_info[1],
+                target_type=target_info[2],
+                location_xyz=location
+            )
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
-        self._send_goal_future.add_done_callback(self.robot_response_cb)
-        StatTimer.exit("Sending command")
-
-    def sendPNPAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
-        #@TODO: not used
-        StatTimer.enter("Sending command")
-        self.get_logger().info("Performing PNP action")
-        self.pclient.robot_done = False
-        self._set_status(self.STATUS_PROCESSING)
-        goal_msg = PickNPlace.Goal()
-        goal_msg.frame_id = "camera1_color_optical_frame"
-        goal_msg.pick_pose = Pose()
-        goal_msg.place_pose = Pose()
-        if target_info is not None: # perform pick
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_info[0]
-            if target_info[1] is None:
-                goal_msg.size = [0, 0, 0]
-            else:
-                goal_msg.size = target_info[1]
-            if target_info[2] is None:
-                goal_msg.object_type.type = -1
-            else:
-                goal_msg.object_type = ObjectType(type=target_info[2])
-        else:
-            pass # @TODO set something, None defaults to 0.0
-        if location is not None: #perform place
-            goal_msg.place_pose.position.x, goal_msg.place_pose.position.y, goal_msg.place_pose.position.z = location
-        else:
-            pass # @TODO set something, None defaults to 0.0
-        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
-        self.wait_then_talk()
-        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
@@ -421,7 +373,7 @@ class ControlLogic(Node):
         if self.hands_full():
             self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
             self.wait_then_talk()
-            self.pclient.robot_failed = True
+            self.make_robot_fail_to_start()
             return
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
@@ -429,7 +381,7 @@ class ControlLogic(Node):
                 target_xyz=target_info[0],
                 target_size=target_info[1],
                 target_type=target_info[2],
-                location_xyz=[0.53381, 0.18881, 0.22759]  # temporary "robot default" position
+                location_xyz=location  # temporary "robot default" position - in PickTask.py template
             )
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
@@ -448,21 +400,21 @@ class ControlLogic(Node):
             if self.hands_empty():
                 self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
                 self.wait_then_talk()
-                self.pclient.robot_failed = True
+                self.make_robot_fail_to_start()
                 return
             else:
                 target_info = [None]
         elif (target_info is not None) and (self.hands_full()):
             self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
             self.wait_then_talk()
-            self.pclient.robot_failed = True
+            self.make_robot_fail_to_start()
             return
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = self.composePNPMessage(
                 target_xyz=target_info[0],
                 target_size=target_info[1],
                 target_type=target_info[2],
-                location_xyz=[0.03914, 0.56487, 0.22759]  # temporary storage location
+                location_xyz=location  # temporary storage location - in Fetch.py template
             )
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
@@ -471,22 +423,24 @@ class ControlLogic(Node):
         StatTimer.exit("Sending command")
 
     def sendFetchToAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
-        """FetchTo (put): move to target, pick, move to location, place OR
-                         something is already picked, move to location, place
+        """FetchTo (put): move to target, pick, move to location, wait for 'touch', release gripper, go home OR
+                         something is already picked, move to location, wait for 'touch', release gripper, go home
         """
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing FetchTo action")
         self.pclient.robot_done = False
+        if (target_info is not None) and (self.hands_full()):
+            self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
+            self.wait_then_talk()
+            self.make_robot_fail_to_start()
+            return
         if (target_info is None) and (self.hands_empty()):
             self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
             self.wait_then_talk()
-            self.pclient.robot_failed = True
+            self.make_robot_fail_to_start()
             return
-        elif (target_info is not None) and (self.hands_full()):
-            self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
-            self.wait_then_talk()
-            self.pclient.robot_failed = True
-            return
+        else:
+            target_info = [None]*3
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = self.composePNPMessage(
                 target_xyz=target_info[0],
@@ -500,6 +454,10 @@ class ControlLogic(Node):
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
+        # wait for 'touch'
+        # self.sendReleaseAction()
+        # self.sendPointAction(location=[0.53381, 0.18881, 0.22759])  # temporary "robot default" position)
+
     def sendReleaseAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
         """Release: open gripper (if holding something), move to home position
         """
@@ -508,13 +466,14 @@ class ControlLogic(Node):
         if self.hands_empty():
             self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
             self.wait_then_talk()
-            self.pclient.robot_failed = True
+            self.make_robot_fail_to_start()
             return
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = None #@TODO: message for release gripper
+        goal_msg = ReleaseObject.Goal()
+        goal_msg.robot_id = 0 #TODO: check which robot is holding something
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future = self.gripper_open_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
@@ -525,12 +484,14 @@ class ControlLogic(Node):
         self.get_logger().info("Performing Tidy action")
         objs = self.crowracle.getTangibleObjects()
         while len(objs) > 0:
-            self._set_status(self.STATUS_PROCESSING)
-            self.pclient.robot_done = False
-            target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
-            kwargs['target_info'] = target_info
-            self.sendFetchToAction(**kwargs)
-            objs = self.crowracle.getTangibleObjects()
+            if (self.status & self.STATUS_IDLE):
+                self._set_status(self.STATUS_PROCESSING)
+                self.pclient.robot_done = False
+                target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
+                kwargs['target_info'] = target_info
+                self.sendFetchToAction(**kwargs)
+                objs = self.crowracle.getTangibleObjects()
+                #TODO: keep only objs in the workspace area (not in the storage, etc.)
         StatTimer.exit("Sending command")
 
     def composePNPMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None):
@@ -562,19 +523,16 @@ class ControlLogic(Node):
     def get_robot_status(self, robot_id=0):
         future = self.robot_status_client.call_async(GetRobotStatus.Request(robot_id=robot_id))
         response = None
-        while rclpy.ok():
-            rclpy.spin_once(self)
-            if future.done():
-                try:
-                    res = future.result()
-                except BaseException as e:
-                    self.get_logger().error(f"GetRobotStatus service fail: {e}")
-                else:
-                    print(res.robot_status.gripper_status)
-                    response = UsefullRobotStatus(robot_id=robot_id, robot_ready=res.robot_status.robot_is_ready,
-                                                  gripper_closed=res.robot_status.gripper_status.status == GripperStatus.GRIPPER_CLOSED)
-                finally:
-                    break
+        while not future.done():
+            time.sleep(0.1)
+        try:
+            res = future.result()
+        except BaseException as e:
+            self.get_logger().error(f"GetRobotStatus service fail: {e}")
+        else:
+            print(res.robot_status.gripper_status)
+            response = UsefullRobotStatus(robot_id=robot_id, robot_ready=res.robot_status.robot_is_ready,
+                                            gripper_closed=res.robot_status.gripper_status.status == GripperStatus.GRIPPER_CLOSED)
         return response
 
     def cancel_current_goal(self, wait=False):
