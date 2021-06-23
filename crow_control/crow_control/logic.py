@@ -38,23 +38,6 @@ from crow_control.utils.profiling import StatTimer
 from crow_control.utils import ParamClient, QueueServer
 from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
 
-# QuickNDirty solutions inc. (but temporary)
-global_2_robot = np.array(
-    [0.7071068, 0.7071068, 0, 0,
-     -0.7071068, 0.7071068, 0, 0,
-     0, 0, 1, 0.233,
-     0, 0, 0, 1]
-).reshape(4, 4)
-robot_2_global = np.linalg.inv(global_2_robot)
-realsense_2_robot = np.array(
-    [6.168323755264282227e-01, 3.375786840915679932e-01, -7.110263705253601074e-01, 1.405695068359375000,
-     7.858521938323974609e-01, -3.148722648620605469e-01, 5.322515964508056641e-01, -0.3209410400390625000,
-     -4.420567303895950317e-02, -8.870716691017150879e-01, -4.595103561878204346e-01, 0.6574929809570312500,
-     0, 0, 0, 1]
-).reshape(4, 4)
-#@TODO: TRANSFORM IS DONE IN ADDER (LOC IN DATABASE IS ALREADY IN GLOBAL)
-
-
 class UsefullRobotStatus():
 
     def __init__(self, robot_ready, gripper_open=None, gripper_closed=None, robot_id=0) -> None:
@@ -131,7 +114,7 @@ class ControlLogic(Node):
         self.gripper_open_client = ActionClient(self, ReleaseObject, self.GRIPPER_ACTION_OPEN)
         self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
         self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
-        # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
+        self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
 
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
@@ -440,7 +423,7 @@ class ControlLogic(Node):
             self.wait_then_talk()
             self.make_robot_fail_to_start()
             return
-        else:
+        elif target_info is None:
             target_info = [None]*3
         self._set_status(self.STATUS_PROCESSING)
         goal_msg = self.composePNPMessage(
@@ -605,38 +588,6 @@ class ControlLogic(Node):
         else:
             self.get_logger().info('Goal failed to cancel')
 
-    def _transform_cam2global(self, point, return_homogeneous=False, return_as_list=True, ravel=True, auto_transpose=True) -> list:
-        if type(point) is list:
-            point = np.array(point)
-        if point.ndim == 1:
-            point = point[:, np.newaxis]
-        if auto_transpose:
-            shape = point.shape
-            if not 1 in shape:
-                self.get_logger().warn(f"Danger!!! Sending multiple points might cause problems with auto transposition!\n{str(point)}\n.")
-            if 3 in shape:  # non-homogeneous point
-                xyz_dir = shape.index(3)
-                if xyz_dir == 1:  # row vector, not good, needs column vector
-                    point = point.T
-                point = np.pad(point, ((0, 1), (0, 0)), "constant", constant_values=1)  # pad to make homogeneous
-            elif 4 in shape:  # homogeneous point
-                xyzw_dir = shape.index(4)
-                if xyzw_dir == 1:  # row vector, not good, needs column vector
-                    point = point.T
-            else:
-                self.get_logger().error(f"Asked to convert a point but the point has an odd shape:\n{str(point)}\n.")
-                return []  # return empty list to raise an error
-        # global_point = robot_2_global @ realsense_2_robot @ point
-        global_point = point  # no transform needed, this has been moved to locator
-        if ravel:
-            global_point = global_point.ravel()
-        if return_as_list:
-            global_point = global_point.tolist()
-        if return_homogeneous:
-            return global_point
-        else:
-            return global_point[:3]
-
     def hands_full(self):
         status_0 = self.get_robot_status(robot_id=0)
         status_1 = self.get_robot_status(robot_id=1)
@@ -697,7 +648,6 @@ def main():
         # time.sleep(1)
         cl.get_logger().info("ready")
         if False:
-            print(cl.get_robot_status().__dict__)
             cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))

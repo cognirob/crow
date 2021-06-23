@@ -54,23 +54,12 @@ class DummyActionRobot(Node):
                     callback_group=ReentrantCallbackGroup()
                 )
             )
-        self.actions.append(  # TODO - make this part of the rest and set proper callbacks
-            ActionServer(
-                self,
-                PickNPlace,
-                self.GRIPPER_ACTION_OPEN,
-                execute_callback=self.execute_pnp_callback,
-                goal_callback=self.goal_callback,
-                cancel_callback=self.cancel_callback,
-                callback_group=ReentrantCallbackGroup()
-            )
-        )
-        self.get_logger().info(f"Creating action server at 'release_object'")
+        self.get_logger().info(f"Creating action server at {self.GRIPPER_ACTION_OPEN}")
         self.actions.append(
             ActionServer(
                 self,
                 ReleaseObject,
-                'release_object',
+                self.GRIPPER_ACTION_OPEN,
                 execute_callback=self.execute_release_callback,
                 goal_callback=self.goal_callback,
                 cancel_callback=self.cancel_callback,
