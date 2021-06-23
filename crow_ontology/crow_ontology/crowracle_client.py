@@ -31,7 +31,8 @@ class CrowtologyClient():
     _tangible_leaf_query = prepareQuery("""SELECT ?cls
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
-            FILTER NOT EXISTS {?nan rdfs:subClassOf ?cls . }
+            FILTER NOT EXISTS {?nan rdfs:subClassOf ?cls .}
+            FILTER NOT EXISTS {?cls crow:hasId ?id .}
         }""",
                                         initNs={"owl": OWL, "crow": CROW}
                                         )

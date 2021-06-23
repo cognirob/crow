@@ -108,6 +108,10 @@ if [ "$O_NO_VISION" != true ]; then
     new_tab $WID
     runcmd "echo -ne '\033]30;Filter\007'"
     runcmd "ros2 run crow_vision_ros2 filter"
+
+    new_tab $WID
+    runcmd "echo -ne '\033]30;Cacher\007'"
+    runcmd "ros2 run crow_vision_ros2 pcl_cacher"
 fi
 
 new_tab $WID
