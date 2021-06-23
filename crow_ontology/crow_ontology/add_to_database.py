@@ -200,7 +200,8 @@ class OntoAdder(Node):
             else:
                 self.get_logger().error(f"Asked to convert a point but the point has an odd shape:\n{str(point)}\n.")
                 return []  # return empty list to raise an error
-        global_point = robot_2_global @ realsense_2_robot @ point
+        global_point = point
+        # global_point = robot_2_global @ realsense_2_robot @ point
         if ravel:
             global_point = global_point.ravel()
         if return_as_list:
