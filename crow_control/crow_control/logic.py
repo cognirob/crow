@@ -131,7 +131,8 @@ class ControlLogic(Node):
         self.gripper_open_client = ActionClient(self, ReleaseObject, self.GRIPPER_ACTION_OPEN)
         self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
         self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
-        self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
+        # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
+
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
