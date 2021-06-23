@@ -20,6 +20,7 @@ import numpy as np
 
 class DummyActionRobot(Node):
     ACTION_TOPICS = ["point", "pick_n_place"]  # names of actions to be created
+    GRIPPER_ACTION_OPEN = 'release_object'
     PNP_FAIL = False
     PNP_RANDOMLY_FAIL = True  # will cause the PNP action (or any action using the PNP format) to fail 50% of the time
     RELEASE_FAIL = False
@@ -53,6 +54,17 @@ class DummyActionRobot(Node):
                     callback_group=ReentrantCallbackGroup()
                 )
             )
+        self.actions.append(  # TODO - make this part of the rest and set proper callbacks
+            ActionServer(
+                self,
+                PickNPlace,
+                self.GRIPPER_ACTION_OPEN,
+                execute_callback=self.execute_pnp_callback,
+                goal_callback=self.goal_callback,
+                cancel_callback=self.cancel_callback,
+                callback_group=ReentrantCallbackGroup()
+            )
+        )
         self.get_logger().info(f"Creating action server at 'release_object'")
         self.actions.append(
             ActionServer(

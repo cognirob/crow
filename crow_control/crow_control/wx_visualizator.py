@@ -240,6 +240,7 @@ class Visualizator(wx.Frame):
         self.toolbar.AddControl(button)
         self.toolbar.AddSeparator()
         self.nlp_mode_label = wx.StaticText(self.toolbar, size=wx.Size(200, 20), style=wx.ALIGN_LEFT)
+        self.nlp_mode_label.Font.SetPointSize(18)
         self.toolbar.AddControl(self.nlp_mode_label)
         self.nlp_mode_slider = wx.Slider(self.toolbar, value=1, minValue=1, maxValue=3, name="nlp_mode_slider")
         # self.nlp_mode_slider.Disable()
@@ -251,10 +252,11 @@ class Visualizator(wx.Frame):
         self.mainVBox.Add(self.toolbar, flag=wx.EXPAND)
 
         # NL TEXT
-        self.text_recognized = wx.StaticText(self, style=wx.ALIGN_CENTER, size=wx.Size(self.WIDTH, 20))
+        self.text_recognized = wx.StaticText(self, style=wx.ALIGN_CENTER, size=wx.Size(self.WIDTH, 28))
         f = wx.Font()
-        f.SetPointSize(14)
+        f.SetPointSize(22)
         self.text_recognized.SetFont(f)
+        # self.text_recognized.SetLabel("Varecha sedí na strome!")
         self.mainVBox.Add(self.text_recognized, flag=wx.EXPAND)
 
         # NOTEBOOK

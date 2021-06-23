@@ -497,7 +497,6 @@ class ControlLogic(Node):
     def composePNPMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None):
         goal_msg = PickNPlace.Goal()
         goal_msg.frame_id = "global"
-        # goal_msg.frame_id = "camera1_color_optical_frame"  # old camera frame
         goal_msg.request_units = Units(unit_type=Units.METERS)
 
         goal_msg.pick_pose = Pose()
@@ -626,7 +625,8 @@ class ControlLogic(Node):
             else:
                 self.get_logger().error(f"Asked to convert a point but the point has an odd shape:\n{str(point)}\n.")
                 return []  # return empty list to raise an error
-        global_point = robot_2_global @ realsense_2_robot @ point
+        # global_point = robot_2_global @ realsense_2_robot @ point
+        global_point = point  # no transform needed, this has been moved to locator
         if ravel:
             global_point = global_point.ravel()
         if return_as_list:
