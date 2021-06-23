@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'logic = crow_control.logic:main',
             'dummy = crow_control.testing.dummy_action_robot:main',
+            'dummy_nl_input = crow_control.testing.dummy_nl_input:main',
             'ptest = crow_control.testing.test_param:main',
             'stest = crow_control.testing.test_param_server:main',
             'ovis = crow_control.onto_vision:main',
