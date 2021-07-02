@@ -36,13 +36,12 @@ class DummyNlInput(Node):
         print('')
 
     def publish_command(self, command, object, color, location):
-
         recog_text = command + ' ' + object  + ' ' + color + ' ' + location
         msg = SentenceProgram()
         msg.data.append(recog_text)
         msg.header.stamp = self.get_clock().now().to_msg()
         self.nl_publisher.publish(msg)
-        print('Publishing text:', msg.data)
+        self.get_logger().info(f'Publshing text {msg.data}')
 
 def main():
     rclpy.init()
@@ -65,13 +64,13 @@ def main():
                     if value_loc:
                         dummy_nl.publish_command(value_com, value_obj, value_col, value_loc)
                     else:
-                        print(f'Wrong location key')
+                        dummy_nl.get_logger().info('Wrong location key')
                 else:
-                    print(f'Wrong color key')
+                    dummy_nl.get_logger().info('Wrong color key')
             else:
-                print(f'Wrong object key')
+                dummy_nl.get_logger().info('Wrong object key')
         else:
-            print(f'Wrong command key')
+            dummy_nl.get_logger().info('Wrong command key')
 
     dummy_nl.destroy_node()
 
