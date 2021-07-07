@@ -1,2 +1,0 @@
-string storage_name
-string group_name

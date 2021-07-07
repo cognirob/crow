@@ -21,3 +21,4 @@ int64 REM_CMD_LAST=4294967296  # removes last added command
 int64 REM_CMD_X=4294967297  # removes the specified command
 
 int64 DEFINE_STORAGE=8589934592 # start process of marker recognition, polyhedron calculation and addition of this entry to the ontology
+int64 DEFINE_POSITION=8589934593 # start process of marker recognition and addition of this entry to the ontology

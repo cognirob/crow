@@ -14,7 +14,7 @@ class DummyNlInput(Node):
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.nl_publisher = self.create_publisher(SentenceProgram, "/nl_input", qos)
 
-        self.bindings_com = {'1':'ukaž', '2':'seber', '3':'polož', '4':'podej', '5':'ukliď', '6':'pustit', '7':'úložiště', '8':'Odstraň poslední příkaz', '9':'Odstraň příkaz', ' ':' '}
+        self.bindings_com = {'1':'ukaž', '2':'seber', '3':'polož', '4':'podej', '5':'ukliď', '6':'pustit', '7':'úložiště', '8': 'pozice', '9':'Odstraň poslední příkaz', '0':'Odstraň příkaz', ' ':' '}
         self.bindings_obj = {'q':'kostka', 'w':'kolo', 'e':'střecha', 'r':'lžíce', 't':'koule', 'y':'destička', 'u':'matka', 'i':'šroub', 'm':'klíč', 'n':'šroubovák', 'b':'kleště', 'v':'kladivo', 'c':'to', ' ':' '}
         self.bindings_col = {'a':'červená', 's':'vínová', 'd':'modrá', 'f':'zelená', 'g':'fialová', 'h':'zlatá', 'j':'bílá', ' ':' '}
         self.bindings_loc = {'z':'sklad', 'x':'stůl', ' ':' '}
@@ -36,7 +36,10 @@ class DummyNlInput(Node):
         print('')
 
     def publish_command(self, command, object, color, location):
-        recog_text = command + ' ' + object  + ' ' + color + ' ' + location
+        if command in ['úložiště', 'pozice']:
+            recog_text = 'definuj test ' + command + ' pomocí ' + color + ' markrů'
+        else:
+            recog_text = command + ' ' + object  + ' ' + color + ' ' + location
         msg = SentenceProgram()
         msg.data.append(recog_text)
         msg.header.stamp = self.get_clock().now().to_msg()

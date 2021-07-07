@@ -917,7 +917,6 @@ class CrowtologyClient():
         norm_name = name.replace(" ", "_")
         norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
         onto_name = self.CROW[norm_name]
-        self.__node.get_logger().info("CREATING storage {}, location: [{:.2f},{:.2f},{:.2f}].".format(name, *centroid))
         PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each storage space
         self.onto.add((onto_name, RDF.type, self.CROW.StorageSpace))
         self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
@@ -954,6 +953,32 @@ class CrowtologyClient():
             self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
             self.onto.add((onto_polyhedron, self.CROW.hasPoint3D, point_name))
         self.onto.add((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
+
+    def add_position(self, name, centroid):
+        """
+        Add new position defined by markers
+
+        Args:
+            name (str): name of position
+            centroid (list): location of the position
+        """
+        self.__node.get_logger().info("CREATING position {}, location: [{:.2f},{:.2f},{:.2f}].".format(name, *centroid))
+        position_uuid = str(uuid4()).replace("-", "_")
+        norm_name = name.replace(" ", "_")
+        norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
+        onto_name = self.CROW[norm_name]
+        PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each position
+        self.onto.add((onto_name, RDF.type, self.CROW.Position))
+        self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
+        self.onto.add((onto_name, self.CROW.hasUuid, Literal(position_uuid, datatype=XSD.string)))
+        self.onto.add((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
+
+        onto_location = PART['xyzAbsoluteLocation']
+        self.onto.add((onto_location, RDF.type, self.CROW.Location))
+        self.onto.add((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
+        self.onto.add((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
+        self.onto.add((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
+        self.onto.add((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
 
     def update_current_action(self, action_name, time):
         """

@@ -167,6 +167,11 @@ class OntoTester(Node):
         uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Action, q1, all=True)
         print(uris)
 
+        print('get_position')
+        q1 = {"name": 'test pozice'}
+        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Position, q1, all=True)
+        print(uris)
+
         print('done')
 
 def main():

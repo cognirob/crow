@@ -43,7 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SentenceProgram.msg"
   "msg/StampedString.msg"
   "msg/CommandType.msg"
-  "msg/StorageMsg.msg"
+  "msg/MarkerMsg.msg"
   #"msg/StopStatus.msg"
   #"msg/GripperStatus.msg"
   #"msg/RobotStatus.msg"

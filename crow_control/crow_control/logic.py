@@ -5,7 +5,7 @@ from ros2param.api import call_get_parameters
 import message_filters
 from rclpy.action import ActionClient
 import asyncio
-from crow_msgs.msg import StampedString, CommandType, Runtime, StorageMsg
+from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import PickNPlace, ReleaseObject
@@ -72,6 +72,7 @@ class UsefullRobotStatus():
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     STORAGE_TOPIC = "/new_storage"
+    POSITION_TOPIC = "/new_position"
     ROBOT_ACTION_POINT = 'point'
     ROBOT_ACTION_PNP = 'pick_n_place'
     GRIPPER_ACTION_OPEN = 'release_object'
@@ -126,9 +127,10 @@ class ControlLogic(Node):
         self.command_meanwhile_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
         self.main_buffer_count = 1
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
-        self.marker_publisher = self.create_publisher(StorageMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
+        self.marker_storage_publisher = self.create_publisher(MarkerMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
+        self.marker_position_publisher = self.create_publisher(MarkerMsg, self.POSITION_TOPIC, qos_profile=1) #publishes the new position command
         self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last, CommandType.REM_CMD_X: self.remove_command_x,
-                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.POINT: self.sendPointAction,
+                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.DEFINE_POSITION: self.definePosition, CommandType.POINT: self.sendPointAction,
                                 CommandType.PICK: self.sendPickAction, CommandType.FETCH: self.sendFetchAction, CommandType.FETCH_TO: self.sendFetchToAction,
                                 CommandType.RELEASE: self.sendReleaseAction, CommandType.TIDY: self.sendTidyAction}
         StatTimer.init()
@@ -318,17 +320,33 @@ class ControlLogic(Node):
             self.get_logger().info(f'Removing command {command_name}')
             self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name + ' ' + command_name, say=2)
         else:
-            self.get_logger().info(f'Can not remove command {command_name}, it is not in the queue')
+            self.get_logger().info(f'Cannot remove command {command_name}, it is not in the queue')
             self.ui.buffered_say(self.guidance_file[self.LANG]["command_not_in_queue"] + disp_name + ' ' + command_name, say=2)
         self.wait_then_talk()
 
-    def defineStorage(self, disp_name='', storage_name=None, marker_group_name=None, **kwargs):
-        marker_msg = StorageMsg()
+    def defineStorage(self, disp_name='', define_name=None, marker_group_name=None, **kwargs):
+        """Marker Detector detects chosen markers, if successful, adds named storage to database
+        """
+        self.get_logger().info("Performing Define storage action")
+        self.pclient.robot_done = False
+        marker_msg = MarkerMsg()
         marker_msg.group_name = marker_group_name
-        marker_msg.storage_name = storage_name
+        marker_msg.define_name = define_name
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self.marker_publisher.publish(marker_msg)
+        self.marker_storage_publisher.publish(marker_msg)
+
+    def definePosition(self, disp_name='', define_name=None, marker_group_name=None, **kwargs):
+        """Marker Detector detects chosen markers, if successful, adds named position to database
+        """
+        self.get_logger().info("Performing Define position action")
+        self.pclient.robot_done = False
+        marker_msg = MarkerMsg()
+        marker_msg.group_name = marker_group_name
+        marker_msg.define_name = define_name
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
+        self.marker_position_publisher.publish(marker_msg)
 
     def sendPointAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs): #@TODO: sendPointAction
         """Point: move to target

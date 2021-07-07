@@ -1,0 +1,2 @@
+string define_name
+string group_name
