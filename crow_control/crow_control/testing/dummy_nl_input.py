@@ -44,7 +44,7 @@ class DummyNlInput(Node):
         msg.data.append(recog_text)
         msg.header.stamp = self.get_clock().now().to_msg()
         self.nl_publisher.publish(msg)
-        self.get_logger().info(f'Publshing text {msg.data}')
+        self.get_logger().info(f'Publishing text {msg.data}')
 
 def main():
     rclpy.init()
@@ -54,26 +54,26 @@ def main():
 
     while True:
         key = input("Please press a key <1, ..., 9> to choose a command, or spacebar to skip (then press ENTER):\n")
-        value_com = dummy_nl.bindings_com.get(key, None)
+        value_com = dummy_nl.bindings_com.get(key, key)
         if value_com:
             key = input("Please press a key <q, ..., i, c, ..., m> to choose a object, or spacebar to skip (then press ENTER):\n")
-            value_obj = dummy_nl.bindings_obj.get(key, None)
+            value_obj = dummy_nl.bindings_obj.get(key, key)
             if value_obj:
                 key = input("Please press a key <a, ..., j> to choose a color, or spacebar to skip (then press ENTER):\n")
-                value_col = dummy_nl.bindings_col.get(key, None)
+                value_col = dummy_nl.bindings_col.get(key, key)
                 if value_col:
                     key = input("Please press a key <z, ..., x> to choose a location, or spacebar to skip (then press ENTER):\n")
-                    value_loc = dummy_nl.bindings_loc.get(key, None)
+                    value_loc = dummy_nl.bindings_loc.get(key, key)
                     if value_loc:
                         dummy_nl.publish_command(value_com, value_obj, value_col, value_loc)
                     else:
-                        dummy_nl.get_logger().info('Wrong location key')
+                        dummy_nl.get_logger().info('Wrong location input')
                 else:
-                    dummy_nl.get_logger().info('Wrong color key')
+                    dummy_nl.get_logger().info('Wrong color input')
             else:
-                dummy_nl.get_logger().info('Wrong object key')
+                dummy_nl.get_logger().info('Wrong object input')
         else:
-            dummy_nl.get_logger().info('Wrong command key')
+            dummy_nl.get_logger().info('Wrong command input')
 
     dummy_nl.destroy_node()
 
