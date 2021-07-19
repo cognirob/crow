@@ -8,3 +8,4 @@ crow_ontology/config/db_config.yaml
 rosbag2_*/
 .directory
 .vscode/
+*.code-workspace
