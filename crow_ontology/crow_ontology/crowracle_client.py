@@ -9,6 +9,7 @@ from uuid import uuid4
 import numpy as np
 import yaml
 from crow_ontology.crowracle_server import DB_PARAM_NAMES, DB_PARAM_MAP
+from crow_vision_ros2.utils.test_point_in_polyhedron import test_in_hull
 try:
     import rclpy
     from threading import Thread
@@ -899,6 +900,84 @@ class CrowtologyClient():
                 return [[None]]
         else:
             return [[None]]
+
+    def get_area_centroid(self, uri):
+        """Get location of centroid of a storage space
+
+        Args:
+            uri (URIRef): URI of the storage space
+
+        Returns:
+            centroid (lists of floats): xyz location of centroid
+        """
+        centroid = self.get_location_of_obj(uri)
+        return centroid
+
+    def test_obj_in_area(self, obj_uri, area_uri):
+        """Test if object is located inside the given area (defined as storage space)
+
+        Args:
+            obj_uri (URIRef): URI of the object
+            area_uri (URIRef): URI of the storage space
+
+        Returns:
+            res (bool): True when object lies inside area, False otherwise
+        """
+        area_poly = self.get_polyhedron(area_uri)
+        obj_location = self.get_location_of_obj(obj_uri)
+        res = test_in_hull(obj_location, area_poly)
+        return res
+
+    def get_objs_in_area(self, area_uri):
+        """Return objects located inside the given area (defined as storage space)
+
+        Args:
+            area_uri (URIRef): URI of the storage space
+
+        Returns:
+            objs_in (list of URIRefs): URIs of objects in the area
+        """
+        objs_all = self.getTangibleObjects()
+        objs_in = []
+        for obj_uri in objs_all:
+            res = self.test_obj_in_area(obj_uri, area_uri)
+            if res:
+                objs_in.append(obj_uri)
+        return objs_in
+
+    def get_free_space_area(self, area_uri, spacing=0.05):
+        """Return location of free (the least filled) space inside the given area (defined as storage space)
+
+        Args:
+            area_uri (URIRef): URI of the storage space
+            spacing (float): discretization of locations in area
+
+        Returns:
+            free_space_coordinates (list of floats): xyz of the free (the least filled) space in the area
+        """
+        objs_in = self.get_objs_in_area(area_uri)
+        objs_location = []
+        for obj_uri in objs_in:
+            res = self.get_location_of_obj(obj_uri)
+            if res:
+                objs_location.append(res)
+        polygon = np.asarray(self.get_polygon(area_uri))
+        z_mean = np.mean(polygon[:,2])
+        x_lim = [min(polygon[:,0]), max(polygon[:,0])]
+        y_lim = [min(polygon[:,1]), max(polygon[:,1])]
+        x_loc = np.arange(x_lim[0] + spacing, x_lim[-1] - spacing, spacing)
+        y_loc = np.arange(y_lim[0] + spacing, y_lim[-1] - spacing, spacing)
+        area_location = []
+        min_dist_to_objs = []
+        for x in x_loc:
+            for y in y_loc:
+                area_location.append([x, y])
+                dist = []
+                for obj in objs_location:
+                    dist.append(np.linalg.norm(np.asarray(obj[:2]) - np.asarray([x, y])))
+                min_dist_to_objs.append(min(dist))
+        free_space = area_location[np.argmax(np.asarray(min_dist_to_objs))]
+        return [free_space[0], free_space[1], z_mean + spacing]
 
     def add_storage_space(self, name, polygon, polyhedron, area, volume, centroid):
         """

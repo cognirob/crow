@@ -6,7 +6,6 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
-from crow_vision_ros2.utils.test_point_in_polyhedron import test_in_hull
 import time
 
 
@@ -140,16 +139,6 @@ class OntoTester(Node):
         dict_of_dicts = self.crowracle.get_filter_object_properties()
         print(dict_of_dicts)
 
-        print('get_storage')
-        q1 = {"name": 'modrá úložiště'}
-        uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
-        print(uris)
-
-        print('test in hull')
-        poly = self.crowracle.get_polyhedron(uris)
-        res = test_in_hull([1., 0.5, 2.5], poly)
-        print(res)
-
         print('getMarkerGroupProps')
         dicti = self.crowracle.getMarkerGroupProps('blue')
         print(dicti)
@@ -171,6 +160,37 @@ class OntoTester(Node):
         q1 = {"name": 'test pozice'}
         uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Position, q1, all=True)
         print(uris)
+###
+        self.crowracle.add_storage_space('modrá úložiště', [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2]], [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2],[0,0,0.4],[1,0,0.4],[1,1,0.4],[0,1,0.4]], 1, 1, [0.5,0.5,0.2])
+        self.crowracle.add_detected_object('my_cube0', [0.1, 0.9, 0.3], [1,1,1], 'uuid0', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
+        self.crowracle.add_detected_object('my_cube1', [0.1, 0.8, 0.3], [1,1,1], 'uuid1', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
+        self.crowracle.add_detected_object('my_cube2', [0.1, 0.7, 0.3], [1,1,1], 'uuid2', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
+        self.crowracle.add_detected_object('my_cube3', [-0.1, 0.9, 0.3], [1,1,1], 'uuid3', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
+
+        print('get_storage')
+        q1 = {"name": 'modrá úložiště'}
+        area_uri = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
+        print(area_uri)
+
+        print('test_obj_in_area')
+        obj_uri = self.crowracle.getTangibleObjects()
+        print(obj_uri)
+        res = self.crowracle.test_obj_in_area(obj_uri[0], area_uri)
+        print(res)
+        res = self.crowracle.test_obj_in_area(obj_uri[-1], area_uri)
+        print(res)
+
+        print('get objs in area')
+        uris = self.crowracle.get_objs_in_area(area_uri)
+        print(uris)
+
+        print('get free space area')
+        space = self.crowracle.get_free_space_area(area_uri)
+        print(space)
+
+        print('get centroid of area')
+        centroid = self.crowracle.get_area_centroid(area_uri)
+        print(centroid)
 
         print('done')
 
