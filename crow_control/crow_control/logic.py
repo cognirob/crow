@@ -194,6 +194,26 @@ class ControlLogic(Node):
             else:
                 return None
 
+    def processLocation(self, location, location_type):
+        """Processes location according to its type.
+
+        Args:
+            location (any): Data or location identifier.
+            location_type (str): Type of the location. Any of ["storage", "position", "xyz"]
+
+        Returns:
+            list: xyz position.
+        """
+        if location_type == "xyz":
+            return np.array(location)
+        elif location_type == "storage":
+            return self.crowracle.get_free_space_area(location)
+        elif location_type == "position":
+            return self.crowracle.get_location_of_obj(location)
+        else:
+            self.get_logger().error(f"Unknown action location type '{location_type}'!")
+            return None
+
     def command_cb(self, msg):
         StatTimer.enter("command callback")
         # self.get_logger().info("Received command msg!")
@@ -268,6 +288,10 @@ class ControlLogic(Node):
                 if 'target' in kwargs.keys():
                     target_info = self.prepare_command(**kwargs) #multiple attempts to identify target
                     kwargs['target_info'] = target_info
+                if 'location' in kwargs.keys():
+                    location = self.processLocation(kwargs['location'], kwargs['location_type'])
+                    print('locs', location)
+                    kwargs['location'] = location
                 if (self.status & self.STATUS_IDLE) and ((kwargs.get('target_info') or kwargs.get('location')) is not None):
                     try:
                         command(**kwargs)
