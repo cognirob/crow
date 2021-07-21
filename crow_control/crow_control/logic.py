@@ -90,6 +90,8 @@ class ControlLogic(Node):
     STATUS_PROCESSING = 2
     STATUS_EXECUTING = 4
 
+    ROBOT_ACTION_PHASE = 0
+
     def __init__(self, node_name="control_logic"):
         super().__init__(node_name)
         self.crowracle = CrowtologyClient(node=self)
@@ -121,12 +123,12 @@ class ControlLogic(Node):
         self.robot_place_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PLACE)
         self.robot_fetch_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_FETCH)
         self.robot_pass_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PASS)
-        self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
+        # self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
         # self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
         # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
 
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
-        self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
+        # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
         self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
@@ -568,6 +570,9 @@ class ControlLogic(Node):
                 goal_msg.object_type = ObjectType(type=target_type)
         else:
             pass # @TODO set something, None defaults to 0.0
+        print(np.isnan(goal_msg.size[0]))
+        if np.isnan(goal_msg.size[0]):
+            goal_msg.size = [0, 0, 0]
         if location_xyz is not None:
             place_pose = Pose()
             place_pose.position.x, place_pose.position.y, place_pose.position.z = location_xyz
@@ -618,6 +623,8 @@ class ControlLogic(Node):
 
         StatTimer.exit("speech2robot", severity=Runtime.S_MAIN)
         StatTimer.enter("robot action")
+        self.ROBOT_ACTION_PHASE = 0
+        StatTimer.enter("phase 0")
         self.get_logger().info('Goal accepted :)')
         self._set_status(self.STATUS_EXECUTING)
 
@@ -627,6 +634,7 @@ class ControlLogic(Node):
     def robot_done_cb(self, future):
         StatTimer.try_exit("robot action")
         StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
+        StatTimer.enter(f"phase {str(self.ROBOT_ACTION_PHASE)}")
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
         if result.done:
@@ -648,8 +656,12 @@ class ControlLogic(Node):
         #     if sn > 0.7:
         #         print(dir(self._get_result_future))
         #         print(self.cancel_current_goal())
-
-        if feedback.core_action_phase == CoreActionPhase.ROBOTIC_ACTION:
+        phase = feedback.core_action_phase.phase
+        if phase != self.ROBOT_ACTION_PHASE:
+            StatTimer.exit(f"phase {str(self.ROBOT_ACTION_PHASE)}")
+            StatTimer.enter(f"phase {str(phase)}")
+            self.ROBOT_ACTION_PHASE = phase
+        if phase == CoreActionPhase.ROBOTIC_ACTION:
             StatTimer.try_exit("robot action")
             StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
 
