@@ -84,6 +84,20 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
+    _positions_query_props = prepareQuery("""SELECT ?obj ?name 
+        WHERE {
+            ?obj rdf:type crow:Position .
+            ?obj crow:hasName ?name .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
+                                   )
+    _storages_query_props = prepareQuery("""SELECT ?obj ?name 
+        WHERE {
+            ?obj rdf:type crow:StorageSpace .
+            ?obj crow:hasName ?name .
+        }""",
+                                   initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
+                                   )
     _marker_group_propsEN = prepareQuery("""SELECT ?obj ?name ?dict_num ?size ?seed ?id ?square_len
         WHERE {
             ?obj rdf:type crow:MarkerGroup .
@@ -827,6 +841,36 @@ class CrowtologyClient():
             res_dict["uuid"] = g["uuid"].toPython()
             res_dict["start_timestamp"] = g["start"].toPython()
             res_dict["stop_timestamp"] = g["stop"].toPython()
+            res_list.append(res_dict)
+        return res_list
+
+    def getPositionsProps(self):
+        """Lists positions detected in the session together with their properties
+
+        Returns:
+            res_list (list of dicts): The positions and their properties
+        """
+        res = self.onto.query(self._positions_query_props)
+        res_list = []
+        for g in res:
+            res_dict = {}
+            res_dict["uri"] = g["obj"]
+            res_dict["name"] = g["name"].toPython()
+            res_list.append(res_dict)
+        return res_list
+
+    def getStoragesProps(self):
+        """Lists storages detected in the session together with their properties
+
+        Returns:
+            res_list (list of dicts): The storages and their properties
+        """
+        res = self.onto.query(self._storages_query_props)
+        res_list = []
+        for g in res:
+            res_dict = {}
+            res_dict["uri"] = g["obj"]
+            res_dict["name"] = g["name"].toPython()
             res_list.append(res_dict)
         return res_list
 
