@@ -40,7 +40,12 @@ class CrowtologyServer():
     def __init__(self, config_path=None, base_onto_path=None):
         if config_path is None:
             modulePath = find_spec("crow_ontology").submodule_search_locations[0]
-            config_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
+
+            ########## TEMPORRARY PERSONAL FIX ###
+            config_path = os.path.join(modulePath, "config", "db_config.yaml")
+            # Old config path
+            #config_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
+            ######################################
 
         with open(config_path, 'r') as file:  # load the config
             self.__cfg = yaml.safe_load(file)

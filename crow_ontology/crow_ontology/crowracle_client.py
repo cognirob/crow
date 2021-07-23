@@ -74,7 +74,7 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
-    _actions_query_props = prepareQuery("""SELECT ?obj ?name ?start ?stop ?uuid 
+    _actions_query_props = prepareQuery("""SELECT ?obj ?name ?start ?stop ?uuid
         WHERE {
             ?obj rdf:type crow:Action .
             ?obj crow:hasName ?name .
@@ -157,7 +157,9 @@ class CrowtologyClient():
 
         if credential_file_path is None:
             modulePath = find_spec("crow_ontology").submodule_search_locations[0]
-            credential_file_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
+            credential_file_path = os.path.join(modulePath, "config", "db_config.yaml")
+            #### OLD FILE name
+            # credential_file_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
 
         self.__local_mode = local_mode
         if self.local_mode:  # LOCAL MODE
@@ -1068,7 +1070,7 @@ class CrowtologyClient():
             time (str): timestamp of the last action detection, in XSD.dateTimeStamp format
         """
         self.__node.get_logger().info("UPDATING CurrentAction: {}, time: {}.".format(action_name, time))
-        
+
         # Add action and its properties
         self.onto.set((self.CROW.CurrentAction, self.CROW.hasName, Literal(action_name, datatype=XSD.string)))
         self.onto.set((self.CROW.CurrentAction, self.CROW.hasStopTimestamp, Literal(time, datatype=XSD.dateTimeStamp)))
@@ -1085,7 +1087,7 @@ class CrowtologyClient():
         """
         individual_name = action_name.replace(" ", "_") + '_ad_'+str(adder_id)
         self.__node.get_logger().info("ADDING action {}, start: {}, end: {}.".format(individual_name, start, stop))
-        
+
         # Add action and its properties
         self.onto.add((self.CROW[individual_name], RDF.type, self.CROW.Action))
         self.onto.add((self.CROW[individual_name], self.CROW.hasName, Literal(action_name, datatype=XSD.string)))

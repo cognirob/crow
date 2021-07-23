@@ -103,6 +103,7 @@ def main():
         rclpy.spin(ot)
         ot.destroy_node()
     finally:
+        curses.initscr() ### Throws error without this:  curses.error: must call initscr() first
         curses.echo()
         curses.endwin()
 
