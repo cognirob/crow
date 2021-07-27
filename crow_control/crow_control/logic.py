@@ -1,17 +1,11 @@
 import rclpy
 from rclpy.node import Node
-from rcl_interfaces.msg import ParameterType
-from ros2param.api import call_get_parameters
-import message_filters
 from rclpy.action import ActionClient
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import RobotAction
-# from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
-# from crow_msgs.srv import GetRobotStatus
-# from crow_msgs.action import PickNPlace
 from geometry_msgs.msg import Pose
 
 from rclpy.qos import qos_profile_sensor_data
@@ -23,20 +17,17 @@ import numpy as np
 from num2words import num2words
 import pkg_resources
 import time
-#from numba import jit
-#from torchvision.utils import save_image
-#from datetime import datetime
 import os
 from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 import time
-import subprocess
 from collections import deque
 from crow_control.utils.profiling import StatTimer
 from crow_control.utils import ParamClient, QueueServer
 from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
+
 
 class UsefullRobotStatus():
 
@@ -73,6 +64,9 @@ class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     STORAGE_TOPIC = "/new_storage"
     POSITION_TOPIC = "/new_position"
+    # ROBOT_ACTIONS = {
+
+    # }
     ROBOT_ACTION_POINT = 'point'
     ROBOT_ACTION_PNP = 'pick_n_place'
     ROBOT_ACTION_OPEN = 'release'
