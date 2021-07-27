@@ -157,9 +157,7 @@ class CrowtologyClient():
 
         if credential_file_path is None:
             modulePath = find_spec("crow_ontology").submodule_search_locations[0]
-            credential_file_path = os.path.join(modulePath, "config", "db_config.yaml")
-            #### OLD FILE name
-            # credential_file_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
+            credential_file_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
 
         self.__local_mode = local_mode
         if self.local_mode:  # LOCAL MODE
