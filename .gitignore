@@ -9,3 +9,5 @@ rosbag2_*/
 .directory
 .vscode/
 *.code-workspace
+.idea
+venv

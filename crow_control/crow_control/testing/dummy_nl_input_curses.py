@@ -1,7 +1,6 @@
 import curses
 import itertools
 import os
-import time
 
 import rclpy
 from crow_msgs.msg import SentenceProgram
@@ -11,7 +10,9 @@ from rclpy.qos import QoSReliabilityPolicy
 
 if "MWX_DEBUG" in os.environ:
     import pydevd_pycharm
-    pydevd_pycharm.settrace('localhost', port=25565, stdoutToServer = True, stderrToServer = True)
+
+    pydevd_pycharm.settrace('localhost', port=25565, stdoutToServer=True, stderrToServer=True)
+
 
 class BINDINGS:
     bindings = {
@@ -192,6 +193,7 @@ def app(stdscr):
             history_pos = 0
 
     node.destroy_node()
+
 
 def main():
     curses.wrapper(app)
