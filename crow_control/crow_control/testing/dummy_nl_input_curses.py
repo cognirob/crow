@@ -105,13 +105,13 @@ def translate_query(chars):
 
 
 def render_command(win_command, win_query, chars, query):
+    win_query.clear()
+    win_query.addstr(0, 0, f"{query}")
+    win_query.refresh()
+
     win_command.clear()
     win_command.addstr(0, 0, f":{chars}")
     win_command.refresh()
-
-    win_query.clear()
-    win_query.addstr(0, 0, f":{query}")
-    win_query.refresh()
 
 
 def render_history(history_window, history):
@@ -120,14 +120,14 @@ def render_history(history_window, history):
     printable = history[-rows:]
 
     for i, c in enumerate(printable):
-        history_window.addstr(i, 0, f"{i}: {c}")
+        history_window.addstr(i, 0, f"{i}: {c[2]}" + (f" ({c[0]})" if c[1] == 'quick' else ''))
 
     history_window.refresh()
 
 
 def app(stdscr):
-    # rclpy.init()
-    # node = DummyNlInput()
+    rclpy.init()
+    node = DummyNlInput()
 
     # PREPARE WINDOW
     rows, cols = stdscr.getmaxyx()
@@ -160,7 +160,7 @@ def app(stdscr):
             chars = ""
             history_pos = 0
         elif ch == 'KEY_F(4)':
-            return
+            break
         elif ch == 'KEY_BACKSPACE':
             chars = chars[:-1]
             history_pos = 0
@@ -175,7 +175,7 @@ def app(stdscr):
             history_pos = 0
 
         if history_pos != 0:
-            chars = history[-history_pos]
+            chars, mode, query = history[-history_pos]
 
         if mode == 'quick':
             query = translate_query(chars)
@@ -185,12 +185,13 @@ def app(stdscr):
         render_command(win_command, win_query, chars, query)
 
         if ch == '\n':
-            #node.publish_command(query)
-            history.append(query + ('' if mode == 'normal' else f" ({chars})"))
+            node.publish_command(query)
+            history.append((chars, mode, query))
             chars = ""
             query = ""
             history_pos = 0
 
+    node.destroy_node()
 
 def main():
     curses.wrapper(app)
