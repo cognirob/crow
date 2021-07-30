@@ -1,5 +1,5 @@
 from rdflib.namespace import FOAF, RDFS, RDF, OWL, XMLNS, Namespace
-from rdflib.extras.infixowl import Class
+from rdflib.extras.infixowl import Class, TermDeletionHelper
 from rdflib import BNode, URIRef, Literal
 from knowl import OntologyAPI
 import yaml
@@ -36,6 +36,7 @@ class CrowtologyServer():
     # crowNSString = "http://imitrob.ciirc.cvut.cz/ontologies/crow#"
     # CROW = Namespace(crowNSString)
     # OWLR = Namespace("http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#")
+    BACKUP_ON_START = False
 
     def __init__(self, config_path=None, base_onto_path=None):
         if config_path is None:
@@ -48,7 +49,7 @@ class CrowtologyServer():
         self.__onto = OntologyAPI(config_path)
         self.__node = None
         try:
-            if len(self.onto) > 0:  # try to make a backup
+            if self.BACKUP_ON_START and len(self.onto) > 0:  # try to make a backup
                 bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
                 self.onto.graph.serialize(bkp_path, format="xml")
                 self.onto.destroy("I know what I am doing")
