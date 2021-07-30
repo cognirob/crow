@@ -204,7 +204,7 @@ class ControlLogic(Node):
             else:
                 return None
 
-    def processLocation(self, location, location_type):
+    def processLocation(self, location, location_type="xyz"):
         """Processes location according to its type.
 
         Args:
@@ -299,6 +299,9 @@ class ControlLogic(Node):
                     target_info = self.prepare_command(**kwargs) #multiple attempts to identify target
                     kwargs['target_info'] = target_info
                 if 'location' in kwargs.keys():
+                    # FIXME: make sure location type is sent from NLP! (this is probably missing from templates)
+                    if 'location_type' not in kwargs:
+                        kwargs['location_type'] = 'xyz'
                     location = self.processLocation(kwargs['location'], kwargs['location_type'])
                     print('locs', location)
                     kwargs['location'] = location
@@ -429,6 +432,7 @@ class ControlLogic(Node):
         """Fetch (give): move to target, pick, move to user, open gripper a bit OR
                          something is already picked, move to user, open gripper a bit
         """
+        # print(kwargs)
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Fetch action")
         self.pclient.robot_done = False
