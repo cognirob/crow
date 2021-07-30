@@ -92,6 +92,8 @@ class OntoTester(Node):
     def destroy_node(self):
         curses.echo()
         curses.endwin()
+        # print(self.crowracle.getStoragesProps())
+        # print(self.crowracle.getPositionsProps())
         super().destroy_node()
 
 
@@ -101,10 +103,8 @@ def main():
         ot = OntoTester()
         ot.start()
         rclpy.spin(ot)
-        ot.destroy_node()
     finally:
-        curses.echo()
-        curses.endwin()
+        ot.destroy_node()
 
 
 if __name__ == "__main__":
