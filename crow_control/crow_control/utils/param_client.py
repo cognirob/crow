@@ -10,6 +10,7 @@ import zmq
 from threading import Thread
 from warnings import warn
 import cloudpickle as cpl
+from zmq.backend import zmq_errno
 from zmq.utils.strtypes import asbytes
 import time
 
@@ -160,7 +161,10 @@ class ParamClient():
 
     def _poll(self):
         while self.active:
-            param, msg = self._subscriber.recv_multipart()
+            try:
+                param, msg = self._subscriber.recv_multipart()
+            except zmq.Again:
+                continue
             # print(param, msg)
             self._params[param.decode()] = cpl.loads(msg)
 
