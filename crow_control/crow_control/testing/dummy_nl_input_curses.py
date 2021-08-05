@@ -1,6 +1,8 @@
 import curses
 import itertools
 import os
+import locale
+locale.setlocale(locale.LC_ALL, '')
 
 import rclpy
 from crow_msgs.msg import SentenceProgram
@@ -13,6 +15,8 @@ if "MWX_DEBUG" in os.environ:
 
     pydevd_pycharm.settrace('localhost', port=25565, stdoutToServer=True, stderrToServer=True)
 
+
+code = locale.getpreferredencoding()
 
 class BINDINGS:
     bindings = {
@@ -154,7 +158,9 @@ def app(stdscr):
         render_history(win_logs, history)
         render_command(win_command, win_query, chars, query)
 
-        ch = stdscr.getkey()
+        ch = stdscr.get_wch()
+        if type(ch) is int:
+            ch = curses.keyname(ch).decode()
 
         if ch == 'KEY_F(5)':
             mode = 'normal' if mode == 'quick' else 'quick'
@@ -181,7 +187,7 @@ def app(stdscr):
         if mode == 'quick':
             query = translate_query(chars)
         else:
-            query = chars
+            query = chars#.encode("utf-8")
 
         render_command(win_command, win_query, chars, query)
 
