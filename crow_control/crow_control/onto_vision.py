@@ -35,6 +35,10 @@ class OntoTester(Node):
                 id = "error"
             finally:
                 new_objects[uri] = (loc, id)
+        for l in self.crowracle.getStoragesProps():
+            new_objects[l["uri"]] = ("storage", l["name"])
+        for l in self.crowracle.getPositionsProps():
+            new_objects[l["uri"]] = ("position", l["name"])
         self.render(new_objects)
 
     def render(self, new_objects):
