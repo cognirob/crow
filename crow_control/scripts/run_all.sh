@@ -103,6 +103,7 @@ if [ "$O_NO_VISION" != true ]; then
     new_tab $WID
     sleep 15
     runcmd "echo -ne '\033]30;Detection\007'"
+    runcmd "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/imitrob/TensorRT-7.2.1.6/lib"
     runcmd "ros2 launch crow_vision_ros2 crow_object.launch.py"
 
     new_tab $WID

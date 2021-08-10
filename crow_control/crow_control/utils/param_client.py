@@ -10,11 +10,13 @@ import zmq
 from threading import Thread
 from warnings import warn
 import cloudpickle as cpl
+from zmq.backend import zmq_errno
 from zmq.utils.strtypes import asbytes
 import time
 
 
 class ParamClient():
+    DEFAULT_TIMEOUT = 10000  # milliseconds
 
     def __init__(self, start_port=25652, addr="127.0.0.1", protocol="tcp"):
         """ Creates a client for parameters. The client can subscribe to various parameters
@@ -38,6 +40,7 @@ class ParamClient():
         self.__addr_pub = f"{protocol}://{addr}:{str(start_port)}"
         self._subscriber = self.__context.socket(zmq.SUB)
         self._subscriber.connect(self.__addr_pub)
+        self._subscriber.setsockopt(zmq.RCVTIMEO, self.DEFAULT_TIMEOUT)
 
         # socket for param change requests
         self.__addr_ch = f"{protocol}://{addr}:{str(start_port + 3)}"
@@ -56,24 +59,29 @@ class ParamClient():
         self.poller_thread.start()
 
     def wait_for_param(self, param, timeout=0):
-        # timeout DOES NOT WORK, yet
         msg = self.wait_receive_param(param, timeout)
         if msg is None:
             return False
         return True
 
     def wait_receive_param(self, param, timeout=0):
-        # timeout DOES NOT WORK, yet
         self._subscriber.setsockopt(zmq.SUBSCRIBE, param.encode('utf-8'))
-        start = time.time()
+        if timeout > 0:
+            self._subscriber.setsockopt(zmq.RCVTIMEO, timeout)
         msg = None
         while True:
-            rcv_param, data = self._subscriber.recv_multipart()
+            try:
+                rcv_param, data = self._subscriber.recv_multipart()
+            except zmq.error.Again:
+                print(f"Paramater {param} request timed out!")
+                return None
             if rcv_param.decode() == param:
                 msg = cpl.loads(data)
                 print(param, msg)
                 break
         self._subscriber.setsockopt(zmq.UNSUBSCRIBE, param.encode('utf-8'))
+        if timeout > 0:
+            self._subscriber.setsockopt(zmq.RCVTIMEO, self.DEFAULT_TIMEOUT)
         if msg is not None:
             return msg
 
@@ -153,7 +161,10 @@ class ParamClient():
 
     def _poll(self):
         while self.active:
-            param, msg = self._subscriber.recv_multipart()
+            try:
+                param, msg = self._subscriber.recv_multipart()
+            except zmq.Again:
+                continue
             # print(param, msg)
             self._params[param.decode()] = cpl.loads(msg)
 

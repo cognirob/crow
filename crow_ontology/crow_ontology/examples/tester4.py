@@ -161,13 +161,26 @@ class OntoTester(Node):
         uris = self.crowracle.get_obj_of_properties(self.crowracle.CROW.Position, q1, all=True)
         print(uris)
 ###
-        self.crowracle.add_storage_space('modrá úložiště', [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2]], [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2],[0,0,0.4],[1,0,0.4],[1,1,0.4],[0,1,0.4]], 1, 1, [0.5,0.5,0.2])
+        self.crowracle.add_storage_space('sklad úložiště', [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2]], [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2],[0,0,0.4],[1,0,0.4],[1,1,0.4],[0,1,0.4]], 1, 1, [0.5,0.5,0.2])
+        self.crowracle.add_storage_space('box úložiště', [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2]], [[0,0,0.2],[1,0,0.2],[1,1,0.2],[0,1,0.2],[0,0,0.4],[1,0,0.4],[1,1,0.4],[0,1,0.4]], 1, 1, [0.2,0.2,0.2])
+        self.crowracle.add_position('auto pozice', [0.5,0.5,0.5])
         self.crowracle.add_detected_object('my_cube0', [0.1, 0.9, 0.3], [1,1,1], 'uuid0', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
         self.crowracle.add_detected_object('my_cube1', [0.1, 0.8, 0.3], [1,1,1], 'uuid1', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
         self.crowracle.add_detected_object('my_cube2', [0.1, 0.7, 0.3], [1,1,1], 'uuid2', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
         self.crowracle.add_detected_object('my_cube3', [-0.1, 0.9, 0.3], [1,1,1], 'uuid3', '2021-07-16Z23:00:00', self.crowracle.CROW.CUBE, 'ukl')
 
-        print('get_storage')
+        print('get all storages')
+        q1 = {}
+        area_uri = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
+        print(area_uri)
+        dicts = self.crowracle.getStoragesProps()
+        print(dicts)
+
+        print('positions props')
+        dicts = self.crowracle.getPositionsProps()
+        print(dicts)
+
+        print('get_storage blue')
         q1 = {"name": 'modrá úložiště'}
         area_uri = self.crowracle.get_obj_of_properties(self.crowracle.CROW.StorageSpace, q1, all=True)
         print(area_uri)

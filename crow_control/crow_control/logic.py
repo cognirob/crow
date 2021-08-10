@@ -1,17 +1,11 @@
 import rclpy
 from rclpy.node import Node
-from rcl_interfaces.msg import ParameterType
-from ros2param.api import call_get_parameters
-import message_filters
 from rclpy.action import ActionClient
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
-from trio3_ros2_interfaces.action import PickNPlace, ReleaseObject
-# from crow_msgs.msg import StampedString, CommandType, RobotStatus, ObjectType
-# from crow_msgs.srv import GetRobotStatus
-# from crow_msgs.action import PickNPlace
+from trio3_ros2_interfaces.action import RobotAction
 from geometry_msgs.msg import Pose
 
 from rclpy.qos import qos_profile_sensor_data
@@ -23,20 +17,17 @@ import numpy as np
 from num2words import num2words
 import pkg_resources
 import time
-#from numba import jit
-#from torchvision.utils import save_image
-#from datetime import datetime
 import os
 from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 import time
-import subprocess
 from collections import deque
 from crow_control.utils.profiling import StatTimer
 from crow_control.utils import ParamClient, QueueServer
 from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
+
 
 class UsefullRobotStatus():
 
@@ -73,9 +64,16 @@ class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
     STORAGE_TOPIC = "/new_storage"
     POSITION_TOPIC = "/new_position"
+    # ROBOT_ACTIONS = {
+
+    # }
     ROBOT_ACTION_POINT = 'point'
     ROBOT_ACTION_PNP = 'pick_n_place'
-    GRIPPER_ACTION_OPEN = 'release_object'
+    ROBOT_ACTION_OPEN = 'release'
+    ROBOT_ACTION_PICK = 'pick_n_home'
+    ROBOT_ACTION_PLACE = 'place_n_home'
+    ROBOT_ACTION_FETCH = 'pick_n_pass'
+    ROBOT_ACTION_PASS = 'pass'
     ROBOT_SERVICE_STATUS = 'get_robot_status'
     DEBUG = False
     UPDATE_INTERVAL = 0.1
@@ -85,6 +83,8 @@ class ControlLogic(Node):
     STATUS_IDLE = 1
     STATUS_PROCESSING = 2
     STATUS_EXECUTING = 4
+
+    ROBOT_ACTION_PHASE = 0
 
     def __init__(self, node_name="control_logic"):
         super().__init__(node_name)
@@ -110,15 +110,19 @@ class ControlLogic(Node):
                                  callback=self.command_cb,
                                  callback_group=rclpy.callback_groups.ReentrantCallbackGroup(),
                                  qos_profile=qos)
-        self.robot_point_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_POINT)
-        self.robot_pnp_client = ActionClient(self, PickNPlace, self.ROBOT_ACTION_PNP)
-        self.gripper_open_client = ActionClient(self, ReleaseObject, self.GRIPPER_ACTION_OPEN)
-        self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
-        self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
-        self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
+        self.robot_point_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_POINT)
+        self.robot_pnp_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PNP)
+        self.gripper_open_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_OPEN)
+        self.robot_pick_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PICK)
+        self.robot_place_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PLACE)
+        self.robot_fetch_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_FETCH)
+        self.robot_pass_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PASS)
+        # self.get_logger().info(f"Connected to robot point action: {self.robot_point_client.wait_for_server()}")
+        # self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
+        # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
 
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
-        self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
+        # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
         self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
@@ -129,10 +133,16 @@ class ControlLogic(Node):
         self._type_dict = {k: v for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
         self.marker_storage_publisher = self.create_publisher(MarkerMsg, self.STORAGE_TOPIC, qos_profile=1) #publishes the new storage command
         self.marker_position_publisher = self.create_publisher(MarkerMsg, self.POSITION_TOPIC, qos_profile=1) #publishes the new position command
-        self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last, CommandType.REM_CMD_X: self.remove_command_x,
-                                CommandType.DEFINE_STORAGE: self.defineStorage, CommandType.DEFINE_POSITION: self.definePosition, CommandType.POINT: self.sendPointAction,
-                                CommandType.PICK: self.sendPickAction, CommandType.FETCH: self.sendFetchAction, CommandType.FETCH_TO: self.sendFetchToAction,
-                                CommandType.RELEASE: self.sendReleaseAction, CommandType.TIDY: self.sendTidyAction}
+        self.COMMAND_DICT = {CommandType.REM_CMD_LAST: self.remove_command_last,
+                             CommandType.REM_CMD_X: self.remove_command_x,
+                             CommandType.DEFINE_STORAGE: self.defineStorage,
+                             CommandType.DEFINE_POSITION: self.definePosition,
+                             CommandType.POINT: self.sendPointAction,
+                             CommandType.PICK: self.sendPickAction,
+                             CommandType.FETCH: self.sendFetchAction,
+                             CommandType.FETCH_TO: self.sendFetchToAction,
+                             CommandType.RELEASE: self.sendReleaseAction,
+                             CommandType.TIDY: self.sendTidyAction}
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -193,6 +203,26 @@ class ControlLogic(Node):
                 return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
             else:
                 return None
+
+    def processLocation(self, location, location_type="xyz"):
+        """Processes location according to its type.
+
+        Args:
+            location (any): Data or location identifier.
+            location_type (str): Type of the location. Any of ["storage", "position", "xyz"]
+
+        Returns:
+            list: xyz position.
+        """
+        if location_type == "xyz":
+            return np.array(location)
+        elif location_type == "storage":
+            return self.crowracle.get_free_space_area(location)
+        elif location_type == "position":
+            return self.crowracle.get_location_of_obj(location)
+        else:
+            self.get_logger().error(f"Unknown action location type '{location_type}'!")
+            return None
 
     def command_cb(self, msg):
         StatTimer.enter("command callback")
@@ -268,6 +298,13 @@ class ControlLogic(Node):
                 if 'target' in kwargs.keys():
                     target_info = self.prepare_command(**kwargs) #multiple attempts to identify target
                     kwargs['target_info'] = target_info
+                if 'location' in kwargs.keys():
+                    # FIXME: make sure location type is sent from NLP! (this is probably missing from templates)
+                    if 'location_type' not in kwargs:
+                        kwargs['location_type'] = 'xyz'
+                    location = self.processLocation(kwargs['location'], kwargs['location_type'])
+                    print('locs', location)
+                    kwargs['location'] = location
                 if (self.status & self.STATUS_IDLE) and ((kwargs.get('target_info') or kwargs.get('location')) is not None):
                     try:
                         command(**kwargs)
@@ -355,7 +392,7 @@ class ControlLogic(Node):
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = self.composePNPMessage(
+        goal_msg = self.composeRobotActionMessage(
                 target_xyz=target_info[0],
                 target_size=target_info[1],
                 target_type=target_info[2],
@@ -379,15 +416,15 @@ class ControlLogic(Node):
             return
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = self.composePNPMessage(
+        goal_msg = self.composeRobotActionMessage(
                 target_xyz=target_info[0],
                 target_size=target_info[1],
                 target_type=target_info[2],
-                location_xyz=location  # temporary "robot default" position - in PickTask.py template
+                # location_xyz=location  # temporary "robot default" position - in PickTask.py template
             )
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future = self.robot_pick_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
@@ -395,32 +432,40 @@ class ControlLogic(Node):
         """Fetch (give): move to target, pick, move to user, open gripper a bit OR
                          something is already picked, move to user, open gripper a bit
         """
+        # print(kwargs)
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Fetch action")
         self.pclient.robot_done = False
-        if target_info is None:
+        pass_only = target_info is None
+        if pass_only:
             if self.hands_empty():
                 self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
                 self.wait_then_talk()
                 self.make_robot_fail_to_start()
                 return
-            else:
-                target_info = [None]
-        elif (target_info is not None) and (self.hands_full()):
-            self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
-            self.wait_then_talk()
-            self.make_robot_fail_to_start()
-            return
-        self._set_status(self.STATUS_PROCESSING)
-        goal_msg = self.composePNPMessage(
-                target_xyz=target_info[0],
-                target_size=target_info[1],
-                target_type=target_info[2],
-                location_xyz=location  # temporary storage location - in Fetch.py template
+            goal_msg = self.composeRobotActionMessage(
+                location_xyz=location,  # temporary storage location - in Fetch.py template
+                robot_id=0
             )
+            client = self.robot_pass_client
+        else:
+            if self.hands_full():
+                self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
+                self.wait_then_talk()
+                self.make_robot_fail_to_start()
+                return
+            goal_msg = self.composeRobotActionMessage(
+                    target_xyz=target_info[0],
+                    target_size=target_info[1],
+                    target_type=target_info[2],
+                    location_xyz=location  # temporary storage location - in Fetch.py template
+                )
+            client = self.robot_fetch_client
+
+        self._set_status(self.STATUS_PROCESSING)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
@@ -431,28 +476,36 @@ class ControlLogic(Node):
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing FetchTo action")
         self.pclient.robot_done = False
-        if (target_info is not None) and (self.hands_full()):
-            self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
-            self.wait_then_talk()
-            self.make_robot_fail_to_start()
-            return
-        if (target_info is None) and (self.hands_empty()):
-            self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
-            self.wait_then_talk()
-            self.make_robot_fail_to_start()
-            return
-        elif target_info is None:
+        pass_only = target_info is None
+        if pass_only:
+            if self.hands_empty():
+                self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
+                self.wait_then_talk()
+                self.make_robot_fail_to_start()
+                return
             target_info = [None]*3
+            client = self.robot_place_client
+            goal_msg = self.composeRobotActionMessage(
+                    location_xyz=location,
+                    robot_id=0
+                )
+        else:
+            if self.hands_full():
+                self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
+                self.wait_then_talk()
+                self.make_robot_fail_to_start()
+                return
+            client = self.robot_pnp_client
+            goal_msg = self.composeRobotActionMessage(
+                    target_xyz=target_info[0],
+                    target_size=target_info[1],
+                    target_type=target_info[2],
+                    location_xyz=location
+                )
         self._set_status(self.STATUS_PROCESSING)
-        goal_msg = self.composePNPMessage(
-                target_xyz=target_info[0],
-                target_size=target_info[1],
-                target_type=target_info[2],
-                location_xyz=location
-            )
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self._send_goal_future = self.robot_pnp_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
+        self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         StatTimer.exit("Sending command")
 
@@ -470,9 +523,7 @@ class ControlLogic(Node):
             self.wait_then_talk()
             self.make_robot_fail_to_start()
             return
-        self._set_status(self.STATUS_PROCESSING)
-        goal_msg = ReleaseObject.Goal()
-        goal_msg.robot_id = 0 #TODO: check which robot is holding something
+        goal_msg = self.composeRobotActionMessage(robot_id=0)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
         self._send_goal_future = self.gripper_open_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
@@ -496,15 +547,17 @@ class ControlLogic(Node):
                 #TODO: keep only objs in the workspace area (not in the storage, etc.)
         StatTimer.exit("Sending command")
 
-    def composePNPMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None):
-        goal_msg = PickNPlace.Goal()
+    def composeRobotActionMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None, robot_id=-1):
+        goal_msg = RobotAction.Goal()
         goal_msg.frame_id = "global"
+        goal_msg.robot_id = robot_id
         goal_msg.request_units = Units(unit_type=Units.METERS)
 
-        goal_msg.pick_pose = Pose()
-        goal_msg.place_pose = Pose()
+        goal_msg.poses = []
         if target_xyz is not None:
-            goal_msg.pick_pose.position.x, goal_msg.pick_pose.position.y, goal_msg.pick_pose.position.z = target_xyz
+            pick_pose = Pose()
+            pick_pose.position.x, pick_pose.position.y, pick_pose.position.z = target_xyz
+            goal_msg.poses.append(pick_pose)
             if target_size is None:
                 goal_msg.size = [0, 0, 0]
             else:
@@ -515,8 +568,13 @@ class ControlLogic(Node):
                 goal_msg.object_type = ObjectType(type=target_type)
         else:
             pass # @TODO set something, None defaults to 0.0
+        print(np.isnan(goal_msg.size[0]))
+        if np.isnan(goal_msg.size[0]):
+            goal_msg.size = [0, 0, 0]
         if location_xyz is not None:
-            goal_msg.place_pose.position.x, goal_msg.place_pose.position.y, goal_msg.place_pose.position.z = location_xyz
+            place_pose = Pose()
+            place_pose.position.x, place_pose.position.y, place_pose.position.z = location_xyz
+            goal_msg.poses.append(place_pose)
         else:
             pass # @TODO set something, None defaults to 0.0
         return goal_msg
@@ -563,6 +621,8 @@ class ControlLogic(Node):
 
         StatTimer.exit("speech2robot", severity=Runtime.S_MAIN)
         StatTimer.enter("robot action")
+        self.ROBOT_ACTION_PHASE = 0
+        StatTimer.enter("phase 0")
         self.get_logger().info('Goal accepted :)')
         self._set_status(self.STATUS_EXECUTING)
 
@@ -572,6 +632,7 @@ class ControlLogic(Node):
     def robot_done_cb(self, future):
         StatTimer.try_exit("robot action")
         StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
+        StatTimer.enter(f"phase {str(self.ROBOT_ACTION_PHASE)}")
         result = future.result().result
         self.get_logger().info(f'Action done, result: {result.done}')
         if result.done:
@@ -593,8 +654,12 @@ class ControlLogic(Node):
         #     if sn > 0.7:
         #         print(dir(self._get_result_future))
         #         print(self.cancel_current_goal())
-
-        if feedback.core_action_phase == CoreActionPhase.ROBOTIC_ACTION:
+        phase = feedback.core_action_phase.phase
+        if phase != self.ROBOT_ACTION_PHASE:
+            StatTimer.exit(f"phase {str(self.ROBOT_ACTION_PHASE)}")
+            StatTimer.enter(f"phase {str(phase)}")
+            self.ROBOT_ACTION_PHASE = phase
+        if phase == CoreActionPhase.ROBOTIC_ACTION:
             StatTimer.try_exit("robot action")
             StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
 
@@ -666,7 +731,8 @@ def main():
         # time.sleep(1)
         cl.get_logger().info("ready")
         if False:
-            cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
+            # cl.push_actions(command_buffer='main', action_type="fetch", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
+            cl.definePosition("modré uložiště", "modrá pozice", "modrá")
             # cl.push_actions(command_buffer='main', action_type="point", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
             # cl.push_actions(command_buffer='main', action_type="pick", action=CommandType.FETCH, target=np.r_[1.0, 2.0, 3.0], target_type="xyz", location=np.r_[1.0, 2.0, 3.0], location_type="xyz", size=np.r_[2.0, 2.0, 2.0].astype(np.float))
         # rclpy.spin_once(cl, executor=mte)

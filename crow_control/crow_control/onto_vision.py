@@ -35,6 +35,10 @@ class OntoTester(Node):
                 id = "error"
             finally:
                 new_objects[uri] = (loc, id)
+        for l in self.crowracle.getStoragesProps():
+            new_objects[l["uri"]] = ("storage", l["name"])
+        for l in self.crowracle.getPositionsProps():
+            new_objects[l["uri"]] = ("position", l["name"])
         self.render(new_objects)
 
     def render(self, new_objects):
@@ -92,6 +96,8 @@ class OntoTester(Node):
     def destroy_node(self):
         curses.echo()
         curses.endwin()
+        # print(self.crowracle.getStoragesProps())
+        # print(self.crowracle.getPositionsProps())
         super().destroy_node()
 
 
@@ -101,7 +107,6 @@ def main():
         ot = OntoTester()
         ot.start()
         rclpy.spin(ot)
-        ot.destroy_node()
     finally:
         curses.initscr() ### Throws error without this:  curses.error: must call initscr() first
         curses.echo()
