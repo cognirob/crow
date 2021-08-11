@@ -3236,6 +3236,17 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#LeftWrist -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#LeftWrist">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TangibleObject"/>
+        <hasNlpNameCZ>levé zápěstí</hasNlpNameCZ>
+        <hasNlpNameEN>left wrist</hasNlpNameEN>
+        <world_name>LEFT_WRIST</world_name>
+    </owl:Class>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Length_Temperature_Time_Unit -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Length_Temperature_Time_Unit">
@@ -4369,6 +4380,17 @@
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Respiratory_Rate_Unit">
         <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Biomedical_Unit"/>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#RightWrist -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#RightWrist">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#TangibleObject"/>
+        <hasNlpNameCZ>pravé zápěstí</hasNlpNameCZ>
+        <hasNlpNameEN>right wrist</hasNlpNameEN>
+        <world_name>RIGHT_WRIST</world_name>
     </owl:Class>
     
 
@@ -7459,23 +7481,7 @@
         <z rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.0</z>
     </owl:NamedIndividual>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7495,7 +7501,7 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7512,6 +7518,22 @@
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     
@@ -7546,6 +7568,17 @@
             <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Path"/>
             <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Point"/>
             <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Volume"/>
+        </owl:members>
+    </rdf:Description>
+    <rdf:Description>
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#AllDisjointClasses"/>
+        <owl:members rdf:parseType="Collection">
+            <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Equipment"/>
+            <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Hand"/>
+            <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#LeftWrist"/>
+            <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#RightWrist"/>
+            <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Tool"/>
+            <rdf:Description rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WorkMaterial"/>
         </owl:members>
     </rdf:Description>
 </rdf:RDF>
