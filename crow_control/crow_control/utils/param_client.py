@@ -199,7 +199,10 @@ class UniversalParamClient(ParamClient):
 
     def _poll(self):
         while self.active:
-            rcv_param, data = self._subscriber.recv_multipart()
+            try:
+                rcv_param, data = self._subscriber.recv_multipart()
+            except zmq.Again:
+                continue
             msg = cpl.loads(data)
             param = rcv_param.decode()
             # print(param, msg)

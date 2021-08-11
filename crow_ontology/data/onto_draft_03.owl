@@ -5666,9 +5666,10 @@
         <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">1</hasMarkerId>
         <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">2</hasMarkerId>
         <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">3</hasMarkerId>
+        <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">4</hasMarkerId>
         <hasMarkerSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int">4</hasMarkerSize>
         <hasSeed rdf:datatype="http://www.w3.org/2001/XMLSchema#int">66</hasSeed>
-        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.03</hasSquareLength>
+        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.06</hasSquareLength>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">modrá</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">blue</hasNlpNameEN>
     </owl:NamedIndividual>
@@ -5683,7 +5684,7 @@
         <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">5</hasMarkerId>
         <hasMarkerSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int">4</hasMarkerSize>
         <hasSeed rdf:datatype="http://www.w3.org/2001/XMLSchema#int">66</hasSeed>
-        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.03</hasSquareLength>
+        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.06</hasSquareLength>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">zelená</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">green</hasNlpNameEN>
     </owl:NamedIndividual>
@@ -5699,7 +5700,7 @@
         <hasMarkerId rdf:datatype="http://www.w3.org/2001/XMLSchema#int">7</hasMarkerId>
         <hasMarkerSize rdf:datatype="http://www.w3.org/2001/XMLSchema#int">4</hasMarkerSize>
         <hasSeed rdf:datatype="http://www.w3.org/2001/XMLSchema#int">66</hasSeed>
-        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.03</hasSquareLength>
+        <hasSquareLength rdf:datatype="http://www.w3.org/2001/XMLSchema#float">0.06</hasSquareLength>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">červená</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">red</hasNlpNameEN>
     </owl:NamedIndividual>
