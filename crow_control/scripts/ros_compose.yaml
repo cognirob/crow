@@ -1,0 +1,93 @@
+pre:  
+  - crow
+
+post:  
+  - echo "Job finished"
+
+
+services:  
+
+  cameras:  
+    working_dir: ~/crow
+    command: ros2 launch crow_vision_ros2 all_cameras.launch.py
+    tags: [ vision, camera ]
+
+  detector:  
+    working_dir: ~/crow
+    commands:  
+      - sleep 7
+      - ros2 run crow_vision_ros2 detector
+    tags: [ detector ]
+
+  detector_edge:  
+    working_dir: ~/crow
+    commands:  
+      - sleep 7
+      - ros2 run crow_vision_ros2 detector_edge
+    tags: [ detector_edge ]
+
+  pose_detector:  
+    working_dir: ~/crow
+    commands:  
+      - sleep 7
+      - ros2 run crow_vision_ros2 detector_pose
+    tags: [ vision, detector_pose ]
+
+  locator:  
+    working_dir: ~/crow
+    commands:  
+      - sleep 15
+      - ros2 run crow_vision_ros2 locator
+    tags: [ vision, locator ]
+
+  filter:  
+    working_dir: ~/crow
+    commands:  
+      - sleep 15
+      - ros2 run crow_vision_ros2 filter
+    tags: [ vision, filter ]
+
+  server:  
+    working_dir: ~/crow
+    command: ros2 run crow_ontology server
+    tags: [ onto ]
+
+  adder:  
+    working_dir: ~/crow
+    commands:
+      - sleep 15
+      - ros2 run crow_ontology adder
+    tags: [ onto ]
+
+  ovis:  
+    working_dir: ~/crow
+    commands:
+      - sleep 10
+      - ros2 run crow_control ovis
+    tags: [ onto ]
+
+  wxvis:  
+    working_dir: ~/crow
+    commands:
+      - sleep 10
+      - ros2 run crow_control wxvis
+    tags: [ vizualization ]
+
+  # crow_object:
+  #   working_dir: ~/crow
+  #   command: ros2 launch crow_vision_ros2 crow_object.launch.py
+  #   tags: [ vision ]
+  pcl_cacher:  
+    working_dir: ~/crow
+    command: ros2 run crow_vision_ros2 pcl_cacher
+    tags: [ pcl_aggregate ]
+
+  dummy:  
+    working_dir: ~/crow
+    command: ros2 run crow_control dummy
+    tags: [ debug ]
+
+  logic:  
+    working_dir: ~/crow
+    command: ros2 run crow_control logic
+    tags: [ control ]

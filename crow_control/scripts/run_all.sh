@@ -107,6 +107,11 @@ if [ "$O_NO_VISION" != true ]; then
     runcmd "ros2 launch crow_vision_ros2 crow_object.launch.py"
 
     new_tab $WID
+    sleep 15
+    runcmd "echo -ne '\033]30;Pose\007'"
+    runcmd "ros2 run crow_vision_ros2 detector_pose"
+
+    new_tab $WID
     runcmd "echo -ne '\033]30;Filter\007'"
     runcmd "ros2 run crow_vision_ros2 filter"
 
@@ -169,7 +174,7 @@ if [ "$O_NO_NLP" != true ]; then
 
     new_tab $WID
     runcmd "echo -ne '\033]30;NL Input\007'"
-    runcmd "ros2 run crow_nlp nl_cont"
+    runcmd "ros2 run crow_nlp nl_snow --lang cs --ends 0.5"
 fi
 
 wmctrl -i -a $WID
