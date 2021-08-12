@@ -1,4 +1,6 @@
 pre:  
+  - shopt -s expand_aliases
+  - source ~/.bashrc
   - crow
 
 post:  
@@ -59,12 +61,12 @@ services:
       - ros2 run crow_ontology adder
     tags: [ onto ]
 
-  ovis:  
-    working_dir: ~/crow
-    commands:
-      - sleep 10
-      - ros2 run crow_control ovis
-    tags: [ onto ]
+  # ovis:  
+  #   working_dir: ~/crow
+  #   commands:
+  #     - sleep 10
+  #     - ros2 run crow_control ovis
+  #   tags: [ onto ]
 
   wxvis:  
     working_dir: ~/crow
@@ -86,6 +88,16 @@ services:
     working_dir: ~/crow
     command: ros2 run crow_control dummy
     tags: [ debug ]
+
+  sentence_processor:  
+    working_dir: ~/crow
+    command: ros2 run crow_nlp sentence_processor
+    tags: [ nlp ]
+
+  nl_input:  
+    working_dir: ~/crow
+    command: ros2 run crow_nlp nl_snow --lang cs --ends 0.5 --gain 0.5
+    tags: [ nlp ]
 
   logic:  
     working_dir: ~/crow
