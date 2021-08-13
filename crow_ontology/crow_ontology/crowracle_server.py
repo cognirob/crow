@@ -37,10 +37,11 @@ class CrowtologyServer():
     # CROW = Namespace(crowNSString)
     # OWLR = Namespace("http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#")
     BACKUP_ON_START = False
+    CLEAR_ON_START = True  # if clearing is False, backup has no effect (i.e. only bkp if clearing)
 
     def __init__(self, config_path=None, base_onto_path=None):
+        modulePath = find_spec("crow_ontology").submodule_search_locations[0]
         if config_path is None:
-            modulePath = find_spec("crow_ontology").submodule_search_locations[0]
             config_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
 
         with open(config_path, 'r') as file:  # load the config
@@ -49,12 +50,14 @@ class CrowtologyServer():
         self.__onto = OntologyAPI(config_path)
         self.__node = None
         try:
-            if self.BACKUP_ON_START and len(self.onto) > 0:  # try to make a backup
-                bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
-                self.onto.graph.serialize(bkp_path, format="xml")
-                self.onto.destroy("I know what I am doing")
-                self.onto.closelink()
-                self.__onto = OntologyAPI(config_path)
+            if len(self.onto) > 0:  # try to make a backup
+                if self.CLEAR_ON_START:
+                    if self.BACKUP_ON_START:
+                        bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
+                        self.onto.graph.serialize(bkp_path, format="xml")
+                    self.onto.destroy("I know what I am doing")
+                    self.onto.closelink()
+                    self.__onto = OntologyAPI(config_path)
         except Exception as e:
             print(f"Tried backing up the ontology but failed because: {e}")
             try:
