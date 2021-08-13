@@ -84,14 +84,14 @@ class CrowtologyClient():
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
-    _positions_query_props = prepareQuery("""SELECT ?obj ?name 
+    _positions_query_props = prepareQuery("""SELECT ?obj ?name
         WHERE {
             ?obj rdf:type crow:Position .
             ?obj crow:hasName ?name .
         }""",
                                    initNs={"owl": OWL, "crow": CROW, "rdf": RDF, "rdfs": RDFS}
                                    )
-    _storages_query_props = prepareQuery("""SELECT ?obj ?name 
+    _storages_query_props = prepareQuery("""SELECT ?obj ?name
         WHERE {
             ?obj rdf:type crow:StorageSpace .
             ?obj crow:hasName ?name .
@@ -969,8 +969,92 @@ class CrowtologyClient():
         """
         area_poly = self.get_polyhedron(area_uri)
         obj_location = self.get_location_of_obj(obj_uri)
-        res = test_in_hull(obj_location, area_poly)
-        return res
+        print(f"* obj_location: {obj_location}")
+        if area_poly != [[None]]:
+            res = test_in_hull(obj_location, area_poly)
+            return res
+        else:
+            return None
+
+    def pair_objects_to_areas_wq(self, verbose=False):
+        """ Test if objects are located inside any area, if so - append that object
+        to that area
+
+        Args:
+            verbose (bool): If verbose is set to True, write out all triples who have
+                predicate self.CROW.insideOf
+
+        Returns:
+            -
+        """
+        areas_uris = self.getStoragesProps()
+        scene_objs_uris = self.getTangibleObjects()
+
+        for scene_obj_uri in scene_objs_uris:
+            # Remove all previous occurences and if objects is within some area -
+            # append it to it
+            self.onto.remove((scene_obj_uri, self.CROW.insideOf, None))
+
+            for area_uri in areas_uris:
+                obj_scene_test_ret = self.test_obj_in_area(obj_uri=scene_obj_uri, area_uri=area_uri['uri'])
+                if obj_scene_test_ret == True:
+                    self.onto.add((scene_obj_uri, self.CROW.insideOf, area_uri['uri']))
+
+        if verbose:
+            print("* All objects in all spaces:")
+            all = self.onto.triples((None, self.CROW.insideOf, None))
+            i = 1
+            for bit in all:
+                print(f"#{i} triple: {bit}")
+                i += 1
+        return
+
+    def check_position_in_workspace_area(self, xyz_list):
+        """
+        Check position xyz_list=[x,y,z] in area with name 'workspace'
+        """
+        areas_uris = self.getStoragesProps()
+        for area_uri in areas_uris:
+            if area_uri['name'] == 'workspace':
+                area_poly = self.get_polyhedron(area_uri['uri'])
+                return test_in_hull(xyz_list, area_poly)
+
+        self.__node.get_logger().info("<crowracle_client.py> 'workspace' scene doesn't exist!")
+        return False
+
+    def pair_objects_to_areas(self, areas_uris, verbose=False):
+        """Test if objects are located inside any area, if so - append that object
+        to that area
+
+        Args:
+            area_uris (URIRef): list of URI's of all the areas in workspace
+            verbose (bool): If verbose is set to True, write out all triples who have
+                predicate self.CROW.insideOf
+        Returns:
+            -
+        """
+        # Get all scene objects
+        scene_objs_uris = self.getTangibleObjects()
+        for scene_obj_uri in scene_objs_uris:
+            # Remove all previous occurences and if objects is within some area -
+            # append it to it
+            self.onto.remove((scene_obj_uri, self.CROW.insideOf, None))
+
+            for area_uri in areas_uris:
+                obj_scene_test_ret = self.test_obj_in_area(obj_uri=scene_obj_uri, area_uri=area_uri)
+
+                if obj_scene_test_ret:
+                    self.onto.add((scene_obj_uri, self.CROW.insideOf, area_uri))
+
+        if verbose:
+            print("* All objects in all spaces:")
+            all = self.onto.triples((None, self.CROW.insideOf, None))
+            i = 1
+            for bit in all:
+                print(f"#{i} triple: {bit}")
+                i += 1
+
+        return
 
     def get_objs_in_area(self, area_uri):
         """Return objects located inside the given area (defined as storage space)
@@ -1246,6 +1330,7 @@ class CrowtologyClient():
         if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
             self.__node.get_logger().info("DELETING object {}.".format(obj.split('#')[-1]))
             self.onto.remove((obj, None, None))
+            self.onto.remove((None, None, obj))
         self.lock.release()
 
     def disable_object(self, obj):
