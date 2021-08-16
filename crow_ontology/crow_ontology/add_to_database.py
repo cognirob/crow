@@ -51,10 +51,10 @@ class OntoAdder(Node):
         self.action_topics = ["action_rec"]
         self.filter_topics = ["filtered_poses"]
 
-        #create timer for crawler - periodically delete old objects from database
+        # create timer for crawler - periodically delete old objects from database
         self.create_timer(TIMER_FREQ, self.timer_callback)
 
-        #create listeners
+        # create listeners
         qos = QoSProfile(depth=20, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         listener = self.create_subscription(msg_type=FilteredPose,
                                         topic=self.filter_topics[0],
@@ -69,9 +69,13 @@ class OntoAdder(Node):
                                           qos_profile=qos) #the listener QoS has to be =1, "keep last only".
         self.get_logger().info('Input listener created on topic: "%s"' % self.action_topics[0])
 
+        # Storage
+        self.storage_space_added = False
+
     def timer_callback(self):
         obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
         now_time = datetime.now()
+
         for obj in obj_in_database:
             try:
                 last_obj_time = next(self.onto.objects(obj, CROW.hasTimestamp))
@@ -86,13 +90,29 @@ class OntoAdder(Node):
             else:
                 self.crowracle.enable_object(obj)
 
+
+        # Add new storage - testing
+        if self.storage_space_added:
+            self.crowracle.pair_objects_to_areas_wq(verbose=True)
+        else:
+            self.storage_space_added = True
+            # add new storage
+            name = "workspace"
+            polygon = [[0.2,0.53,0.3],[0.44,0.53,0.3],[0.44,0.3,0.3],[0.2,0.3,0.3]]
+            polyhedron = [ [0.2,0.53,0.3],[0.44,0.53,0.3],[0.44,0.3,0.3],[0.2,0.3,0.3],  [0.2,0.53,-0.3],[0.44,0.53,-0.3],[0.44,0.3,-0.3],[0.2,0.3,-0.3] ]
+            area = 1
+            volume = 1
+            centroid = [0.275,0.55,1]
+            self.crowracle.add_storage_space(name=name, polygon=polygon, polyhedron=polyhedron, area=area, volume=volume, centroid=centroid)
+        ##
+
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses received. Quitting early.")
             return  # no mask detections (for some reason)
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
-        for class_name, pose, size, uuid in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid):
-            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, timestamp)
+        for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
+            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
 
     def input_action_callback(self, action_array_msg):
         if not action_array_msg.avg_class_name:
@@ -128,7 +148,8 @@ class OntoAdder(Node):
         else:
             return -1
 
-    def process_detected_object(self, object_name, location, size, uuid, timestamp):
+    def process_detected_object(self, object_name, location, size, uuid, tracked, timestamp):
+
         if object_name in ['kuka', 'kuka_gripper']:
             #self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
             return
