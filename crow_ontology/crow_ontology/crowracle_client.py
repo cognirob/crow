@@ -189,7 +189,7 @@ class CrowtologyClient():
                 cfg = yaml.safe_load(file)
 
             # try to get the database parameters (host, port, ...)
-            self.__db_params = self.get_db_params()
+            self.__db_params = self.__get_db_params()
             initial_config = {DB_PARAM_MAP[k]: v for k, v in self.__db_params.items()}
             self.__node.get_logger().info(str(initial_config))
             self.__config = DBConfig(
@@ -209,7 +209,11 @@ class CrowtologyClient():
         self.__onto.bind("crow", self.CROW)  # this is not good, overwrites the base namespace
         self.__onto.bind("owl", OWL)
 
-    def get_db_params(self):
+    @property
+    def node(self) -> rclpy.node.Node:
+        return self.__node
+
+    def __get_db_params(self):
         """Tries to get the connection parameters from the server node, if run in ROS mode
 
         Raises:

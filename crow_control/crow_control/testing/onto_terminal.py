@@ -8,6 +8,9 @@ import re
 from itertools import chain
 import os
 
+import rclpy
+from rdflib.plugins.sparql.algebra import Union
+
 
 class History():
     MAX_LEN = 100
@@ -58,10 +61,10 @@ class History():
 # class
 
 class OTerm(npyscreen.Autocomplete):
-    M_FUNCTION_BASE = re.compile(r"\.(?P<fname>\w+(?=\())\((?P<args>[\w\'\",=\s:/\[\]\{\}\(\)]+(?!$))?")
-    M_FUNCTION_FILTER = re.compile(r"((\([^\(]+(?=[^\(]+\)).\))|(\[[^\[]+(?=[^\[]+\]).\]))|(\{[^\{]+(?=[^\{]+\}).\})")
-    M_FUNCTION_SPLIT = re.compile(r"(?:(?:[\w_]+(?= *\=) *\= *)?(?:(?:\{(?=[^\{]+\})[^\}]+\})|(?:\((?=[^\(]+\))[^\)]+\))|(?:\[(?=[^\[]+\])[^\]]+\])|[\w_]+))")
-    M_FUNCTION_ARGS = re.compile(r"(?P<key>\w+(?=\s*\=))?\s*\=?\s*(?P<arg>[,\w\'\"\s:/\[\]\{\}\(\)]+)")
+    M_FUNCTION_BASE = re.compile(r"\.(?P<fname>\w+(?=\())\((?P<args>[\w\'\",=\s:\/\[\]\{\}\(\)\.]+(?!$))?", flags=re.UNICODE)
+    M_FUNCTION_FILTER = re.compile(r"((\([^\(]+(?=[^\(]+\)).\))|(\[[^\[]+(?=[^\[]+\]).\]))|(\{[^\{]+(?=[^\{]+\}).\})", flags=re.UNICODE)
+    M_FUNCTION_SPLIT = re.compile(r"(?:\s*(?:(?:[\w_\s]+)(?=\=) *\= *)?(?:(?:\{(?=[^\{]+\})[^\}]+\})|(?:\((?=[^\(]+\))[^\)]+\))|(?:\[(?=[^\[]+\])[^\]]+\])|[\'\"\w_\s\t\n]+))", flags=re.UNICODE)
+    M_FUNCTION_ARGS = re.compile(r"(?P<key>\w+(?=\s*\=))?\s*\=?\s*(?P<arg>[,\w\'\"\s:/\[\]\{\}\(\)\.]+)", flags=re.UNICODE)
 
     def __init__(self, *args, **keywords):
         super().__init__(*args, **keywords)
@@ -127,14 +130,19 @@ class OTerm(npyscreen.Autocomplete):
         if arg_string is not None:
             arg_list = self.M_FUNCTION_SPLIT.findall(arg_string)
             for arg in arg_list:
-                m = self.M_FUNCTION_ARGS.match(arg)
+                m = self.M_FUNCTION_ARGS.match(arg.strip())
                 if m is None:
                     raise Exception(f"Malformed argument: '{arg}'!")
                 key, value = m.group("key", "arg")
-                if key is None:
-                    args.append(self.process_function_values(value))
+                try:
+                    arg_val = self.process_function_values(value)
+                except BaseException as e:
+                    raise Exception(f"Error while evaluating function argument(s): '{arg}'!\nError was:\n{e}")
                 else:
-                    kwargs[key] = self.process_function_values(value)
+                    if key is None:
+                        args.append(arg_val)
+                    else:
+                        kwargs[key] = arg_val
 
         return fname, args, kwargs
 
@@ -151,20 +159,28 @@ class OTerm(npyscreen.Autocomplete):
         return ""
 
     def error_popup(self, message, title=""):
-        self.popup(([title, ""] if len(title) > 0 else []) + (message if type(message) is list else [message]), title="Error")
+        self.popup(([title, ""] if len(title) > 0 else []) + (message if type(message) is list else message.split("\n")), title="Error")
 
     def display_result(self, function_call, result):
         if result is None:
             result = []
         else:
-            def wrap_or_tap(value):
-                if type(value) is list:
+            def ravel_dict(d: dict) -> List[str]:
+                return [f"{k}: {v}" for k, v in d.items()]
+                # return '\n'.join([f"{k}: {v}" for k, v in d.items()]).split("\n")
+
+            def wrap_or_tap(value) -> List[str]:
+                if type(value) in [list, set]:
                     return value
+                elif type(value) is dict:
+                    return ravel_dict(value)
                 else:
                     return wrap(value, width=self.parent.columns - 10)
 
-            if type(result) is list:
+            if type(result) in [list, set]:
                 result = list(chain.from_iterable([wrap_or_tap(m) for m in result]))
+            elif type(result) is dict:
+                result = ravel_dict(result)
             else:
                 result = wrap_or_tap(result)
             result = [""] + result
@@ -178,7 +194,7 @@ class OTerm(npyscreen.Autocomplete):
                 try:
                     fname, args, kwargs = self.parse_function(self.value)
                 except BaseException as e:
-                    self.error_popup([f"Error parsing command '{self.value}':", str(e)])
+                    self.error_popup([f"Error parsing command '{self.value}':"] + str(e).split("\n"))
                 else:
                     try:
                         func = getattr(self.crowracle, fname)
@@ -190,7 +206,7 @@ class OTerm(npyscreen.Autocomplete):
             else:
                 raise Exception("SPARQL execution not implemented yet!")
         except BaseException as e:
-            self.error_popup([f"Error executing command '{self.value}':", str(e)])
+            self.error_popup([f"Error executing command '{self.value}':"] + str(e).split("\n"))
         else:
             self.history.append(self.value)
         finally:
@@ -256,6 +272,7 @@ class OntoTerm(npyscreen.NPSAppManaged):
         # initialize the ontology client
         self.crowracle = CrowtologyClient()
         self.onto = self.crowracle.onto
+        self.crowracle.node.get_logger().set_level(rclpy.logging.LoggingSeverity.ERROR)
 
         self.history = History()
 
