@@ -7,9 +7,10 @@ import inspect
 import re
 from itertools import chain
 import os
-
+from crow_ontology.utils import QueryParser
 import rclpy
 from rdflib.plugins.sparql.algebra import Union
+from rdflib.plugins.sparql.processor import prepareQuery
 
 
 class History():
@@ -71,6 +72,7 @@ class OTerm(npyscreen.Autocomplete):
         self.crowracle = self.parent.parentApp.crowracle
         self.crowtology_functions = [(el_str, inspect.signature(el)) for el, el_str in [(getattr(self.crowracle, el_str), el_str) for el_str in filter(lambda x: not x.startswith("_"), dir(self.crowracle))] if callable(el)]
         self.history = self.parent.parentApp.history
+        self.query_parser = QueryParser(self.crowracle.CROW)
 
     def set_up_handlers(self):
         super().set_up_handlers()
@@ -204,7 +206,18 @@ class OTerm(npyscreen.Autocomplete):
                         result = func(*args, **kwargs)
                         self.display_result(self.value, result)
             else:
-                raise Exception("SPARQL execution not implemented yet!")
+                try:
+                    query_string = self.query_parser.parse(self.value)
+                except BaseException as e:
+                    self.error_popup([f"Error parsing query '{self.value}':"] + str(e).split("\n"))
+                    return
+                try:
+                    query = prepareQuery(query_string, initNs=self.crowracle.onto.namespaces, base=self.crowracle.CROW)
+                except BaseException as e:
+                    self.error_popup([f"Error preparing query '{self.value}':"] + str(e).split("\n") + ["\nThe parsed query string:\n"] + query_string.split("\n"))
+                    return
+                result = self.crowracle.onto.query(query)
+                self.display_result(self.value, result)
         except BaseException as e:
             self.error_popup([f"Error executing command '{self.value}':"] + str(e).split("\n"))
         else:
