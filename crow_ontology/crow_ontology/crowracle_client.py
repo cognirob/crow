@@ -237,6 +237,7 @@ class CrowtologyClient():
             res_list (dict of dicts): Object properties (name, sigma, color) for filter
         """
         qres = list(self.onto.query(self._filter_properties_query))
+        print("After list")
         res_list = {}
         qres.sort(key = lambda i: i["name"])
         for idx, g in enumerate(qres):
@@ -245,7 +246,9 @@ class CrowtologyClient():
             res_dict["sigma"] = g['sigma'].toPython()
             res_dict["color"] = np.fromstring(g["col"].toPython().strip('[]').strip("''"), dtype=float, sep=' ')
             res_list[idx] = res_dict
+        print("After first enum")
         names = [res_list[res]['name'] for res in res_list.keys()]
+        print("Before for")
         for name in ['kuka', 'kuka_gripper', 'hand']:
             if name not in names:
                 idx += 1
