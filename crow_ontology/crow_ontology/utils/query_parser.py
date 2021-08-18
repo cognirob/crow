@@ -148,7 +148,7 @@ class QueryParser():
                 last_end = varm.span()[1]
             else:
                 vname = "?" + vname
-            if v_ignore is None:
+            if v_ignore is None and vname not in self.selected:
                 self.selected.append(vname)
             self.autogen_idx += 1
         if len(tmp_core) > 0:
@@ -162,14 +162,14 @@ class QueryParser():
             if modifier == "!":
                 fmod = ""
                 if self.P_FILT_COMP.search(core) is None:
-                    fmod = " NOT EXIST { "
+                    fmod = " NOT EXISTS { "
                     core += " }"
                 else:
                     if self.P_FILT_REGEX.search(core) is not None:
                         fmod = " regex"
                 core = "FILTER" + fmod + core
             elif modifier == "!?":
-                core = "FILTER EXIST { " + core + " }"
+                core = "FILTER EXISTS { " + core + " }"
             elif modifier == "+":
                 core = "OPTIONAL { " + core + " }"
             elif modifier == "-":
