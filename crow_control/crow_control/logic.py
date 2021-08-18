@@ -392,12 +392,21 @@ class ControlLogic(Node):
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
         self._set_status(self.STATUS_PROCESSING)
+        print(target_info)
+        size = target_info[1]
+        if np.any(np.isnan(size)):
+            size = [0.0, 0.0, 0.0]
+        # print('************)', size)
+        # print('************)', np.any(np.isnan(size)))
         goal_msg = self.composeRobotActionMessage(
                 target_xyz=target_info[0],
-                target_size=target_info[1],
+                # target_size=target_info[1],
+                target_size=size,
                 target_type=target_info[2],
                 location_xyz=location
             )
+        # print('>>>>')
+        print(goal_msg)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
@@ -558,8 +567,8 @@ class ControlLogic(Node):
             pick_pose = Pose()
             pick_pose.position.x, pick_pose.position.y, pick_pose.position.z = target_xyz
             goal_msg.poses.append(pick_pose)
-            if target_size is None:
-                goal_msg.size = [0, 0, 0]
+            if target_size is None:  # or target_type==-1:
+                goal_msg.size = [0.0, 0.0, 0.0]
             else:
                 goal_msg.size = target_size
             if target_type is None:
