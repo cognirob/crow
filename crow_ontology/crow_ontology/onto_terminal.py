@@ -457,8 +457,10 @@ class OTerm(npyscreen.Autocomplete):
                     npyscreen.Popup.DEFAULT_COLUMNS = 100
                     choice_id = self.get_choice(choices)
                     npyscreen.Popup.DEFAULT_COLUMNS = rem
-                choice = self._shorten_uri(choices[choice_id])
-                self.value = seq.replace(inp, inp.replace(part, choice) if len(part) > 0 else inp + choice)
+                choice = self._shorten_uri(choices[choice_id])[::-1]
+                part = part[::-1]
+                inp = inp[::-1]
+                self.value = seq[::-1].replace(inp, inp.replace(part, choice, 1) if len(part) > 0 else choice + inp, 1)[::-1]
             else:
                 curses.beep()
 
