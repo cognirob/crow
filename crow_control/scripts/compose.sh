@@ -97,4 +97,4 @@ if [ "$O_DEBUG" == true ]; then
 fi
 
 
-echo jcompose "${BASH_SOURCE%/*}/ros_compose.yaml" --jobs ${CMD}
+jcompose "${BASH_SOURCE%/*}/ros_compose.yaml" --jobs ${CMD}
