@@ -71,7 +71,9 @@ class OntoAdder(Node):
 
     def timer_callback(self):
         obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
-        now_time = datetime.now()
+        # now_time = datetime.now()
+        tmsg = self.get_clock().now().to_msg()
+        now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
         for obj in obj_in_database:
             try:
                 last_obj_time = next(self.onto.objects(obj, CROW.hasTimestamp))
