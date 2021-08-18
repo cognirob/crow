@@ -65,7 +65,7 @@ services:
   #   working_dir: ~/crow
   #   commands:
   #     - sleep 10
-  #     - ros2 run crow_control ovis
+  #     - ros2 run crow_ontology ovis
   #   tags: [ onto ]
 
   wxvis:  

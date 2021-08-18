@@ -337,7 +337,7 @@ class OTerm(npyscreen.Autocomplete):
                 start = time.time()
                 result = func(*args, **kwargs)
                 run_time = time.time() - start
-                self.display_result(self.value, result, info=f"(function executed in {run_time:.5f} seconds)")
+                self.display_result(self.value, result, info=f"[function executed in {run_time:.5f} seconds]")
             else:
                 try:
                     query_string = self.query_parser.parse(self.value)
@@ -359,7 +359,7 @@ class OTerm(npyscreen.Autocomplete):
                     records = [{v: self._shorten_uri(r[v]) for v in vnames} for r in result]
                     df = pd.DataFrame.from_records(records)
                     self.display_result(self.value, df.to_markdown().split("\n"),
-                        info=f"(query prepared in {run_time_qp:.5f} seconds and evaluated in {run_time_ask:.5f} seconds)")
+                        info=f"[query prepared in {run_time_qp:.5f} seconds and evaluated in {run_time_ask:.5f} seconds]")
                 else:
                     self.display_result(self.value, "> query returned empty result <")
         except BaseException as e:

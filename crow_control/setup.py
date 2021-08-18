@@ -29,8 +29,6 @@ setup(
             'dummy_nl_input = crow_control.testing.dummy_nl_input_curses:main',
             'ptest = crow_control.testing.test_param:main',
             'stest = crow_control.testing.test_param_server:main',
-            'ovis = crow_control.onto_vision:main',
-            'oterm = crow_control.testing.onto_terminal:main',
             'profiler = crow_control.utils.profiler_node:main',
             'wxvis = crow_control.wx_visualizator:main'
         ],

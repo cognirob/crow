@@ -134,7 +134,7 @@ new_tab $WID
 runcmd "echo -ne '\033]30;OViz\007'"
 runcmd "echo Waiting for Ontology server to come online"
 runcmd "ros2 service call /ontology_server/get_parameters rcl_interfaces/srv/GetParameters names:\ ['database_host']\ "
-runcmd "ros2 run crow_control ovis"
+runcmd "ros2 run crow_ontology ovis"
 
 if [ "$O_NO_SPLIT" != true ]; then
     xdotool windowfocus $WID
