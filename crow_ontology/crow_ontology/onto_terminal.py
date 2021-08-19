@@ -1,7 +1,7 @@
 from crow_ontology.utils import query_parser
 import sys
 import time
-from typing import List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 from textwrap import wrap
 
 import pandas as pd
@@ -15,12 +15,14 @@ import os
 from crow_ontology.utils import QueryParser
 from npyscreen.wgmultiline import MultiLine
 import rclpy
-from rdflib.plugins.sparql.algebra import Union
+from typing import Union
 from rdflib.plugins.sparql.processor import prepareQuery
 
 
 
 class FileLog():
+    """A simple logging class that can store the log into a file.
+    """
 
     def __init__(self, log_file=".oterm_errors.txt", max_len=100) -> None:
         self.LOG_FILE = log_file
@@ -40,7 +42,13 @@ class FileLog():
         if len(msg) > 0:
             self._list.append(msg)
 
-    def append(self, msg) -> None:
+    def append(self, msg: Union[str, List[str]]) -> None:
+        """Appends the provided message to the log.
+
+        Args:
+            msg (Union[str, List[str]]): Message to append.
+        """
+
         if type(msg) is list:
             self._list += msg
         else:
@@ -48,6 +56,8 @@ class FileLog():
         self._has_changes = True
 
     def delete(self):
+        """Deletes the current log content. Does not immediately delete the log file!
+        """
         self._list = []
         self._has_changes = True
 
@@ -56,6 +66,8 @@ class FileLog():
         return self._list
 
     def write(self) -> None:
+        """Writes the current log content to the file.
+        """
         if len(self._list) == 0:
             return
         if len(self._list) > self.MAX_LEN:
@@ -96,13 +108,15 @@ class History(FileLog):
 
 
 class ActionSelector(npyscreen.MultiSelectAction):
-    _contained_widgets = npyscreen.RoundCheckBox
+    _contained_widgets = npyscreen.BoxBasic
 
     def actionHighlighted(self, act_on_this, key_press):
         self.parent.on_ok(value=act_on_this)
 
 
 class Histeresis(npyscreen.ActionFormV2):
+    """Form to disply the complete history (from the 'History' logging object).
+    """
 
     def create(self):
         self.selector = self.add(ActionSelector, name="History")
@@ -128,6 +142,8 @@ class Histeresis(npyscreen.ActionFormV2):
 
 
 class QueryDoc(npyscreen.Form):
+    """A form to display the help/documentation from the query_parser.py file.
+    """
 
     def create(self):
         self.qdoc = self.add(MultiLine, name="QDoc")
@@ -140,6 +156,8 @@ class QueryDoc(npyscreen.Form):
 
 
 class OTerm(npyscreen.Autocomplete):
+    """The main control widget that also serves as a command line for the main form.
+    """
     M_FUNCTION_BASE = re.compile(r"\.(?P<fname>\w+(?=\())\((?P<args>[\w\'\",=\s:\/\[\]\{\}\(\)\.]+(?!$))?", flags=re.UNICODE)
     M_FUNCTION_FILTER = re.compile(r"((\([^\(]+(?=[^\(]+\)).\))|(\[[^\[]+(?=[^\[]+\]).\]))|(\{[^\{]+(?=[^\{]+\}).\})", flags=re.UNICODE)
     M_FUNCTION_SPLIT = re.compile(r"(?:\s*(?:(?:[\w_\s]+)(?=\=) *\= *)?(?:(?:\{(?=[^\{]+\})[^\}]+\})|(?:\((?=[^\(]+\))[^\)]+\))|(?:\[(?=[^\[]+\])[^\]]+\])|[\'\"\w_\s\t\n]+))", flags=re.UNICODE)
@@ -147,17 +165,20 @@ class OTerm(npyscreen.Autocomplete):
     P_SPO = re.compile(r"^(?P<modifier>(?:!|\+|-|(!\?))(?= ))?\s*(?P<s>[\?:\w]+)?(?P<p>\s+[\?:\w]+)?(?P<o>\s+[\?:\w]+)?", flags=re.UNICODE)
     P_NS = re.compile(r"^ *(?P<ns>\w+(?=:))", flags=re.UNICODE)
 
-    def __init__(self, *args, **keywords):
+    def __init__(self, *args, **keywords) -> None:
         super().__init__(*args, **keywords)
+        # reference to crowracle
         self.crowracle = self.parent.parentApp.crowracle
         self.crowtology_functions = [(el_str, inspect.signature(el)) for el, el_str in [(getattr(self.crowracle, el_str), el_str) for el_str in filter(lambda x: not x.startswith("_"), dir(self.crowracle))] if callable(el)]
+        # logging object references
         self.history = self.parent.parentApp.history
         self.error_log = self.parent.parentApp.error_log
+        # query parser instance
         self.query_parser = QueryParser(self.crowracle.CROW)
+        # get namespaces for URI shortening and expansion
         self.onto_namespaces = self.crowracle.onto.namespaces
         if "crow" not in self.onto_namespaces.keys():
             self.onto_namespaces["crow"] = self.crowracle.CROW
-
         self.replacement_ns = {}
         for ns, uri in self.onto_namespaces.items():
             if ns == "base":
@@ -183,6 +204,7 @@ class OTerm(npyscreen.Autocomplete):
                 curses.KEY_F2: self.show_docs,
                 curses.KEY_F5: self.show_history,
                 curses.KEY_F8: self.delete_history,
+                curses.KEY_F10: self.exit_application,
                 curses.KEY_UP: self.history_up,
                 curses.KEY_DOWN: self.history_down,
                 "^s": self.help_subject,
@@ -197,14 +219,16 @@ class OTerm(npyscreen.Autocomplete):
         self.parent.parentApp.switchForm('HISTORY')
 
     def delete_history(self, input):
-        tmp_win = npyscreen.ActionPopup(name="History deletion confirmation", framed=True)
-        tmp_win.add(npyscreen.TitleText, name="Are you sure you want to delete all history?")
-        def delete_history():
+        decision = npyscreen.notify_ok_cancel("Are you sure you want to delete all history?", title="History deletion confirmation", form_color="DANGER")
+        if decision:
             self.history.delete()
-        tmp_win.on_ok = delete_history
-        tmp_win.display()
-        tmp_win.edit()
         return ""
+
+    def exit_application(self, input=None):
+        self.parent.parentApp.setNextForm(None)
+        self.parent.editing = False
+        self.editing = False
+        print("Goodbye!")
 
     def test(self):
         print("LAL")
@@ -237,23 +261,44 @@ class OTerm(npyscreen.Autocomplete):
         self.parent.wMain.start_display_at = len(self.parent.wMain.values) - len(self.parent.wMain._my_widgets)
         self.parent.wMain.update()
 
-    def process_function_values(self, value):
+    def process_function_values(self, value: str) -> Any:
+        """Get arguments from a string (e.g. "12", "'aaa'", "[1, 2, 3]", ...)
+
+        Args:
+            value ([str]): A string containing function a argument.
+
+        Returns:
+            [Any]: A python value/object (e.g. list, dict, etc.)
+        """
         return eval(value)  # TODO: maybe something better and safer in the future
 
-    def parse_function(self, command):
-        m = self.M_FUNCTION_BASE.match(command)
+    def parse_function(self, command: str) -> Tuple[str, list, dict]:
+        """Parses a string from user input containing a full function call,
+        i.e., function name and signature with args/kwargs.
+
+        Args:
+            command (str): The string with a function call.
+
+        Raises:
+            Exception: Error when parsing or executing the function.
+
+        Returns:
+            Tuple[str, list, dict]: The function name, arguments and keyword arguments.
+        """
+        m = self.M_FUNCTION_BASE.match(command)  # first, split the function into name & signature
         if m is None:
             raise Exception("Could not split the function into 'function name' and 'args'! Is the signature correct? (enclosing brackets, etc.)")
         fname, arg_string = m.group("fname", "args")
         if fname is None:
             raise Exception("Could not retrieve function name from the command!")
 
+        # next, process args
         args = []
         kwargs = {}
         if arg_string is not None:
-            arg_list = self.M_FUNCTION_SPLIT.findall(arg_string)
-            for arg in arg_list:
-                m = self.M_FUNCTION_ARGS.match(arg.strip())
+            arg_list = self.M_FUNCTION_SPLIT.findall(arg_string)  # split individual args
+            for arg in arg_list:  # for each arg
+                m = self.M_FUNCTION_ARGS.match(arg.strip())  # try to split it into key: val pair or just val
                 if m is None:
                     raise Exception(f"Malformed argument: '{arg}'!")
                 key, value = m.group("key", "arg")
@@ -269,29 +314,44 @@ class OTerm(npyscreen.Autocomplete):
 
         return fname, args, kwargs
 
-    def popup(self, message, title=""):
+    def popup(self, message: Union[str, List[str]], title: str="", form_color: str="STANDOUT") -> None:
+        """Displays a popup message.
+
+        Args:
+            message ([str, list]): The message do display.
+            title (str, optional): Title of the window. Defaults to "".
+            form_color (str, optional): Color scheme to use. Use "DANGER" for errors. Defaults to "STANDOUT".
+        """
         if type(message) is list:
             message = list(chain.from_iterable([wrap(m, width=100) for m in message]))
         else:
             message = wrap(message)
-        tmp_win = npyscreen.MessagePopup(name=title, framed=True, columns=100, lines=len(message) + 5)
+        decision = npyscreen.notify_confirm(message, title=title, wide=True, editw=1, form_color="DANGER")
         self.error_log.append(message)
-        tmp_win.TextWidget.values = message
-        tmp_win.TextWidget.editable = False
-        tmp_win.display()
-        tmp_win.edit()
-        return ""
 
-    def error_popup(self, message, title=""):
-        self.popup(([title, "\n"] if len(title) > 0 else []) + (message if type(message) is list else message.split("\n")), title="Error")
+    def error_popup(self, message: Union[str, List[str]], title: str="") -> None:
+        """Displays an error message. Se OTerm.display_popup for details on arguments.
 
-    def display_result(self, function_call, result, info=""):
+        Args:
+            message (Union[str, List[str]])
+            title (str, optional): Defaults to "".
+        """
+        self.popup(([title, "\n"] if len(title) > 0 else []) + (message if type(message) is list else message.split("\n")), title="Error", form_color="DANGER")
+
+    def display_result(self, function_call: str, result: Union[None, List, Dict, Set, str], info: str="") -> None:
+        """Displays a function result into the main form buffer.
+
+        Args:
+            function_call (str): The original user input (for clarity on what returned the result).
+            result (Union[None, Any]): The result of the function, if any.
+            info (str, optional): Additional info, like execution time, etc. Defaults to "".
+        """
         if result is None:
             result = []
         else:
+            # Some helper functions to process the input
             def ravel_dict(d: dict) -> List[str]:
                 return [f"{k}: {v}" for k, v in d.items()]
-                # return '\n'.join([f"{k}: {v}" for k, v in d.items()]).split("\n")
 
             def wrap_or_tap(value) -> List[str]:
                 if type(value) in [list, set]:
@@ -314,16 +374,24 @@ class OTerm(npyscreen.Autocomplete):
         self.parent.wMain.buffer([function_call] + result + ["#" * (self.parent.columns - 10)])
         self.parent.wMain.update()
 
-    def _shorten_uri(self, input_uri):
+    def _shorten_uri(self, input_uri: str) -> str:
+        """Replaces the namespace part of the URI with a short namespace name.
+
+        Args:
+            input_uri (str): The URI to shorten.
+
+        Returns:
+            str: Shortened version of the URI.
+        """
         for uri, ns in self.replacement_ns.items():
             input_uri = input_uri.replace(uri, ns)
         return input_uri
 
-    def process_command(self, *args, **keywords):
+    def process_command(self, input=None):
         if len(self.value) == 0:
             return
         try:
-            if self.value.startswith("."):
+            if self.value.startswith("."):  # CrowracleClient function call:
                 try:
                     fname, args, kwargs = self.parse_function(self.value)
                 except BaseException as e:
@@ -338,13 +406,13 @@ class OTerm(npyscreen.Autocomplete):
                 result = func(*args, **kwargs)
                 run_time = time.time() - start
                 self.display_result(self.value, result, info=f"[function executed in {run_time:.5f} seconds]")
-            else:
-                try:
+            else:  # Ontology SPARQL query:
+                try:  # try to parse the query
                     query_string = self.query_parser.parse(self.value)
                 except BaseException as e:
                     self.error_popup([f"Error parsing query '{self.value}':"] + str(e).split("\n"))
                     return
-                try:
+                try:  # try to prepare the query
                     start = time.time()
                     query = prepareQuery(query_string, initNs=self.onto_namespaces)
                     run_time_qp = time.time() - start
@@ -352,7 +420,7 @@ class OTerm(npyscreen.Autocomplete):
                     self.error_popup([f"Error preparing query '{self.value}':"] + str(e).split("\n") + ["\n\nThe parsed query string:\n"] + query_string.split("\n"))
                     return
                 start = time.time()
-                result = self.crowracle.onto.query(query)
+                result = self.crowracle.onto.query(query)  # execute the query
                 run_time_ask = time.time() - start
                 if len(result) > 0:
                     vnames = [str(v) for v in result.vars]
@@ -374,21 +442,23 @@ class OTerm(npyscreen.Autocomplete):
         choices, functions = zip(*result) if len(result) > 0 else ([], [])
         return choices, functions
 
-    def call_for_help(self, input):
+    def call_for_help(self, input=None):
         if self.value.startswith("."):  # crowtology client function call
             end = self.value.index("(") if "(" in self.value else len(self.value)
             choices, func_strings = self.get_crowtology_functions(self.value[1:end])
             if len(choices) > 0:
                 if len(choices) == 1:
                     fn = func_strings[0]
+                    self.value = "." + fn
+                    self.cursor_position = len(self.value)
                     fn = fn[:fn.index("(")]
                     self.popup([choices[0], ""] + getattr(self.crowracle, fn).__doc__.split("\n"), title="Help")
                 else:
-                    self.auto_complete(None)
+                    self.auto_complete()
             else:
                 self.error_popup("Unknown command, cannot display help!")
         else:  # ontology query
-            choices = ["Abeceda", "Bbceda"]
+            choices = "This is still not implemented :(".split(" ")
 
     def _expand_ns(self, elem: str) -> str:
         m = self.P_NS.match(elem)
@@ -412,7 +482,7 @@ class OTerm(npyscreen.Autocomplete):
     def help_object(self, partial_text=""):
         return self._filter_entities(self.crowracle.onto.objects, partial_text)
 
-    def auto_complete(self, input):
+    def auto_complete(self, input=None):
         if len(self.value) == 0:
             return
 
@@ -453,10 +523,7 @@ class OTerm(npyscreen.Autocomplete):
                 if len(choices) == 1:
                     choice_id = 0
                 else:
-                    rem = npyscreen.Popup.DEFAULT_COLUMNS
-                    npyscreen.Popup.DEFAULT_COLUMNS = 100
                     choice_id = self.get_choice(choices)
-                    npyscreen.Popup.DEFAULT_COLUMNS = rem
                 choice = self._shorten_uri(choices[choice_id])[::-1]
                 part = part[::-1]
                 inp = inp[::-1]
@@ -473,8 +540,8 @@ class MainForm(npyscreen.FormMutt):
 
     def beforeEditing(self):
         self.keypress_timeout = 30
-        self.wStatus1.value = "TAB: auto-complete command; F1: help; F5: show history; F8 clear history; PGDN/PGUP: scroll output; UP/DOWN scroll history"
-        self.wStatus2.value = "Command (.<crowtology_function> | RDF triple query (e.g. '?obj :hasColor ?')):"
+        self.wStatus1.value = "TAB: auto-complete command | F1: context help | F2: SPARQL help | F5: show history | F8 clear history | F10: quit | PGDN/PGUP: scroll output | UP/DOWN: history prev/next"
+        self.wStatus2.value = "Command (.<crowtology_function> | SPARQL query):"
         self.wMain.editable = False
         # self.wMain.interested_in_mouse_even_when_not_editable = True
 
@@ -487,8 +554,12 @@ class OntoTerm(npyscreen.NPSAppManaged):
     def __init__(self):
         super().__init__()
         npyscreen.BufferPager.DEFAULT_MAXLEN = 500
+        npyscreen.Popup.DEFAULT_COLUMNS = 100
+        npyscreen.PopupWide.DEFAULT_LINES = 20
+        npyscreen.PopupWide.SHOW_ATY = 1
         # initialize the ontology client
         self.crowracle = CrowtologyClient()
+
         self.onto = self.crowracle.onto
         self.crowracle.node.get_logger().set_level(rclpy.logging.LoggingSeverity.ERROR)
 
@@ -496,6 +567,7 @@ class OntoTerm(npyscreen.NPSAppManaged):
         self.error_log = FileLog()
 
     def onStart(self):
+        # npyscreen.setTheme(npyscreen.Themes.TransparentThemeLightText)
         self.addForm("MAIN", MainForm, name="OntoTerm")
         self.addForm("HISTORY", Histeresis, name="History")
         self.addForm("QUERYDOC", QueryDoc, name="Ontology query documentation")
