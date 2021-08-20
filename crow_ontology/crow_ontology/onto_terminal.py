@@ -465,7 +465,6 @@ class OTerm(npyscreen.Autocomplete):
         else:
             message = wrap(message)
         decision = npyscreen.notify_confirm(message, title=title, wide=True, editw=1, form_color="DANGER")
-        self.error_log.append(message)
 
     def error_popup(self, message: Union[str, List[str]], title: str="") -> None:
         """Displays an error message. Se OTerm.display_popup for details on arguments.
@@ -474,7 +473,9 @@ class OTerm(npyscreen.Autocomplete):
             message (Union[str, List[str]])
             title (str, optional): Defaults to "".
         """
-        self.popup(([title, "\n"] if len(title) > 0 else []) + (message if type(message) is list else message.split("\n")), title="Error", form_color="DANGER")
+        message = ([title, "\n"] if len(title) > 0 else []) + (message if type(message) is list else message.split("\n"))
+        self.popup(message, title="Error", form_color="DANGER")
+        self.error_log.append(message)
 
     def display_result(self, function_call: str, result: Union[None, List, Dict, Set, str], info: str="") -> None:
         """Displays a function result into the main form buffer.
@@ -587,8 +588,9 @@ class OTerm(npyscreen.Autocomplete):
             if len(choices) > 0:
                 if len(choices) == 1:
                     fn = func_strings[0]
-                    self.value = "." + fn
-                    self.cursor_position = len(self.value)
+                    if "(" not in self.value:
+                        self.value = "." + fn
+                        self.cursor_position = len(self.value)
                     fn = fn[:fn.index("(")]
                     self.popup([choices[0], ""] + getattr(self.crowracle, fn).__doc__.split("\n"), title="Function help")
                 else:
