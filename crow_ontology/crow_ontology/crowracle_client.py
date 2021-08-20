@@ -1137,41 +1137,41 @@ class CrowtologyClient():
         norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
         onto_name = self.CROW[norm_name]
         PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each storage space
-        self.onto.add((onto_name, RDF.type, self.CROW.StorageSpace))
-        self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
-        self.onto.add((onto_name, self.CROW.hasUuid, Literal(storage_uuid, datatype=XSD.string)))
-        self.onto.add((onto_name, self.CROW.hasArea, Literal(area, datatype=XSD.float)))
-        self.onto.add((onto_name, self.CROW.hasVolume, Literal(volume, datatype=XSD.float)))
-        self.onto.add((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
+        self.onto.set((onto_name, RDF.type, self.CROW.StorageSpace))
+        self.onto.set((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
+        self.onto.set((onto_name, self.CROW.hasUuid, Literal(storage_uuid, datatype=XSD.string)))
+        self.onto.set((onto_name, self.CROW.hasArea, Literal(area, datatype=XSD.float)))
+        self.onto.set((onto_name, self.CROW.hasVolume, Literal(volume, datatype=XSD.float)))
+        self.onto.set((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
 
         onto_location = PART['xyzAbsoluteLocation']
-        self.onto.add((onto_location, RDF.type, self.CROW.Location))
-        self.onto.add((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
-        self.onto.add((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
-        self.onto.add((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
-        self.onto.add((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
+        self.onto.set((onto_location, RDF.type, self.CROW.Location))
+        self.onto.set((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
+        self.onto.set((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
+        self.onto.set((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
+        self.onto.set((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
 
         onto_polygon = PART['Polygon']
-        self.onto.add((onto_polygon, RDF.type, self.CROW.Vector))
+        self.onto.set((onto_polygon, RDF.type, self.CROW.Vector))
         for idx, point in enumerate(polygon):
             point_name = PART['PolygonPoint{}'.format(idx)]
-            self.onto.add((point_name, RDF.type, self.CROW.Point3D))
-            self.onto.add((point_name, self.CROW.x, Literal(point[0], datatype=XSD.float)))
-            self.onto.add((point_name, self.CROW.y, Literal(point[1], datatype=XSD.float)))
-            self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
-            self.onto.add((onto_polygon, self.CROW.hasPoint3D, point_name))
-        self.onto.add((onto_name, self.CROW.hasPolygon, onto_polygon))
+            self.onto.set((point_name, RDF.type, self.CROW.Point3D))
+            self.onto.set((point_name, self.CROW.x, Literal(point[0], datatype=XSD.float)))
+            self.onto.set((point_name, self.CROW.y, Literal(point[1], datatype=XSD.float)))
+            self.onto.set((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
+            self.onto.set((onto_polygon, self.CROW.hasPoint3D, point_name))
+        self.onto.set((onto_name, self.CROW.hasPolygon, onto_polygon))
 
         onto_polyhedron = PART['Polyhedron']
-        self.onto.add((onto_polyhedron, RDF.type, self.CROW.Vector))
+        self.onto.set((onto_polyhedron, RDF.type, self.CROW.Vector))
         for idx, point in enumerate(polyhedron):
             point_name = PART['PolyhedronPoint{}'.format(idx)]
-            self.onto.add((point_name, RDF.type, self.CROW.Point3D))
-            self.onto.add((point_name, self.CROW.x, Literal(point[0], datatype=XSD.float)))
-            self.onto.add((point_name, self.CROW.y, Literal(point[1], datatype=XSD.float)))
-            self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
-            self.onto.add((onto_polyhedron, self.CROW.hasPoint3D, point_name))
-        self.onto.add((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
+            self.onto.set((point_name, RDF.type, self.CROW.Point3D))
+            self.onto.set((point_name, self.CROW.x, Literal(point[0], datatype=XSD.float)))
+            self.onto.set((point_name, self.CROW.y, Literal(point[1], datatype=XSD.float)))
+            self.onto.set((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
+            self.onto.set((onto_polyhedron, self.CROW.hasPoint3D, point_name))
+        self.onto.set((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
 
     def add_position(self, name, centroid):
         """
@@ -1187,17 +1187,17 @@ class CrowtologyClient():
         norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
         onto_name = self.CROW[norm_name]
         PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each position
-        self.onto.add((onto_name, RDF.type, self.CROW.Position))
-        self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
-        self.onto.add((onto_name, self.CROW.hasUuid, Literal(position_uuid, datatype=XSD.string)))
-        self.onto.add((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
+        self.onto.set((onto_name, RDF.type, self.CROW.Position))
+        self.onto.set((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
+        self.onto.set((onto_name, self.CROW.hasUuid, Literal(position_uuid, datatype=XSD.string)))
+        self.onto.set((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
 
         onto_location = PART['xyzAbsoluteLocation']
-        self.onto.add((onto_location, RDF.type, self.CROW.Location))
-        self.onto.add((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
-        self.onto.add((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
-        self.onto.add((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
-        self.onto.add((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
+        self.onto.set((onto_location, RDF.type, self.CROW.Location))
+        self.onto.set((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
+        self.onto.set((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
+        self.onto.set((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
+        self.onto.set((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
 
     def update_current_action(self, action_name, time):
         """
