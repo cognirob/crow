@@ -48,8 +48,8 @@ class OntoAdder(Node):
             self.get_logger().warn("No cams detected, waiting 2s.")
             time.sleep(2)
             self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
-        self.action_topics = ["action_rec"]
-        self.filter_topics = ["filtered_poses"]
+        self.action_topics = ["/action_rec"]
+        self.filter_topics = ["/filtered_poses"]
 
         # create timer for crawler - periodically delete old objects from database
         self.create_timer(TIMER_FREQ, self.timer_callback)

@@ -888,6 +888,11 @@ class CrowtologyClient():
             res_dict: The properties
         """
         if language == 'CZ':
+            quick_dirty_conv = {"modr": "modrá", "červen": "červená", "zelen": "zelená"}
+            for inp, out in quick_dirty_conv.items():
+                if inp in name:
+                    name = out
+                    break
             res = self.onto.query(self._marker_group_propsCZ, initBindings={'name': name})
         elif language == 'EN':
             res = self.onto.query(self._marker_group_propsEN, initBindings={'name': name})
