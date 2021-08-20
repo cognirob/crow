@@ -48,6 +48,13 @@ services:
       - sleep 15
       - ros2 run crow_vision_ros2 filter
     tags: [ vision, filter ]
+    
+  marker:  
+    working_dir: ~/crow
+    commands:  
+      - sleep 15
+      - ros2 run crow_vision_ros2 marker_detector
+    tags: [ vision, marker ]
 
   server:  
     working_dir: ~/crow

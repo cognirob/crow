@@ -30,7 +30,7 @@ setup(
             'tester4 = crow_ontology.examples.tester4:main',
             'query_bench = crow_ontology.examples.query_bench:main',
             'server = crow_ontology.crowracle_server:main_ros',
-            'adder = crow_ontology.add_to_database:main'
+            'adder = crow_ontology.add_to_database:main',
             'ovis = crow_ontology.onto_vision:main',
             'oterm = crow_ontology.onto_terminal:main'
         ],
