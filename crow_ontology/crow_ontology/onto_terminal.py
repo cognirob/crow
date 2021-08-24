@@ -434,7 +434,36 @@ class OTerm(npyscreen.Autocomplete):
         args = []
         kwargs = {}
         if arg_string is not None:
-            arg_list = self.M_FUNCTION_SPLIT.findall(arg_string)  # split individual args
+            # arg_list = self.M_FUNCTION_SPLIT.findall(arg_string)  # split individual args -- does not work
+            # Microparser to split the args:
+            lsq = False
+            ldq = False
+            lsb, lrb, lcb = 0, 0, 0
+            buff = ""
+            arg_list = []
+            for c in arg_string:
+                if c == "," and not lsq and not ldq and lsb == 0 and lrb == 0 and lcb == 0:
+                    arg_list.append(buff.strip())
+                    buff = ''
+                else:
+                    buff += c
+                if c == "'":
+                    lsq = not lsq
+                elif c == '"':
+                    ldq = not ldq
+                elif c == "(":
+                    lsb += 1
+                elif c == ")":
+                    lsb -= 1
+                elif c == "[":
+                    lrb += 1
+                elif c == "]":
+                    lrb -= 1
+                elif c == "{":
+                    lcb += 1
+                elif c == "}":
+                    lcb -= 1
+            arg_list.append(buff.strip())
             for arg in arg_list:  # for each arg
                 m = self.M_FUNCTION_ARGS.match(arg.strip())  # try to split it into key: val pair or just val
                 if m is None:
