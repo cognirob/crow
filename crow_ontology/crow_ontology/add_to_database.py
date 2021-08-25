@@ -29,6 +29,8 @@ def distance(entry):
     return entry[-1]
 
 class OntoAdder(Node):
+    ACTION_TOPIC = "/action_rec"
+    FILTERED_POSES_TOPIC = "/filtered_poses"
 
     def __init__(self, node_name="onto_adder"):
         super().__init__(node_name)
@@ -39,35 +41,31 @@ class OntoAdder(Node):
         self.id = self.get_last_id() + 1
         self.ad = self.get_last_action_id() + 1
 
-        client = self.create_client(GetParameters, f'/calibrator/get_parameters')
-        if not client.wait_for_service(10):
-            raise Exception("Could not get parameters from calibrator!")
+        # client = self.create_client(GetParameters, f'/calibrator/get_parameters')
+        # if not client.wait_for_service(10):
+        #     raise Exception("Could not get parameters from calibrator!")
 
-        self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
-        while len(self.cameras) == 0: #wait for cams to come online
-            self.get_logger().warn("No cams detected, waiting 2s.")
-            time.sleep(2)
-            self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
-        self.action_topics = ["/action_rec"]
-        self.filter_topics = ["/filtered_poses"]
+        # self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
+        # while len(self.cameras) == 0: #wait for cams to come online
+        #     self.get_logger().warn("No cams detected, waiting 2s.")
+        #     time.sleep(2)
+        #     self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
 
         # create timer for crawler - periodically delete old objects from database
         self.create_timer(TIMER_FREQ, self.timer_callback)
 
         # create listeners
-        qos = QoSProfile(depth=20, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
-        listener = self.create_subscription(msg_type=FilteredPose,
-                                        topic=self.filter_topics[0],
-                                        # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                        callback=lambda pose_array_msg: self.input_filter_callback(pose_array_msg),
-                                        qos_profile=qos) #the listener QoS has to be =1, "keep last only".
-        self.get_logger().info('Input listener created on topic: "%s"' % self.filter_topics[0])
-        listener = self.create_subscription(msg_type=ActionDetection,
-                                          topic=self.action_topics[0],
-                                          # we're using the lambda here to pass additional(topic) arg to the listner. Which then calls a different Publisher for relevant topic.
-                                          callback=lambda action_array_msg: self.input_action_callback(action_array_msg),
-                                          qos_profile=qos) #the listener QoS has to be =1, "keep last only".
-        self.get_logger().info('Input listener created on topic: "%s"' % self.action_topics[0])
+        qos = QoSProfile(depth=30, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        self.create_subscription(msg_type=FilteredPose,
+                                 topic=self.FILTERED_POSES_TOPIC,
+                                 callback=self.input_filter_callback,
+                                 qos_profile=qos)
+        self.get_logger().info(f'Input listener created on topic: {self.FILTERED_POSES_TOPIC}')
+        self.create_subscription(msg_type=ActionDetection,
+                                 topic=self.ACTION_TOPIC,
+                                 callback=self.input_action_callback,
+                                 qos_profile=qos)
+        self.get_logger().info(f'Input listener created on topic: {self.ACTION_TOPIC}')
 
         # Storage
         self.storage_space_added = False
@@ -110,7 +108,7 @@ class OntoAdder(Node):
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses received. Quitting early.")
-            return  # no mask detections (for some reason)
+            return
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
             self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
@@ -151,12 +149,12 @@ class OntoAdder(Node):
 
     def process_detected_object(self, object_name, location, size, uuid, tracked, timestamp):
 
-        if object_name in ['kuka', 'kuka_gripper']:
-            #self.get_logger().info("Skipping detected object {} at location {}.".format(object_name, location))
+        if object_name in ['kuka', 'kuka_gripper']:  # we don't want the robot in the DB
             return
         #self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
-        prop_range = list(self.onto.objects(subject=CROW.hasDetectorName, predicate=RDFS.range))[0]
-        corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))
+        # prop_range = list(self.onto.objects(subject=CROW.hasDetectorName, predicate=RDFS.range))[0]
+        # corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))
+        corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=XSD.string)))
         already_detected = []
         already_located = []
         for x in corresponding_objects:
