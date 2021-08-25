@@ -1,6 +1,8 @@
+from typing import Union
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
+from rclpy.callback_groups import ReentrantCallbackGroup
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
@@ -108,7 +110,7 @@ class ControlLogic(Node):
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
                                  callback=self.command_cb,
-                                 callback_group=rclpy.callback_groups.ReentrantCallbackGroup(),
+                                 callback_group=ReentrantCallbackGroup(),
                                  qos_profile=qos)
         self.robot_point_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_POINT)
         self.robot_pnp_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PNP)
@@ -121,12 +123,12 @@ class ControlLogic(Node):
         # self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
         # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
 
-        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
+        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=ReentrantCallbackGroup())
         # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
-        self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
-        self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
+        self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=ReentrantCallbackGroup())
+        self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=ReentrantCallbackGroup())
         self.command_main_buffer = QueueServer(maxlen=self.MAX_QUEUE_LENGTH, queue_name='main')
         self.command_meanwhile_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
         self.main_buffer_count = 1
@@ -588,7 +590,7 @@ class ControlLogic(Node):
             pass # @TODO set something, None defaults to 0.0
         return goal_msg
 
-    def get_robot_status(self, robot_id=0):
+    def get_robot_status(self, robot_id=0) -> UsefullRobotStatus:
         future = self.robot_status_client.call_async(GetRobotStatus.Request(robot_id=robot_id))
         response = None
         while not future.done():
