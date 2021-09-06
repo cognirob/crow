@@ -13,7 +13,6 @@ import argparse
 import re
 import matplotlib.pyplot as plt
 
-
 # %%ArgParser
 parser = argparse.ArgumentParser()
 parser.add_argument("build_name")
@@ -52,7 +51,7 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
         recipe = yaml.safe_load(f)
 
     G = nx.DiGraph()
-    #Add recipe name
+    # Add recipe name
     assembly_name = recipe["assembly_name"]
 
     # Add nodes - first for each object one node
@@ -61,7 +60,8 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
             node_type = props["type"]
             Gin = nx.DiGraph()
             Gin.add_node(entity, part_type=node_type)
-            G.add_node(i, parts_names=[entity], parts_type=[node_type], probs=[1 / (len(recipe) + 1)], graph=Gin)
+            G.add_node(i, parts_names=[entity], parts_type=[node_type], probs=[1 / (len(recipe) + 1)],
+                       weight=1, graph=Gin)
             # G.add_node(i, probs=[1 / (len(recipe) + 1)], graph=Gin)
     # now add nodes in the way that for each current node it checks if there is an operation with the object in the node and if yes,
     # it adds the new part to the object
@@ -82,14 +82,15 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
                                     if partName == props['consumer']:
                                         partNameSel = partName
                                 G4 = props2['graph']
-                                #TODO again copy - was necessary not to add object to all appearances, but there should be a nicer way
+                                # TODO again .copy - was necessary not to add object to all appearances,
+                                # but there should be a nicer way
                                 G3 = G4.copy()
                                 G3.add_node(props['provider'],
                                             part_type=recipe['objects'][props['provider']]['type'])
                                 G3.add_edge(partNameSel, props['provider'])
                                 G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, probs=[0],
                                            graph=G3)
-                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=0.1)
+                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, probs=0)
                         if props["provider"] in props2["parts_names"]:
                             if props["consumer"] not in props2["parts_names"]:
                                 names_new = np.concatenate((props2["parts_names"], [props['consumer']]))
@@ -99,14 +100,15 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
                                     if partName == props['provider']:
                                         partNameSel = partName
                                 G4 = props2['graph']
-                                G3 = G4.copy()  # TODO ugly stuff: how to do it better that I do not overwrite also the original graph?
+                                G3 = G4.copy()  # TODO ugly stuff: how to do it better that I do not overwrite
+                                # also the original graph?
                                 G3.add_node(props['consumer'],
                                             part_type=recipe['objects'][props['consumer']]['type'])
                                 G3.add_edge(partNameSel, props['consumer'])
 
                                 G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, probs=[0],
                                            graph=G3)
-                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=0.1)
+                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0)
         # nx.draw_networkx(G3, node_color='r', edge_color='b')
         # plt.draw()
         # plt.savefig('plot2')
@@ -127,17 +129,18 @@ def prune_graph(G):
     # list of nodes which were considered same to the ones in remove_list
     # (to these nodes, edges from removed nodes will be added)
     similarity_list = []
-    #checks each node in Gp (node1) towards each node in Gp (node2)
+    # checks each node in Gp (node1) towards each node in Gp (node2)
     # todo we want to check only when node2>node1 not to double removals, there might be some nicer way than this one...
     for entity, props in Gp.nodes.data():
         for entity2, props2 in Gp.nodes.data():
             if entity2 > entity:
-                if (len(props['parts_type'])==len(props2['parts_type'])) and compare_list(props['parts_type'], props2['parts_type']):
+                if (len(props['parts_type']) == len(props2['parts_type'])) and compare_list(props['parts_type'],
+                                                                                            props2['parts_type']):
                     # nm = iso.categorical_node_match("parts_type", 'cube')
                     # em = iso.numerical_edge_match("weight", 1)
-                    #if nx.is_isomorphic(props['graph'], props2['graph'], node_match=nm):
-                        #TODO should check if the assembly graphs are same and isomorphic, not working so far
-                        # - so far checking only number and type of the parts
+                    # if nx.is_isomorphic(props['graph'], props2['graph'], node_match=nm):
+                    # TODO should check if the assembly graphs are same and isomorphic, not working so far
+                    # - so far checking only number and type of the parts
                     remove_list.append(entity2)
                     similarity_list.append(entity)
         print(entity)
@@ -157,22 +160,55 @@ def prune_graph(G):
             # if the ancessor of the node (where the edge ends) is a node in the remove list,
             # find in similarity list the node to which it will be
             # merged to and exchange
+            fromE = similarity_list_u[idx]
             if outE in remove_list_u:
-                Gp.add_edge(similarity_list_u[idx], similarity_list_u[np.where(remove_list_u ==outE)][0])
+                toE = similarity_list_u[np.where(remove_list_u == outE)][0]
             else:
-                Gp.add_edge(similarity_list_u[idx], outE)
+                toE = outE
+            #adjust the weight of the edge - increase the weight based on the number of the merged edges
+            if Gp.has_edge(fromE, toE):
+                weightE = nx.get_edge_attributes(Gp, 'weight')
+                nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
+            else:
+                Gp.add_edge(fromE, toE, weight=1, prob=0)
         for inE, outE in in_edges:
             # if the predecessor of the edge is a node in the remove list,
             # find in similarity list the node to which it will be merged to and exchange
+            toE = similarity_list_u[idx]
             if inE in remove_list_u:
-                Gp.add_edge(similarity_list_u[np.where(remove_list_u == inE)], similarity_list_u[idx][0])
+                fromE = similarity_list_u[np.where(remove_list_u == inE)]
             else:
-                Gp.add_edge(inE, similarity_list_u[idx])
+                fromE = inE
+            #adjust the weight of the edge - increase the weight based on the number of the merged edges
+            if Gp.has_edge(fromE, toE):
+                weightE = nx.get_edge_attributes(Gp, 'weight')
+                nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
+            else:
+                Gp.add_edge(fromE, toE, weight=1, prob=0)
+            Gp.add_edge(fromE, toE)
         Gp.remove_node(rem_item)
-    #nx.draw_networkx(Gp, node_color='r', edge_color='b')
+    # nx.draw_networkx(Gp, node_color='r', edge_color='b')
+
+    # recompute probabilities of the edges - for each node of the graph sum probabilities of the outgoing edges to 1
+    with open(build_name, "r") as f:
+        recipe = yaml.safe_load(f)
+    # filter the nodes which have the given number of objects (same level of the assembly)
+    for entity, props in Gp.nodes.data():
+        out_edges = Gp.out_edges(entity)
+        edges_weights = nx.get_edge_attributes(Gp, 'weight')
+        sum_weights = 0
+        for e in out_edges:
+            sum_weights = sum_weights + edges_weights[e]
+        for e in out_edges:
+            nx.set_edge_attributes(Gp, {e: {'prob': round(edges_weights[e]/sum_weights,2)}})
+    # for level in range(1, len(recipe['objects']) + 2):
+    #     nodes_level = [x for x, y in Gp.nodes(data=True) if len(y['parts_type']) == level]
+    #     print(nodes_level)
 
     labels = nx.get_node_attributes(Gp, 'parts_type')
-    nx.draw_networkx(Gp, pos=nx.circular_layout(Gp), labels = labels)
+    nx.draw_networkx(Gp, pos=nx.circular_layout(Gp), labels=labels,  font_size=8)
+    labels_e = nx.get_edge_attributes(Gp, 'prob')
+    nx.draw_networkx_edge_labels(G, pos=nx.circular_layout(Gp), edge_labels=labels_e, font_size=8)
     plt.draw()
     plt.savefig('plotPruned')
     return Gp
