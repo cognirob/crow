@@ -21,14 +21,30 @@ class AssemblyPlanner(Node):
         self.objects = [o[2:].lower() for o in dir(AssemblyObjectProbability) if o.startswith("O_")]
         self.actions = [a[2:].lower() for a in dir(AssemblyActionProbability) if a.startswith("A_")]
 
-        # publishers
+        # callbacks
         self.create_subscription(AssemblyActionProbability, self.ASSEMBLY_ACTION_TOPIC, self.action_cb, 10)
         self.create_subscription(AssemblyObjectProbability, self.ASSEMBLY_OBJECT_TOPIC, self.object_cb, 10)
 
     def _translate_action(self, actions: List[float]) -> Dict[str, float]:
+        """Translates a list of action probabilities into a dictionary {action_name: probability}
+
+        Args:
+            actions (List[float]): list of action probabilities
+
+        Returns:
+            Dict[str, float]: Dictionary of action probabilities
+        """
         return {a: v for a, v in zip(self.actions, actions)}
 
     def _translate_object(self, objects: List[float]) -> Dict[str, float]:
+        """Translates a list of object probabilities into a dictionary {object_name: probability}
+
+        Args:
+            objects (List[float]): list of object probabilities
+
+        Returns:
+            Dict[str, float]: Dictionary of object probabilities
+        """
         return {o: v for o, v in zip(self.objects, objects)}
 
     def action_cb(self, actions):
