@@ -23,10 +23,12 @@ ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 10  # seconds
 DISABLING_TIME_LIMIT = 7  # seconds
-TIMER_FREQ = 0.5 # seconds
+TIMER_FREQ = 0.5  # seconds
+
 
 def distance(entry):
     return entry[-1]
+
 
 class OntoAdder(Node):
     ACTION_TOPIC = "/action_rec"
@@ -37,7 +39,7 @@ class OntoAdder(Node):
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
         # self.get_logger().info(self.onto)
-        self.loc_threshold = 0.05 # object detected within 5cm from an older detection will be considered as the same one
+        self.loc_threshold = 0.05  # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
         self.ad = self.get_last_action_id() + 1
 
@@ -89,7 +91,6 @@ class OntoAdder(Node):
             else:
                 self.crowracle.enable_object(obj)
 
-
         # Add new storage - testing
         if self.storage_space_added:
             self.crowracle.pair_objects_to_areas_wq(verbose=True)
@@ -97,11 +98,13 @@ class OntoAdder(Node):
             self.storage_space_added = True
             # add new storage
             name = "workspace"
-            polygon = [[0.2,0.53,0.3],[0.44,0.53,0.3],[0.44,0.3,0.3],[0.2,0.3,0.3]]
-            polyhedron = [ [0.2,0.53,0.3],[0.44,0.53,0.3],[0.44,0.3,0.3],[0.2,0.3,0.3],  [0.2,0.53,-0.3],[0.44,0.53,-0.3],[0.44,0.3,-0.3],[0.2,0.3,-0.3] ]
+            polygon = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3],
+                       [0.44, 0.3, 0.3], [0.2, 0.3, 0.3]]
+            polyhedron = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3], [0.44, 0.3, 0.3], [0.2, 0.3, 0.3],  [
+                0.2, 0.53, -0.3], [0.44, 0.53, -0.3], [0.44, 0.3, -0.3], [0.2, 0.3, -0.3]]
             area = 1
             volume = 1
-            centroid = [0.275,0.55,1]
+            centroid = [0.275, 0.55, 1]
             self.crowracle.add_storage_space(name=name, polygon=polygon, polyhedron=polyhedron, area=area, volume=volume, centroid=centroid)
         ##
 
@@ -110,6 +113,11 @@ class OntoAdder(Node):
             self.get_logger().info("No poses received. Quitting early.")
             return
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
+
+        # find already existing objects by uuid
+        # update location of existing objects
+        # add new objects (not found by uuid)
+
         for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
             self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
 
@@ -162,29 +170,31 @@ class OntoAdder(Node):
                 already_detected.append(x)
         for x in already_detected:
             x_uuid = list(self.onto.objects(x, CROW.hasUuid))[0]
-            if uuid == x_uuid.toPython(): # update timestamp and loc of matched already detected object
+            if uuid == x_uuid.toPython():  # update timestamp and loc of matched already detected object
                 self.crowracle.update_detected_object(x, location, size, uuid, timestamp)
                 return
             else:
                 old_loc_obj = list(self.onto.objects(x, CROW.hasAbsoluteLocation))[0]
-                old_loc = [float(list(self.onto.objects(old_loc_obj, x))[0]) for x in [CROW.x, CROW.y, CROW.z]]
+                old_loc = [float(list(self.onto.objects(old_loc_obj, x))[0])
+                           for x in [CROW.x, CROW.y, CROW.z]]
                 dist = (np.linalg.norm(np.asarray(old_loc) - np.asarray(location)))
                 already_located.append([x, dist])
         if len(already_located) > 0:
             already_located.sort(key=distance)
             closest = already_located[0]
-            if closest[-1] <= self.loc_threshold: # update timestamp and loc of matched already detected object
+            # update timestamp and loc of matched already detected object
+            if closest[-1] <= self.loc_threshold:
                 self.crowracle.update_detected_object(closest[0], location, size, uuid, timestamp)
-            else: # add new detected object
+            else:  # add new detected object
                 self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
                 self.id += 1
-        elif len(corresponding_objects) > 0: # add new detected object
+        elif len(corresponding_objects) > 0:  # add new detected object
             self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
             self.id += 1
         else:
             self.get_logger().info("Object {} not added - there is no corresponding template in the ontology.".format(object_name))
 
-    #@TODO: assembly functions, update, move to client
+    # @TODO: assembly functions, update, move to client
     # def add_assembled_object(self, object_name, location):
     #     self.get_logger().info("Setting properties of assembled object {} at location {}.".format(object_name, location))
     #     PART = Namespace(f"{ONTO_IRI}/{object_name}#") #ns for each object (/cube_holes_1#)
@@ -205,6 +215,7 @@ class OntoAdder(Node):
     #     self.onto.add((prop_name, CROW.isBool, Literal(value, datatype=XSD.boolean)))
     #     self.onto.set((part_name, CROW.isEnabled, prop_name))
 
+
 def main():
     rclpy.init()
     time.sleep(1)
@@ -212,6 +223,7 @@ def main():
 
     rclpy.spin(adder)
     adder.destroy_node()
+
 
 if __name__ == "__main__":
     main()
