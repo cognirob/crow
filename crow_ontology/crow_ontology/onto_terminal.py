@@ -290,6 +290,13 @@ class OTerm(npyscreen.Autocomplete):
             if uri.endswith("/"):
                 self.replacement_ns[uri[:-1] + "#"] = ns + ":"
 
+        self.store_is_fuseki = self.crowracle.onto.config.store == "fuseki"
+        if self.store_is_fuseki:
+            self.query_prefixes = "\n".join([f"PREFIX {k}: <{v}>" for k, v in self.onto_namespaces.items()])
+        else:
+            self.query_prefixes = ""
+
+
     def set_up_handlers(self):
         super().set_up_handlers()
         self.handlers.update({
@@ -580,13 +587,17 @@ class OTerm(npyscreen.Autocomplete):
                 except BaseException as e:
                     self.error_popup([f"Error parsing query '{self.value}':"] + str(e).split("\n"))
                     return
-                try:  # try to prepare the query
-                    start = time.time()
-                    query = prepareQuery(query_string, initNs=self.onto_namespaces)
-                    run_time_qp = time.time() - start
-                except BaseException as e:
-                    self.error_popup([f"Error preparing query '{self.value}':"] + str(e).split("\n") + ["\n\nThe parsed query string:\n"] + query_string.split("\n"))
-                    return
+                if self.store_is_fuseki:
+                    query = self.query_prefixes + '\n' + query_string
+                    run_time_qp = None
+                else:
+                    try:  # try to prepare the query
+                        start = time.time()
+                        query = prepareQuery(query_string, initNs=self.onto_namespaces)
+                        run_time_qp = time.time() - start
+                    except BaseException as e:
+                        self.error_popup([f"Error preparing query '{self.value}':"] + str(e).split("\n") + ["\n\nThe parsed query string:\n"] + query_string.split("\n"))
+                        return
                 start = time.time()
                 result = self.crowracle.onto.query(query)  # execute the query
                 run_time_ask = time.time() - start
@@ -595,7 +606,7 @@ class OTerm(npyscreen.Autocomplete):
                     records = [{v: self._shorten_uri(r[v]) for v in vnames} for r in result]
                     df = pd.DataFrame.from_records(records)
                     self.display_result(self.value, df.to_markdown().split("\n"),
-                        info=f"[query prepared in {run_time_qp:.5f} seconds and evaluated in {run_time_ask:.5f} seconds]")
+                        info="[query" + (f"prepared in {run_time_qp:.5f} seconds and" if run_time_qp is not None else "") + f"evaluated in {run_time_ask:.5f} seconds]")
                 else:
                     self.display_result(self.value, "> query returned empty result <")
         except BaseException as e:

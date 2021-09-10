@@ -11,3 +11,8 @@ rosbag2_*/
 *.code-workspace
 .idea
 venv
+crow_ontology/*/*.html
+crow_ontology/*.html
+crow_ontology/css
+crow_ontology/images
+crow_ontology/js
