@@ -1,0 +1,59 @@
+from typing import Dict, List
+import rclpy
+from rclpy.node import Node
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
+from crow_msgs.msg import AssemblyObjectProbability, AssemblyActionProbability
+from rclpy.executors import MultiThreadedExecutor
+from crow_control.utils import ParamClient
+from crow_ontology.crowracle_client import CrowtologyClient
+
+
+class AssemblyPlanner(Node):
+    ASSEMBLY_ACTION_TOPIC = 'assembly_action'
+    ASSEMBLY_OBJECT_TOPIC = 'assembly_object'
+
+    def __init__(self):
+        super().__init__("assembly_planner")
+        # connect to onto
+        self.crowracle = CrowtologyClient(node=self)
+        self.onto = self.crowracle.onto
+        # get object / action dicts
+        self.objects = [o[2:].lower() for o in dir(AssemblyObjectProbability) if o.startswith("O_")]
+        self.actions = [a[2:].lower() for a in dir(AssemblyActionProbability) if a.startswith("A_")]
+
+        # publishers
+        self.create_subscription(AssemblyActionProbability, self.ASSEMBLY_ACTION_TOPIC, self.action_cb, 10)
+        self.create_subscription(AssemblyObjectProbability, self.ASSEMBLY_OBJECT_TOPIC, self.object_cb, 10)
+
+    def _translate_action(self, actions: List[float]) -> Dict[str, float]:
+        return {a: v for a, v in zip(self.actions, actions)}
+
+    def _translate_object(self, objects: List[float]) -> Dict[str, float]:
+        return {o: v for o, v in zip(self.objects, objects)}
+
+    def action_cb(self, actions):
+        self.get_logger().info(f"Got some action probabilities: {str(self._translate_action(actions.probabilities))}")
+
+    def object_cb(self, objects):
+        self.get_logger().info(f"Got some object probabilities: {str(self._translate_object(objects.probabilities))}")
+
+
+def main():
+    rclpy.init()
+    ap = AssemblyPlanner()
+    try:
+        n_threads = 2
+        mte = MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
+        rclpy.spin_once(ap, executor=mte)
+        ap.get_logger().info("ready")
+        rclpy.spin(ap, executor=mte)
+        ap.destroy_node()
+    except KeyboardInterrupt:
+        ap.destroy_node()
+        print("User requested shutdown.")
+    except BaseException as e:
+        print(f"Some error had occured: {e}")
+
+
+if __name__ == '__main__':
+    main()

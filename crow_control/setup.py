@@ -30,6 +30,9 @@ setup(
             'ptest = crow_control.testing.test_param:main',
             'stest = crow_control.testing.test_param_server:main',
             'profiler = crow_control.utils.profiler_node:main',
+            'aplanner = crow_control.assembly_planner:main',
+            # 'amonitor = crow_control.assembly_monitor:main',
+            'famonitor = crow_control.assembly_monitor_fake:main',
             'wxvis = crow_control.wx_visualizator:main'
         ],
     },

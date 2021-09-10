@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov 13 20:59:47 2020
-
-@author: rados
-"""
 import rdflib
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Identifier
@@ -24,34 +18,37 @@ import numpy as np
 import hashlib
 
 
-# %%ArgParser
-parser = argparse.ArgumentParser()
-parser.add_argument("build_name")
-parser.add_argument("--onto_file", "-o", default="onto_draft_03.owl")
-# args = parser.parse_args(["build_dog.yaml"])
-args = parser.parse_args(["crow_reasoning/build_snake_fixed.yaml", "-o", "crow_ontology/data/onto_draft_03.owl"])
-# args = parser.parse_args(["sub_build_dog.yaml", "-o", "../onto_draft_03.owl"])
-# os.chdir(r".\code\crow\ontology\assembly")
-# os.chdir(r".\assembly")
-# args = parser.parse_args()
-
-# %%Initialization
-# build_name = "build_dog.yaml"
-build_name = args.build_name
-# onto_file = "onto_draft_03.owl"
-# onto_file = "dog_build.owl"
-onto_file = args.onto_file
-print(onto_file)
-split_name_re = re.compile(r"([\w\/]+)\.?")
-# split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
-
-# %%Load onto
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 
-onto = rdflib.Graph()
-onto.load(onto_file)
-onto.bind("crow", CROW)
+
+if __name__ == '__main__':
+    # %%ArgParser
+    parser = argparse.ArgumentParser()
+    parser.add_argument("build_name")
+    parser.add_argument("--onto_file", "-o", default="onto_draft_03.owl")
+    # args = parser.parse_args(["build_dog.yaml"])
+    args = parser.parse_args(["crow_reasoning/build_snake_fixed.yaml", "-o", "crow_ontology/data/onto_draft_03.owl"])
+    # args = parser.parse_args(["sub_build_dog.yaml", "-o", "../onto_draft_03.owl"])
+    # os.chdir(r".\code\crow\ontology\assembly")
+    # os.chdir(r".\assembly")
+    # args = parser.parse_args()
+
+    # %%Initialization
+    # build_name = "build_dog.yaml"
+    build_name = args.build_name
+    # onto_file = "onto_draft_03.owl"
+    # onto_file = "dog_build.owl"
+    onto_file = args.onto_file
+    print(onto_file)
+    split_name_re = re.compile(r"([\w\/]+)\.?")
+    # split_name_re = re.compile(r".*\.(\w*)\.(\w*)")
+
+    # %%Load onto
+
+    onto = rdflib.Graph()
+    onto.load(onto_file)
+    onto.bind("crow", CROW)
 
 
 # %%Functions
@@ -348,24 +345,8 @@ def buildGraph(build_name, onto, recipe_name=None, isBaseBuild=None):
     # DeductiveClosure(OWLRL_Semantics).expand(onto)
     # %%Output
 
-    image_file = base_filename + ".png"
-    graph.layout(prog='dot')
-    graph.draw(image_file, prog="dot")
+    # image_file = base_filename + ".png"
+    # graph.layout(prog='dot')
+    # graph.draw(image_file, prog="dot")
 
     return graph, recipe_name, assembly_name, base_filename
-
-
-# %% Do
-g, g_name, assembly_name, base_filename = buildGraph(build_name, onto)
-
-# %% Draw
-image_file = base_filename + ".png"
-outonto_file = base_filename + ".owl"
-image = cv2.imread(image_file)
-# cv2.imshow(image_file, image)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
-with open(f"{base_filename}_graph.txt", "w") as f:
-    f.write(str(g))
-
-onto.serialize(outonto_file)

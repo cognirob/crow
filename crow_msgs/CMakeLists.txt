@@ -51,6 +51,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ObjectType.msg"
   "msg/NlpStatus.msg"
   "msg/Runtime.msg"
+  "msg/AssemblyObjectProbability.msg"
+  "msg/AssemblyActionProbability.msg"
 
   #"srv/GetRobotStatus.srv"
 
