@@ -1,7 +1,7 @@
 from rdflib.namespace import FOAF, RDFS, RDF, OWL, XMLNS, Namespace
 from rdflib.extras.infixowl import Class, TermDeletionHelper
 from rdflib import BNode, URIRef, Literal
-from knowl import OntologyAPI
+from knowl import OntologyAPI, DBConfig
 import yaml
 from importlib.util import find_spec
 import os
@@ -11,22 +11,26 @@ try:
     import rclpy
     from rclpy.node import ParameterDescriptor
     from rcl_interfaces.msg import ParameterType
+    from std_srvs.srv import Trigger
 except:  # noqa
     pass  # TODO make nicer
+import subprocess
 
 
-DB_PARAM_NAMES = ["database_host", "database_port", "database_uri", "database_name"]
+DB_PARAM_NAMES = ["database_host", "database_port", "database_uri", "database_name", "database_store"]
 DB_PARAM_MAP = {
     "database_host": "host",
     "database_port": "port",
     "database_name": "database",
-    "database_uri": "baseURL"
+    "database_uri": "baseURL",
+    "database_store": "store"
 }
 DB_PARAM_DESC = {
     "database_host": "Host address of the database server.",
     "database_port": "Port on which the database server is running.",
     "database_name": "Name of the database (e.g. an SQL DB name).",
-    "database_uri": "Ontology base string / base namespace."
+    "database_uri": "Ontology base string / base namespace.",
+    "database_store": "Store type, can be alchemy or fuseki."
 }
 
 
@@ -36,44 +40,112 @@ class CrowtologyServer():
     # crowNSString = "http://imitrob.ciirc.cvut.cz/ontologies/crow#"
     # CROW = Namespace(crowNSString)
     # OWLR = Namespace("http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl#")
-    BACKUP_ON_START = False
+    BACKUP_ON_CLEAR = False
     CLEAR_ON_START = True  # if clearing is False, backup has no effect (i.e. only bkp if clearing)
+    ALLOW_CLIENTS_CLEARING_DATA = True  # if true, ROS service to clear/reset the DB will be created
+    FUSEKI_PORT = 4242
+    MODE = "ros"  # "ros" or "local" mode
 
     def __init__(self, config_path=None, base_onto_path=None):
-        modulePath = find_spec("crow_ontology").submodule_search_locations[0]
+        if self.MODE == "ros":  # "ros"
+            self.__node = rclpy.create_node(node_name="ontology_server")
+            self.log("Setting up 'ontology_server' node.")
+        else:  # "local"
+            self.__node = None
+            self.pserver = None
+
+        self.modulePath = find_spec("crow_ontology").submodule_search_locations[0]
         if config_path is None:
-            config_path = os.path.join(modulePath, "..", "config", "db_config.yaml")
+            config_path = os.path.join(self.modulePath, "..", "config", "db_config.yaml")
+        if base_onto_path is None:  # load new onto
+            self.base_onto_path = os.path.join(self.modulePath, "..", "data", "onto_draft_03.owl")
+        else:
+            self.base_onto_path = base_onto_path
 
         with open(config_path, 'r') as file:  # load the config
             self.__cfg = yaml.safe_load(file)
 
-        self.__onto = OntologyAPI(config_path)
-        self.__node = None
-        try:
-            if len(self.onto) > 0:  # try to make a backup
-                if self.CLEAR_ON_START:
-                    if self.BACKUP_ON_START:
-                        bkp_path = os.path.join(modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
-                        self.onto.graph.serialize(bkp_path, format="xml")
+        self.__dbconf = DBConfig.factory(config_path)
+
+        if "store" not in self.__cfg:
+            self.__cfg["store"] = "alchemy"  # backwards compatibility for cfgs without store option
+            self.log("No info about store type found in the config, assuming the default 'SQLAlchemy' store.")
+        elif self.__cfg["store"] == "fuseki":
+            self.log("Store type set to 'jena fuseki'.")
+            self.fuseki_run_cmd = ""
+            if "fuseki_path" in self.__cfg:
+                self.log("Fuseki server path found in the config, attempting to start the server.")
+                self.start_fuseki(self.__cfg["fuseki_path"])
+            else:
+                self.log("Fuseki server path NOT found in the config, assuming server was started manually.")
+        elif self.__cfg["store"] == "alchemy":
+            self.log("Store type set to 'SQLAlchemy'.")
+        else:
+            raise Exception(f'Unknown store type {self.__cfg["store"]}!')
+
+        self.__onto = OntologyAPI(self.__dbconf)
+        if self.CLEAR_ON_START:
+            self.clear_data()
+
+    def clear_data(self):
+        if len(self.onto) > 0:  # try to make a backup
+            if self.BACKUP_ON_CLEAR:
+                try:
+                    bkp_path = os.path.join(self.modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
+                    self.onto.graph.serialize(bkp_path, format="xml")
+                except Exception as e:
+                    self.log(f"Tried backing up the ontology but failed because: {e}")
+            try:
+                if self.__dbconf.store == "alchemy":
                     self.onto.destroy("I know what I am doing")
                     self.onto.closelink()
-                    self.__onto = OntologyAPI(config_path)
-        except Exception as e:
-            print(f"Tried backing up the ontology but failed because: {e}")
-            try:
-                self.onto.destroy("I know what I am doing")
-                self.onto.closelink()
-                self.__onto = OntologyAPI(config_path)
+                    self.__onto = OntologyAPI(self.__dbconf)
+                elif self.__dbconf.store == "fuseki":
+                    self.onto.remove((None, None, None))  # remove all triples
+                else:
+                    raise Exception(f"Unknown DB store type: {self.__dbconf.store}")
             except Exception as e:
-                print(f"Tried cleaning up the ontology but failed because: {e}")
+                self.log(f"Tried cleaning up the ontology but failed because: {e}")
 
-        if base_onto_path is None:  # load new onto
-            base_onto_path = os.path.join(modulePath, "..", "data", "onto_draft_03.owl")
-        self.onto.mergeFileIntoDB(base_onto_path)
+        self.onto.mergeFileIntoDB(self.base_onto_path)
+
+    def log(self, msg):
+        if self.node is not None:
+            self.node.get_logger().info(msg)
+        else:
+            print(msg)
+
+    def start_fuseki(self, fuseki_path):
+        # fuseki_path = '~/packages/apache-jena-fuseki-4.1.0/'
+        fuseki_path = os.path.expanduser(fuseki_path)
+        self.fuseki_run_cmd = os.path.join(fuseki_path, 'fuseki')
+        if os.path.exists(self.fuseki_run_cmd):
+            self.log(f'Running fuseki as service from {self.fuseki_run_cmd}...')
+        else:
+            raise Exception(f'Fuseki executable not found in: {self.fuseki_run_cmd}!')
+        if self.get_fuseki_status():
+            self.log('Fuseki is already running!')
+        else:
+            fuseki_env = {
+                    "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
+                }
+            ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'start']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
+            if ret.returncode > 0:
+                raise Exception(f"Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-8')}")
+            else:
+                if "fail" in str(ret.stdout):
+                    self.log(f"Fuseki service somehow failed but the returncode was 0 (indicating no error). Read the output of the run command and decide what to do:\n{ret.stdout.decode('utf-8')}")
+                else:
+                    self.log(f"{ret.stdout.decode('utf')}\nFuseki service started on port {self.FUSEKI_PORT}.")
+
+    def get_fuseki_status(self) -> bool:
+        ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'status']), stdout=subprocess.PIPE, shell=True, check=True)
+        if ret.returncode > 0:
+            raise Exception(f"Trying to get Fuseki status returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-')}")
+        else:
+            return "is running" in str(ret.stdout)
 
     def start_onto_server(self):
-        self.__node = rclpy.create_node(node_name="ontology_server")
-        self.node.get_logger().info("Setting up 'ontology_server' node.")
         invmap = {v: k for k, v in DB_PARAM_MAP.items()}
         parameters = [(invmap[k], v,
                        ParameterDescriptor(
@@ -84,9 +156,21 @@ class CrowtologyServer():
             namespace=None,
             parameters=parameters
         )
-        self.node.get_logger().info("Created server with params:")
+        if self.ALLOW_CLIENTS_CLEARING_DATA:
+            self.clearing_service = self.node.create_service(Trigger, "reset_database", self.clear_data_service_cb)
+        self.log("Created server with params:")
         for k, v, d in parameters:
-            self.node.get_logger().info(f"\t{k}: {v}")
+            self.log(f"\t{k}: {v}")
+
+    def clear_data_service_cb(self, request, response):
+        try:
+            self.clear_data()
+        except BaseException as e:
+            response.success = False
+            response.message = str(e)
+        else:
+            response.success = True
+        return response
 
     def start_param_server(self):
         self.pserver = ParamServer()
@@ -100,9 +184,16 @@ class CrowtologyServer():
         return self.__node
 
     def destroy(self):
-        self.pclient.destroy()
+        if self.pserver is not None:
+            self.pserver.destroy()
         if self.node is not None:
             self.node.destroy_node()
+        if self.__cfg["store"] == "fuseki" and self.fuseki_run_cmd and self.get_fuseki_status():
+            ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'stop']), stdout=subprocess.PIPE, shell=True, check=True)
+            if ret.returncode > 0:
+                raise Exception(f"Trying to stop Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout}")
+            else:
+                self.log(f"{ret.stdout.decode('utf-8')}\nFuseki service stopped.")
 
 
 def main_ros(args=[]):
@@ -111,9 +202,12 @@ def main_ros(args=[]):
     cs = CrowtologyServer()
     cs.start_param_server()
     cs.start_onto_server()
-
-    rclpy.spin(cs.node)
-    cs.destroy()
+    try:
+        rclpy.spin(cs.node)
+    except KeyboardInterrupt as ke:
+        print("User requested shutdown.")
+    finally:
+        cs.destroy()
 
 def main():  # run from console as standalone python script
     # TODO Process args
