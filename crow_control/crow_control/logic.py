@@ -749,7 +749,10 @@ def main():
         # rclpy.spin_once(cl, executor=mte)
         rclpy.spin(cl, executor=mte)
         cl.destroy_node()
-    except Exception as e:
+    except KeyboardInterrupt:
+        cl.destroy_node()
+        print("User requested shutdown.")
+    except BaseException as e:
         print(f"Some error had occured: {e}")
     finally:
         cl.pclient.robot_failed = False
