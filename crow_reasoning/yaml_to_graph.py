@@ -12,6 +12,8 @@ import os
 import argparse
 import re
 import matplotlib.pyplot as plt
+import graphviz
+from networkx.drawing.nx_agraph import graphviz_layout
 
 # %%ArgParser
 parser = argparse.ArgumentParser()
@@ -55,13 +57,18 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
     assembly_name = recipe["assembly_name"]
 
     # Add nodes - first for each object one node
+    Gin = nx.DiGraph()
+    G.add_node(0, parts_names=[None], parts_type=[None], probs=[1],
+               weight=1, graph=Gin)
     if "objects" in recipe:
         for i, (entity, props) in enumerate(recipe["objects"].items()):
             node_type = props["type"]
             Gin = nx.DiGraph()
             Gin.add_node(entity, part_type=node_type)
-            G.add_node(i, parts_names=[entity], parts_type=[node_type], probs=[1 / (len(recipe) + 1)],
+            G.add_node(i+1, parts_names=[entity], parts_type=[node_type], probs=[0],
                        weight=1, graph=Gin)
+            G.add_edge(0, i+1, weight=1, probs=1 / (len(recipe) + 1), action='move',
+                       object=node_type)
             # G.add_node(i, probs=[1 / (len(recipe) + 1)], graph=Gin)
     # now add nodes in the way that for each current node it checks if there is an operation with the object in the node and if yes,
     # it adds the new part to the object
@@ -90,7 +97,8 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
                                 G3.add_edge(partNameSel, props['provider'])
                                 G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, probs=[0],
                                            graph=G3)
-                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, probs=0)
+                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, probs=0, action=props['type'],
+                                           object=recipe['objects'][props['provider']]['type'])
                         if props["provider"] in props2["parts_names"]:
                             if props["consumer"] not in props2["parts_names"]:
                                 names_new = np.concatenate((props2["parts_names"], [props['consumer']]))
@@ -108,7 +116,8 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
 
                                 G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, probs=[0],
                                            graph=G3)
-                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0)
+                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0, action=props['type'],
+                                           object=recipe['objects'][props['consumer']]['type'])
         # nx.draw_networkx(G3, node_color='r', edge_color='b')
         # plt.draw()
         # plt.savefig('plot2')
@@ -156,6 +165,7 @@ def prune_graph(G):
         out_edges = Gp.out_edges(rem_item)
         # in_edges_sim = Gp.in_edges(similarity_list_u[idx])
         # out_edges_sim = Gp.out_edges(similarity_list_u[idx])
+        rem_edges = []
         for inE, outE in out_edges:
             # if the ancessor of the node (where the edge ends) is a node in the remove list,
             # find in similarity list the node to which it will be
@@ -165,12 +175,13 @@ def prune_graph(G):
                 toE = similarity_list_u[np.where(remove_list_u == outE)][0]
             else:
                 toE = outE
-            #adjust the weight of the edge - increase the weight based on the number of the merged edges
+            # adjust the weight of the edge - increase the weight based on the number of the merged edges
             if Gp.has_edge(fromE, toE):
                 weightE = nx.get_edge_attributes(Gp, 'weight')
                 nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
             else:
                 Gp.add_edge(fromE, toE, weight=1, prob=0)
+            rem_edges.append([inE, outE])
         for inE, outE in in_edges:
             # if the predecessor of the edge is a node in the remove list,
             # find in similarity list the node to which it will be merged to and exchange
@@ -179,13 +190,16 @@ def prune_graph(G):
                 fromE = similarity_list_u[np.where(remove_list_u == inE)]
             else:
                 fromE = inE
-            #adjust the weight of the edge - increase the weight based on the number of the merged edges
+            # adjust the weight of the edge - increase the weight based on the number of the merged edges
             if Gp.has_edge(fromE, toE):
                 weightE = nx.get_edge_attributes(Gp, 'weight')
                 nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
             else:
                 Gp.add_edge(fromE, toE, weight=1, prob=0)
             Gp.add_edge(fromE, toE)
+            rem_edges.append([inE, outE])
+        for edge in rem_edges:
+            Gp.remove_edge(edge[0], edge[1])
         Gp.remove_node(rem_item)
     # nx.draw_networkx(Gp, node_color='r', edge_color='b')
 
@@ -200,18 +214,34 @@ def prune_graph(G):
         for e in out_edges:
             sum_weights = sum_weights + edges_weights[e]
         for e in out_edges:
-            nx.set_edge_attributes(Gp, {e: {'prob': round(edges_weights[e]/sum_weights,2)}})
+            nx.set_edge_attributes(Gp, {e: {'prob': round(edges_weights[e] / sum_weights, 2)}})
     # for level in range(1, len(recipe['objects']) + 2):
     #     nodes_level = [x for x, y in Gp.nodes(data=True) if len(y['parts_type']) == level]
     #     print(nodes_level)
 
+    pos = nx.kamada_kawai_layout(Gp)
+    pos = nx.circular_layout(Gp)
+
+    # pos = graphviz_layout(Gp, prog="dot")
     labels = nx.get_node_attributes(Gp, 'parts_type')
-    nx.draw_networkx(Gp, pos=nx.circular_layout(Gp), labels=labels,  font_size=8)
+    nx.draw_networkx(Gp, pos=pos, labels=labels, font_size=8)
+    label_options = {"ec": "k", "fc": "white", "alpha": 0.7}
+    nx.draw_networkx_labels(Gp, pos=pos, labels=labels, font_size=8, bbox=label_options)
     labels_e = nx.get_edge_attributes(Gp, 'prob')
-    nx.draw_networkx_edge_labels(G, pos=nx.circular_layout(Gp), edge_labels=labels_e, font_size=8)
+    nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=labels_e, font_size=8, bbox=label_options)
     plt.draw()
     plt.savefig('plotPruned')
     return Gp
+
+
+def update_graph(G, Po, Pa):
+    # updates the probabilities of the nodes of the incoming graph G based on the observed probability of the observed
+    # object and action
+    # Po - probability distribution over objects
+    # Pa - probability distribution over actions
+    Gp = G.copy()
+    # for each node:
+    # node prob = sum of prob.edge*prob.observed_needed_object+action*prob.prev.state
 
 
 # %% Do
@@ -227,6 +257,11 @@ def compare_list(l1, l2):
 
 g, g_name, assembly_name, base_filename = build_graph(build_name, onto)
 gp = prune_graph(g)
+po = {"peg": 0.1, "cube": 0.3, "sphere": 0.2, "screw": 0.1, "other": 0.3}
+pa1 = {"hammering": 0.1, "handling": 0.3, "screwing": 0.1, "other": 0.5}
+pa2 = {"hammering": 0.4, "handling": 0.3, "screwing": 0.1, "other": 0.2}
+# g = update_graph(g, po, pa1)
+# g = update_graph(g, po, pa2)
 # %% Draw
 image_file = base_filename + ".png"
 outonto_file = base_filename + ".owl"
