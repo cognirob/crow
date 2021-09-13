@@ -233,11 +233,15 @@ class AssemblyGraphMaker():
         Gp = G.copy()
         # for each node:
         # node prob = sum of prob.edge*prob.observed_needed_object+action*prob.prev.state
+        #TODO need to lower probability of the initial node + increase the probability of the "None" node
+        #TODO need not to recompute probability of the nonzero nodes, only lower it. How?
+        nx.set_node_attributes(G, {0: 0.01}, name='prob') #make it smarter
+        print('set probability for node {} to {}'.format(0, 0.01))
         for n, props in Gp.nodes.data():
             prob_node = []
             in_edges = Gp.in_edges(n)
             for inE, outE in in_edges:
-                print(props)
+                # print(props)
                 objectE = Gp.get_edge_data(inE, outE)['object']
                 probsE = Gp.get_edge_data(inE, outE)['prob']
                 actionE = Gp.get_edge_data(inE, outE)['action']
@@ -245,6 +249,8 @@ class AssemblyGraphMaker():
                 prob_node.append(Gp.nodes[inE]['prob']*objectE_p*probsE)
             if prob_node!=[]:
                 nx.set_node_attributes(G, {n: sum(prob_node)}, name='prob')
+                if sum(prob_node)>0:
+                    print('set probability for node {} to {}'.format(n,sum(prob_node)))
         return G
 
     # %% Do
@@ -285,9 +291,14 @@ def main():
         g, g_name, assembly_name, base_filename = am.build_graph(onto)
         gp = am.prune_graph(g)
     po = {"peg": 0.1, "cube": 0.3, "sphere": 0.2, "screw": 0.1, "other": 0.3}
+    po2 = {"peg": 0.3, "cube": 0.1, "sphere": 0.1, "screw": 0.1, "other": 0.3}
+    po3 = {"peg": 0.5, "cube": 0.1, "sphere": 0.1, "screw": 0.1, "other": 0.3}
     pa1 = {"hammering": 0.1, "handling": 0.3, "screwing": 0.1, "other": 0.5}
     pa2 = {"hammering": 0.4, "handling": 0.3, "screwing": 0.1, "other": 0.2}
     gp = am.update_graph(gp, po, pa1)
+    gp = am.update_graph(gp, po2, pa1)
+    gp = am.update_graph(gp, po3, pa1)
+
     # outonto_file = am.build_name + ".owl"
     # with open(f"{am.graph_name}_graph.txt", "w") as f:
     #     f.write(str(gp))

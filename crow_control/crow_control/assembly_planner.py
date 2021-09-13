@@ -23,12 +23,12 @@ class AssemblyPlanner(Node):
         onto_file = "../../ontology/onto_draft_02.owl"
         self.am = AssemblyGraphMaker(build_file)
         if os.path.exists(self.am.graph_name):
-            gp = pickle.load(open(self.am.graph_name, 'rb'))
+            self.gp = pickle.load(open(self.am.graph_name, 'rb'))
             print('loading graph from a file')
         else:
             print('building a new graph for the given assembly')
             g, g_name, assembly_name, base_filename = self.am.build_graph(onto_file)
-            gp = self.am.prune_graph(g)        # get object / action dicts
+            self.gp = self.am.prune_graph(g)        # get object / action dicts
         self.objects = [o[2:].lower() for o in dir(AssemblyObjectProbability) if o.startswith("O_")]
         self.actions = [a[2:].lower() for a in dir(AssemblyActionProbability) if a.startswith("A_")]
 
@@ -63,7 +63,8 @@ class AssemblyPlanner(Node):
 
     def object_cb(self, objects):
         self.get_logger().info(f"Got some object probabilities: {str(self._translate_object(objects.probabilities))}")
-
+        Po = dict(self._translate_object(objects.probabilities))
+        self.am.update_graph(self.gp, Po)
 def main():
     rclpy.init()
     ap = AssemblyPlanner()
