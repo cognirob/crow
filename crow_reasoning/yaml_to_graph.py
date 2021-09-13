@@ -8,19 +8,21 @@ import rdflib
 import numpy as np
 import networkx as nx
 import yaml
+import pickle
 import os
 import argparse
 import re
 import matplotlib.pyplot as plt
-import graphviz
+import pygraphviz
 from networkx.drawing.nx_agraph import graphviz_layout
+from collections import Counter
 
 # %%ArgParser
 parser = argparse.ArgumentParser()
 parser.add_argument("build_name")
-parser.add_argument("--onto_file", "-o", default="onto_draft_02.owl")
+parser.add_argument("--onto_file", "-o", default="../ontology/onto_draft_02.owl")
 # args = parser.parse_args(["build_dog.yaml"])
-args = parser.parse_args(["build_snake.yaml", "-o", "onto_draft_02.owl"])
+args = parser.parse_args(["build_snake.yaml", "-o", "../ontology/onto_draft_02.owl"])
 # os.chdir(r".\code\crow\ontology\assembly")
 # os.chdir(r".\assembly")
 # args = parser.parse_args()
@@ -49,6 +51,8 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
     base_filename, _ = os.path.splitext(build_name)
     _, base_name = os.path.split(base_filename)
 
+
+    # if os.path.exists('mydirectory/myfile.png')
     with open(build_name, "r") as f:
         recipe = yaml.safe_load(f)
 
@@ -58,16 +62,16 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
 
     # Add nodes - first for each object one node
     Gin = nx.DiGraph()
-    G.add_node(0, parts_names=[None], parts_type=[None], probs=[1],
+    G.add_node(0, parts_names=[None], parts_type=[None], prob=1,
                weight=1, graph=Gin)
     if "objects" in recipe:
         for i, (entity, props) in enumerate(recipe["objects"].items()):
             node_type = props["type"]
             Gin = nx.DiGraph()
             Gin.add_node(entity, part_type=node_type)
-            G.add_node(i+1, parts_names=[entity], parts_type=[node_type], probs=[0],
+            G.add_node(i+1, parts_names=[entity], parts_type=[node_type], prob=0,
                        weight=1, graph=Gin)
-            G.add_edge(0, i+1, weight=1, probs=1 / (len(recipe) + 1), action='move',
+            G.add_edge(0, i+1, weight=1, prob=1 / (len(recipe) + 1), action='move',
                        object=node_type)
             # G.add_node(i, probs=[1 / (len(recipe) + 1)], graph=Gin)
     # now add nodes in the way that for each current node it checks if there is an operation with the object in the node and if yes,
@@ -95,9 +99,9 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
                                 G3.add_node(props['provider'],
                                             part_type=recipe['objects'][props['provider']]['type'])
                                 G3.add_edge(partNameSel, props['provider'])
-                                G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, probs=[0],
+                                G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, prob=0,
                                            graph=G3)
-                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, probs=0, action=props['type'],
+                                G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0, action=props['type'],
                                            object=recipe['objects'][props['provider']]['type'])
                         if props["provider"] in props2["parts_names"]:
                             if props["consumer"] not in props2["parts_names"]:
@@ -114,7 +118,7 @@ def build_graph(build_name, onto, recipe_name=None, isBaseBuild=None):
                                             part_type=recipe['objects'][props['consumer']]['type'])
                                 G3.add_edge(partNameSel, props['consumer'])
 
-                                G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, probs=[0],
+                                G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, prob=0,
                                            graph=G3)
                                 G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0, action=props['type'],
                                            object=recipe['objects'][props['consumer']]['type'])
@@ -180,7 +184,12 @@ def prune_graph(G):
                 weightE = nx.get_edge_attributes(Gp, 'weight')
                 nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
             else:
-                Gp.add_edge(fromE, toE, weight=1, prob=0)
+                #if the edge between the two nodes does not exist yet:
+                #find by which object the two nodes differ and add edge with the corresponding parameters between fromE and toE nodes
+                # objectE=list(set(Gp.nodes[toE]['parts_type']).symmetric_difference(set(Gp.nodes[fromE]['parts_type'])))
+                objectEs = Counter(Gp.nodes[toE]['parts_type'])-Counter(Gp.nodes[fromE]['parts_type'])
+                for a in objectEs.keys(): objectE = a
+                Gp.add_edge(fromE, toE, weight=1, prob=0, object=objectE, action = None)#TODO how to find the action for the merged edges?
             rem_edges.append([inE, outE])
         for inE, outE in in_edges:
             # if the predecessor of the edge is a node in the remove list,
@@ -195,9 +204,15 @@ def prune_graph(G):
                 weightE = nx.get_edge_attributes(Gp, 'weight')
                 nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
             else:
-                Gp.add_edge(fromE, toE, weight=1, prob=0)
-            Gp.add_edge(fromE, toE)
+                #if the edge between the two nodes does not exist yet:
+                #find by which object the two nodes differ and add edge with the corresponding parameters between fromE and toE nodes
+                # objectE=list(set(Gp.nodes[toE]['parts_type']).symmetric_difference(set(Gp.nodes[fromE]['parts_type'])))
+                objectEs = Counter(Gp.nodes[toE]['parts_type'])-Counter(Gp.nodes[fromE]['parts_type'])
+                for a in objectEs.keys(): objectE = a
+                Gp.add_edge(fromE, toE, weight=1, prob=0, object=objectE, action = None) #TODO how to find the action for the merged edges?
+            # add merged edges tot he remove list
             rem_edges.append([inE, outE])
+        #remove all merged edges and then the node
         for edge in rem_edges:
             Gp.remove_edge(edge[0], edge[1])
         Gp.remove_node(rem_item)
@@ -222,27 +237,41 @@ def prune_graph(G):
     pos = nx.kamada_kawai_layout(Gp)
     pos = nx.circular_layout(Gp)
 
-    # pos = graphviz_layout(Gp, prog="dot")
+    pos = graphviz_layout(Gp, prog="dot")
     labels = nx.get_node_attributes(Gp, 'parts_type')
-    nx.draw_networkx(Gp, pos=pos, labels=labels, font_size=8)
+    nx.draw_networkx(Gp, pos=pos, labels=labels, font_size=6)
     label_options = {"ec": "k", "fc": "white", "alpha": 0.7}
-    nx.draw_networkx_labels(Gp, pos=pos, labels=labels, font_size=8, bbox=label_options)
+    nx.draw_networkx_labels(Gp, pos=pos, labels=labels, font_size=6, bbox=label_options)
     labels_e = nx.get_edge_attributes(Gp, 'prob')
-    nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=labels_e, font_size=8, bbox=label_options)
+    nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=labels_e, font_size=6, bbox=label_options)
     plt.draw()
     plt.savefig('plotPruned')
+    graph_name_pickle = str.split(build_name,'.')[0]+'.txt'
+    pickle.dump(Gp, open(graph_name_pickle, 'wb'))
     return Gp
 
 
-def update_graph(G, Po, Pa):
+def update_graph(G, Po=[], Pa=[]):
     # updates the probabilities of the nodes of the incoming graph G based on the observed probability of the observed
     # object and action
-    # Po - probability distribution over objects
-    # Pa - probability distribution over actions
+    # Po - dictionary with probability distribution over objects
+    # Pa - dictionary with probability distribution over actions
     Gp = G.copy()
     # for each node:
     # node prob = sum of prob.edge*prob.observed_needed_object+action*prob.prev.state
-
+    for n, props in Gp.nodes.data():
+        prob_node = []
+        in_edges = Gp.in_edges(n)
+        for inE, outE in in_edges:
+            print(props)
+            objectE = Gp.get_edge_data(inE, outE)['object']
+            probsE = Gp.get_edge_data(inE, outE)['prob']
+            actionE = Gp.get_edge_data(inE, outE)['action']
+            objectE_p = Po[str.lower(objectE)]
+            prob_node.append(Gp.nodes[inE]['prob']*objectE_p*probsE)
+        if prob_node!=[]:
+            nx.set_node_attributes(G, {n: sum(prob_node)}, name='prob')
+    return G
 
 # %% Do
 def compare_list(l1, l2):
@@ -254,22 +283,28 @@ def compare_list(l1, l2):
     else:
         return False
 
-
-g, g_name, assembly_name, base_filename = build_graph(build_name, onto)
-gp = prune_graph(g)
+#TODO save after building the tree the tree and just load the saved object
+graph_name_pickle = str.split(build_name,'.')[0]+'.txt'
+if os.path.exists(graph_name_pickle):
+    gp = pickle.load(open(graph_name_pickle, 'rb'))
+    print('loading graph from a file')
+else:
+    print('building a new graph for the given assembly')
+    g, g_name, assembly_name, base_filename = build_graph(build_name, onto)
+    gp = prune_graph(g)
 po = {"peg": 0.1, "cube": 0.3, "sphere": 0.2, "screw": 0.1, "other": 0.3}
 pa1 = {"hammering": 0.1, "handling": 0.3, "screwing": 0.1, "other": 0.5}
 pa2 = {"hammering": 0.4, "handling": 0.3, "screwing": 0.1, "other": 0.2}
-# g = update_graph(g, po, pa1)
+gp = update_graph(gp, po, pa1)
 # g = update_graph(g, po, pa2)
 # %% Draw
-image_file = base_filename + ".png"
-outonto_file = base_filename + ".owl"
+# image_file = base_filename + ".png"
+outonto_file = graph_name_pickle + ".owl"
 # image = cv2.imread(image_file)
 # cv2.imshow(image_file, image)
 # cv2.waitKey(0)
 # cv2.destroyAllWindows()
-with open(f"{base_filename}_graph.txt", "w") as f:
-    f.write(str(g))
+with open(f"{graph_name_pickle}_graph.txt", "w") as f:
+    f.write(str(gp))
 
 onto.serialize(outonto_file)
