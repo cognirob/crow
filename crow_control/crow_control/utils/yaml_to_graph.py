@@ -235,8 +235,10 @@ class AssemblyGraphMaker():
         # node prob = sum of prob.edge*prob.observed_needed_object+action*prob.prev.state
         #TODO need to lower probability of the initial node + increase the probability of the "None" node
         #TODO need not to recompute probability of the nonzero nodes, only lower it. How?
-        nx.set_node_attributes(G, {0: 0.01}, name='prob') #make it smarter
-        print('set probability for node {} to {}'.format(0, 0.01))
+        pp = nx.get_node_attributes(G, 'prob')
+        orig_prob = pp[0]
+        nx.set_node_attributes(G, {0: orig_prob/100}, name='prob') #make it smarter
+        print('set probability for node {} to {}'.format(0, orig_prob/100))
         for n, props in Gp.nodes.data():
             prob_node = []
             in_edges = Gp.in_edges(n)
@@ -253,7 +255,12 @@ class AssemblyGraphMaker():
                     print('set probability for node {} to {}'.format(n,sum(prob_node)))
         return G
 
-    # %% Do
+    def detect_most_probable_state(self, G):
+        node_probs = nx.get_node_attributes(G, 'prob')
+        max_node = max(node_probs, key = node_probs.get)
+        print('max probability has a node {}.'.format(max_node))
+
+            # %% Do
     def compare_list(self, l1, l2):
         import functools
         l1.sort()
@@ -298,7 +305,7 @@ def main():
     gp = am.update_graph(gp, po, pa1)
     gp = am.update_graph(gp, po2, pa1)
     gp = am.update_graph(gp, po3, pa1)
-
+    max = am.detect_most_probable_state(gp)
     # outonto_file = am.build_name + ".owl"
     # with open(f"{am.graph_name}_graph.txt", "w") as f:
     #     f.write(str(gp))
