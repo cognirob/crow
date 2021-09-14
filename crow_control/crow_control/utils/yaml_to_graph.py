@@ -291,8 +291,23 @@ class AssemblyGraphMaker():
         prob = nx.get_node_attributes(G, 'prob')
         parts = nx.get_node_attributes(G, 'parts_type')
         print('max probability has a node {}: p = {}% ({}).'.format(max_node, round(prob[max_node]*100,4), parts[max_node]))
+        return max_node
 
-            # %% Do
+    def detect_next_state(self, G, max_node):
+        #detect the most probable next state in graph G given the current node is max_node
+        out_edges = G.out_edges(max_node)
+        edge_probs = nx.get_edge_attributes(G, 'prob')
+        outEs = []
+        edge_prob = []
+        for i, (inE, outE) in enumerate(out_edges):
+            edge_prob.append(edge_probs[(inE, outE)])
+            outEs.append(outE)
+        next_node = outEs[edge_prob.index(max(edge_prob))]
+        objects_add = nx.get_edge_attributes(G, 'object')
+        object_add = objects_add[(max_node, next_node)]
+        print('next most probable node is {}: p = {}% (need to add: {}).'.format(next_node, round(max(edge_prob)*100,4), object_add))
+        return next_node
+
     def compare_list(self, l1, l2):
         import functools
         l1.sort()
@@ -337,7 +352,9 @@ def main():
     gp = am.update_graph(gp, po, pa1)
     gp = am.update_graph(gp, po2, pa1)
     gp = am.update_graph(gp, po3, pa1)
-    max = am.detect_most_probable_state(gp)
+    max_node = am.detect_most_probable_state(gp)
+    next_node = am.detect_next_state(gp, max_node)
+    print()
     # outonto_file = am.build_name + ".owl"
     # with open(f"{am.graph_name}_graph.txt", "w") as f:
     #     f.write(str(gp))

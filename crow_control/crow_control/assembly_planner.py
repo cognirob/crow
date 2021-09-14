@@ -65,7 +65,8 @@ class AssemblyPlanner(Node):
         self.get_logger().info(f"Got some object probabilities: {str(self._translate_object(objects.probabilities))}")
         Po = dict(self._translate_object(objects.probabilities))
         self.am.update_graph(self.gp, Po)
-        self.am.detect_most_probable_state(self.gp)
+        max_node = self.am.detect_most_probable_state(self.gp)
+        next_node = self.am.detect_next_state(self.gp, max_node)
 def main():
     rclpy.init()
     ap = AssemblyPlanner()
