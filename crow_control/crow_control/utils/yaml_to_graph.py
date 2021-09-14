@@ -40,21 +40,37 @@ class AssemblyGraphMaker():
         # Add recipe name
         assembly_name = recipe["assembly_name"]
 
-        # Add nodes - first for each object one node
         Gin = nx.DiGraph()
+        #Add nodes - initial node with 100% probability
         G.add_node(0, parts_names=[None], parts_type=[None], prob=1,
                    weight=1, graph=Gin)
+        #Add "Other" node for false positive detections
+        G.add_node(1, parts_names=['Other'], parts_type=['Other'], prob=0,
+                   weight=1, graph=Gin)
+        G.add_edge(0, 1, weight=1, prob=1 / (len(recipe["objects"].items()) + 1), action='None',
+                   object="Other")
+        #Add edge to stay in the current state
+        G.add_edge(1, 1, weight=1, prob=0.5, action='None',
+                   object="Other")
+        # Add nodes - first for each object one node
         if "objects" in recipe:
             for i, (entity, props) in enumerate(recipe["objects"].items()):
                 node_type = props["type"]
                 Gin = nx.DiGraph()
                 Gin.add_node(entity, part_type=node_type)
-                G.add_node(i+1, parts_names=[entity], parts_type=[node_type], prob=0,
+                G.add_node(i+2, parts_names=[entity], parts_type=[node_type], prob=0,
                            weight=1, graph=Gin)
-                G.add_edge(0, i+1, weight=1, prob=1 / (len(recipe) + 1), action='move',
+                #Edge to connect to initial node
+                G.add_edge(0, i+2, weight=1, prob=1 / (len(recipe["objects"].items()) + 1), action='move',
                            object=node_type)
-                # G.add_node(i, probs=[1 / (len(recipe) + 1)], graph=Gin)
-        # now add nodes in the way that for each current node it checks if there is an operation with the object in the node and if yes,
+                #Edge to connect to 'other' node
+                G.add_edge(1, i+2, weight=1, prob=0.5, action='move',
+                           object=node_type)
+                #Add edge to stay in the current state
+                G.add_edge(i+2, i+2, weight=1, prob=0.5, action='None',
+                           object="Other")
+
+        # Add nodes: in the way that for each current node it checks if there is an operation with the object in the node and if yes,
         # it adds the new part to the object
         # it is checked on individual levels - in each level, one object should be added
         # TODO improve the level thing - this was done just to not change the size of dictionary during iterations (that is why .copy is in place)
@@ -63,6 +79,10 @@ class AssemblyGraphMaker():
                 G2 = G.copy()
                 for entity, props in recipe["operations"].items():
                     for entity2, props2 in G2.nodes.data():
+                        # print(level)
+                        # print(props2['parts_names'])
+                        # if ('cube_front' in props2['parts_names']) and ('peg_neck' in props2['parts_names']):
+                        #     print('hi')
                         if len(props2['parts_names']) < level - 1:
                             if props["consumer"] in props2["parts_names"]:
                                 if props["provider"] not in props2["parts_names"]:
@@ -81,8 +101,11 @@ class AssemblyGraphMaker():
                                     G3.add_edge(partNameSel, props['provider'])
                                     G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, prob=0,
                                                graph=G3)
-                                    G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0, action=props['type'],
+                                    G.add_edge(entity2, G.number_of_nodes()-1 , weight=1, prob=0, action=props['type'],
                                                object=recipe['objects'][props['provider']]['type'])
+                                    # Add edge to stay in the current state
+                                    G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.5, action='None',
+                                               object="Other")
                             if props["provider"] in props2["parts_names"]:
                                 if props["consumer"] not in props2["parts_names"]:
                                     names_new = np.concatenate((props2["parts_names"], [props['consumer']]))
@@ -100,8 +123,11 @@ class AssemblyGraphMaker():
 
                                     G.add_node(G.number_of_nodes(), parts_names=names_new, parts_type=types_new, prob=0,
                                                graph=G3)
-                                    G.add_edge(entity2, G.number_of_nodes() - 1, weight=1, prob=0, action=props['type'],
+                                    G.add_edge(entity2, G.number_of_nodes()-1 , weight=1, prob=0, action=props['type'],
                                                object=recipe['objects'][props['consumer']]['type'])
+                                    # Add edge to stay in the current state
+                                    G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.5, action='None',
+                                               object="Other")
             # nx.draw_networkx(G3, node_color='r', edge_color='b')
             # plt.draw()
             # plt.savefig('plot2')
@@ -151,44 +177,46 @@ class AssemblyGraphMaker():
                 # if the ancessor of the node (where the edge ends) is a node in the remove list,
                 # find in similarity list the node to which it will be
                 # merged to and exchange
-                fromE = similarity_list_u[idx]
-                if outE in remove_list_u:
-                    toE = similarity_list_u[np.where(remove_list_u == outE)][0]
-                else:
-                    toE = outE
-                # adjust the weight of the edge - increase the weight based on the number of the merged edges
-                if Gp.has_edge(fromE, toE):
-                    weightE = nx.get_edge_attributes(Gp, 'weight')
-                    nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
-                else:
-                    #if the edge between the two nodes does not exist yet:
-                    #find by which object the two nodes differ and add edge with the corresponding parameters between fromE and toE nodes
-                    # objectE=list(set(Gp.nodes[toE]['parts_type']).symmetric_difference(set(Gp.nodes[fromE]['parts_type'])))
-                    objectEs = Counter(Gp.nodes[toE]['parts_type'])-Counter(Gp.nodes[fromE]['parts_type'])
-                    for a in objectEs.keys(): objectE = a
-                    Gp.add_edge(fromE, toE, weight=1, prob=0, object=objectE, action = None)#TODO how to find the action for the merged edges?
-                rem_edges.append([inE, outE])
+                if not inE == outE:
+                    fromE = similarity_list_u[idx]
+                    if outE in remove_list_u:
+                        toE = similarity_list_u[np.where(remove_list_u == outE)][0]
+                    else:
+                        toE = outE
+                    # adjust the weight of the edge - increase the weight based on the number of the merged edges
+                    if Gp.has_edge(fromE, toE):
+                        weightE = nx.get_edge_attributes(Gp, 'weight')
+                        nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
+                    else:
+                        #if the edge between the two nodes does not exist yet:
+                        #find by which object the two nodes differ and add edge with the corresponding parameters between fromE and toE nodes
+                        # objectE=list(set(Gp.nodes[toE]['parts_type']).symmetric_difference(set(Gp.nodes[fromE]['parts_type'])))
+                        objectEs = Counter(Gp.nodes[toE]['parts_type'])-Counter(Gp.nodes[fromE]['parts_type'])
+                        for a in objectEs.keys(): objectE = a
+                        Gp.add_edge(fromE, toE, weight=1, prob=0, object=objectE, action = None)#TODO how to find the action for the merged edges?
+                    rem_edges.append([inE, outE])
             for inE, outE in in_edges:
                 # if the predecessor of the edge is a node in the remove list,
                 # find in similarity list the node to which it will be merged to and exchange
-                toE = similarity_list_u[idx]
-                if inE in remove_list_u:
-                    fromE = similarity_list_u[np.where(remove_list_u == inE)]
-                else:
-                    fromE = inE
-                # adjust the weight of the edge - increase the weight based on the number of the merged edges
-                if Gp.has_edge(fromE, toE):
-                    weightE = nx.get_edge_attributes(Gp, 'weight')
-                    nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
-                else:
-                    #if the edge between the two nodes does not exist yet:
-                    #find by which object the two nodes differ and add edge with the corresponding parameters between fromE and toE nodes
-                    # objectE=list(set(Gp.nodes[toE]['parts_type']).symmetric_difference(set(Gp.nodes[fromE]['parts_type'])))
-                    objectEs = Counter(Gp.nodes[toE]['parts_type'])-Counter(Gp.nodes[fromE]['parts_type'])
-                    for a in objectEs.keys(): objectE = a
-                    Gp.add_edge(fromE, toE, weight=1, prob=0, object=objectE, action = None) #TODO how to find the action for the merged edges?
-                # add merged edges tot he remove list
-                rem_edges.append([inE, outE])
+                if not inE==outE:
+                    toE = similarity_list_u[idx]
+                    if inE in remove_list_u:
+                        fromE = similarity_list_u[np.where(remove_list_u == inE)]
+                    else:
+                        fromE = inE
+                    # adjust the weight of the edge - increase the weight based on the number of the merged edges
+                    if Gp.has_edge(fromE, toE):
+                        weightE = nx.get_edge_attributes(Gp, 'weight')
+                        nx.set_edge_attributes(Gp, {(fromE, toE): {"weight": 1 + weightE[(fromE, toE)]}})
+                    else:
+                        #if the edge between the two nodes does not exist yet:
+                        #find by which object the two nodes differ and add edge with the corresponding parameters between fromE and toE nodes
+                        # objectE=list(set(Gp.nodes[toE]['parts_type']).symmetric_difference(set(Gp.nodes[fromE]['parts_type'])))
+                        objectEs = Counter(Gp.nodes[toE]['parts_type'])-Counter(Gp.nodes[fromE]['parts_type'])
+                        for a in objectEs.keys(): objectE = a
+                        Gp.add_edge(fromE, toE, weight=1, prob=0, object=objectE, action = None) #TODO how to find the action for the merged edges?
+                    # add merged edges tot he remove list
+                    rem_edges.append([inE, outE])
             #remove all merged edges and then the node
             for edge in rem_edges:
                 Gp.remove_edge(edge[0], edge[1])
@@ -237,8 +265,9 @@ class AssemblyGraphMaker():
         #TODO need not to recompute probability of the nonzero nodes, only lower it. How?
         pp = nx.get_node_attributes(G, 'prob')
         orig_prob = pp[0]
-        nx.set_node_attributes(G, {0: orig_prob/100}, name='prob') #make it smarter
-        print('set probability for node {} to {}'.format(0, orig_prob/100))
+        # nx.set_node_attributes(G, {0: orig_prob/100}, name='prob') #make it smarter
+        nx.set_node_attributes(G, {0: 0}, name='prob') #make it smarter
+        print('set probability for node {} to to p = {}%'.format(0, (orig_prob/100)*100))
         for n, props in Gp.nodes.data():
             prob_node = []
             in_edges = Gp.in_edges(n)
@@ -251,14 +280,17 @@ class AssemblyGraphMaker():
                 prob_node.append(Gp.nodes[inE]['prob']*objectE_p*probsE)
             if prob_node!=[]:
                 nx.set_node_attributes(G, {n: sum(prob_node)}, name='prob')
+                parts = nx.get_node_attributes(G, 'parts_type')
                 if sum(prob_node)>0:
-                    print('set probability for node {} to {}'.format(n,sum(prob_node)))
+                    print('set probability for node {} to p = {}% ({})'.format(n,round(sum(prob_node)*100,4), parts[n]))
         return G
 
     def detect_most_probable_state(self, G):
         node_probs = nx.get_node_attributes(G, 'prob')
         max_node = max(node_probs, key = node_probs.get)
-        print('max probability has a node {}.'.format(max_node))
+        prob = nx.get_node_attributes(G, 'prob')
+        parts = nx.get_node_attributes(G, 'parts_type')
+        print('max probability has a node {}: p = {}% ({}).'.format(max_node, round(prob[max_node]*100,4), parts[max_node]))
 
             # %% Do
     def compare_list(self, l1, l2):
