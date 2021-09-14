@@ -67,6 +67,7 @@ class AssemblyPlanner(Node):
         self.am.update_graph(self.gp, Po)
         max_node = self.am.detect_most_probable_state(self.gp)
         next_node = self.am.detect_next_state(self.gp, max_node)
+
 def main():
     rclpy.init()
     ap = AssemblyPlanner()

@@ -24,6 +24,8 @@ class AssemblyGraphMaker():
         self.build_name = build_name + '.yaml'
         self.graph_name = build_name + '.txt'
         self.fig_name = build_name + '.png'
+        with open(self.build_name, "r") as f:
+            self.recipe = yaml.safe_load(f)
 
     # %%Build graph
     def build_graph(self, onto, recipe_name=None, isBaseBuild=None):
@@ -50,8 +52,8 @@ class AssemblyGraphMaker():
         G.add_edge(0, 1, weight=1, prob=1 / (len(recipe["objects"].items()) + 1), action='None',
                    object="Other")
         #Add edge to stay in the current state
-        G.add_edge(1, 1, weight=1, prob=0.5, action='None',
-                   object="Other")
+        G.add_edge(1, 1, weight=1, prob=0.55, action='None',
+                   object="OtherO")
         # Add nodes - first for each object one node
         if "objects" in recipe:
             for i, (entity, props) in enumerate(recipe["objects"].items()):
@@ -67,8 +69,8 @@ class AssemblyGraphMaker():
                 G.add_edge(1, i+2, weight=1, prob=0.5, action='move',
                            object=node_type)
                 #Add edge to stay in the current state
-                G.add_edge(i+2, i+2, weight=1, prob=0.5, action='None',
-                           object="Other")
+                G.add_edge(i+2, i+2, weight=1, prob=0.55, action='None',
+                           object="OtherO")
 
         # Add nodes: in the way that for each current node it checks if there is an operation with the object in the node and if yes,
         # it adds the new part to the object
@@ -104,8 +106,8 @@ class AssemblyGraphMaker():
                                     G.add_edge(entity2, G.number_of_nodes()-1 , weight=1, prob=0, action=props['type'],
                                                object=recipe['objects'][props['provider']]['type'])
                                     # Add edge to stay in the current state
-                                    G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.5, action='None',
-                                               object="Other")
+                                    G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.55, action='None',
+                                               object="OtherO")
                             if props["provider"] in props2["parts_names"]:
                                 if props["consumer"] not in props2["parts_names"]:
                                     names_new = np.concatenate((props2["parts_names"], [props['consumer']]))
@@ -126,8 +128,8 @@ class AssemblyGraphMaker():
                                     G.add_edge(entity2, G.number_of_nodes()-1 , weight=1, prob=0, action=props['type'],
                                                object=recipe['objects'][props['consumer']]['type'])
                                     # Add edge to stay in the current state
-                                    G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.5, action='None',
-                                               object="Other")
+                                    G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.55, action='None',
+                                               object="OtherO")
             # nx.draw_networkx(G3, node_color='r', edge_color='b')
             # plt.draw()
             # plt.savefig('plot2')
@@ -231,11 +233,13 @@ class AssemblyGraphMaker():
             out_edges = Gp.out_edges(entity)
             edges_weights = nx.get_edge_attributes(Gp, 'weight')
             sum_weights = 0
+            nmb_weights = 0
             for e in out_edges:
                 sum_weights = sum_weights + edges_weights[e]
+                nmb_weights = nmb_weights + 1
             for e in out_edges:
                 nx.set_edge_attributes(Gp, {e: {'prob': round(edges_weights[e] / sum_weights, 2)}})
-
+            nx.set_edge_attributes(Gp, {(entity,entity): {'prob': round(((sum_weights-1)/nmb_weights)/sum_weights,2)}})
         # pos = nx.kamada_kawai_layout(Gp)
         # pos = nx.circular_layout(Gp)
 
@@ -261,29 +265,46 @@ class AssemblyGraphMaker():
         Gp = G.copy()
         # for each node:
         # node prob = sum of prob.edge*prob.observed_needed_object+action*prob.prev.state
-        #TODO need to lower probability of the initial node + increase the probability of the "None" node
         #TODO need not to recompute probability of the nonzero nodes, only lower it. How?
         pp = nx.get_node_attributes(G, 'prob')
         orig_prob = pp[0]
         # nx.set_node_attributes(G, {0: orig_prob/100}, name='prob') #make it smarter
         nx.set_node_attributes(G, {0: 0}, name='prob') #make it smarter
         print('set probability for node {} to to p = {}%'.format(0, (orig_prob/100)*100))
+        prob_other = self.compute_prob_other_object(Po)
+
         for n, props in Gp.nodes.data():
             prob_node = []
             in_edges = Gp.in_edges(n)
             for inE, outE in in_edges:
                 # print(props)
-                objectE = Gp.get_edge_data(inE, outE)['object']
-                probsE = Gp.get_edge_data(inE, outE)['prob']
-                actionE = Gp.get_edge_data(inE, outE)['action']
-                objectE_p = Po[str.lower(objectE)]
-                prob_node.append(Gp.nodes[inE]['prob']*objectE_p*probsE)
+                if not inE == outE:
+                    objectE = Gp.get_edge_data(inE, outE)['object']
+                    probsE = Gp.get_edge_data(inE, outE)['prob']
+                    actionE = Gp.get_edge_data(inE, outE)['action']
+                    objectE_p = Po[str.lower(objectE)]
+                    prob_node.append(Gp.nodes[inE]['prob']*objectE_p*probsE)
+            if n>0:
+                prob_node.append(Gp.nodes[n]['prob']*Gp.get_edge_data(n, n)['prob']*prob_other)
             if prob_node!=[]:
                 nx.set_node_attributes(G, {n: sum(prob_node)}, name='prob')
                 parts = nx.get_node_attributes(G, 'parts_type')
                 if sum(prob_node)>0:
                     print('set probability for node {} to p = {}% ({})'.format(n,round(sum(prob_node)*100,4), parts[n]))
         return G
+
+    def compute_prob_other_object(self, Po):
+        # for the given graph G, and current observation of object probabilities Po computes what is the probability
+        # that we observed other object (prob_other) than in the assembly
+        # other + nothing + all the objects not in the assembly
+        prob_other = 0
+        object_list = []
+        for item, props in self.recipe['objects'].items():
+            object_list.append(str.lower(props['type']))
+        for key in Po:
+            if key not in object_list:
+                prob_other = prob_other + Po[key]
+        return prob_other
 
     def detect_most_probable_state(self, G):
         node_probs = nx.get_node_attributes(G, 'prob')
