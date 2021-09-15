@@ -327,7 +327,7 @@ class AssemblyGraphMaker():
         objects_add = nx.get_edge_attributes(G, 'object')
         object_add = objects_add[(max_node, next_node)]
         print('next most probable node is {}: p = {}% (need to add: {}).'.format(next_node, round(max(edge_prob)*100,4), object_add))
-        return next_node
+        return next_node, object_add
 
     def compare_list(self, l1, l2):
         import functools
