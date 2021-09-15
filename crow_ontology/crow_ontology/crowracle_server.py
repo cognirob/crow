@@ -119,6 +119,9 @@ class CrowtologyServer():
         # fuseki_path = '~/packages/apache-jena-fuseki-4.1.0/'
         fuseki_path = os.path.expanduser(fuseki_path)
         self.fuseki_run_cmd = os.path.join(fuseki_path, 'fuseki')
+        fuseki_env = {
+                "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
+            }
         if os.path.exists(self.fuseki_run_cmd):
             self.log(f'Running fuseki as service from {self.fuseki_run_cmd}...')
         else:
@@ -134,9 +137,6 @@ class CrowtologyServer():
                 else:
                     self.log(f"{ret.stdout.decode('utf-8')}\nFuseki service stopped.")
         # else:
-        fuseki_env = {
-                "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
-            }
         ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'start']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
         if ret.returncode > 0:
             raise Exception(f"Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-8')}")
