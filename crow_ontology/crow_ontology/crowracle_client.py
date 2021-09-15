@@ -33,6 +33,59 @@ class CrowtologyClient():
     CROW = Namespace(f"{ONTO_IRI}#")
     OWL_READY_NS = Namespace(f"{OWL_READY}#")
 
+    _query_add_object = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        INSERT {
+            ?individual ?prop ?value .
+            ?individual crow:hasAbsoluteLocation ?loc_name .
+            ?individual crow:hasPclDimensions ?pcl_name .
+            ?loc_name a crow:xyzAbsoluteLocation .
+            ?loc_name crow:x ?loc_x .
+            ?loc_name crow:y ?loc_y .
+            ?loc_name crow:z ?loc_z .
+            ?pcl_name a crow:xyzPclDimensions .
+            ?pcl_name crow:x ?pcl_x .
+            ?pcl_name crow:y ?pcl_y .
+            ?pcl_name crow:z ?pcl_z .
+            ?individual crow:hasId ?adder_id .
+            ?individual crow:hasUuid ?uuid .
+            ?individual crow:hasTimestamp ?stamp .
+        }
+
+        WHERE {
+            ?template ?prop ?value .
+            FILTER NOT EXISTS { ?template crow:hasUuid ?uuid }
+            FILTER NOT EXISTS { ?any crow:hasAbsoluteLocation ?value }
+            FILTER NOT EXISTS { ?any crow:hasPclDimensions ?value }
+        }"""
+    _query_add_object_no_template = """
+        INSERT {
+            ?individual ?prop ?value .
+            ?individual crow:hasAbsoluteLocation ?loc_name .
+            ?individual crow:hasPclDimensions ?pcl_name .
+            ?loc_name a crow:xyzAbsoluteLocation .
+            ?loc_name crow:x ?loc_x .
+            ?loc_name crow:y ?loc_y .
+            ?loc_name crow:z ?loc_z .
+            ?pcl_name a crow:xyzPclDimensions .
+            ?pcl_name crow:x ?pcl_x .
+            ?pcl_name crow:y ?pcl_y .
+            ?pcl_name crow:z ?pcl_z .
+            ?individual crow:hasId ?adder_id .
+            ?individual crow:hasUuid ?uuid .
+            ?individual crow:hasTimestamp ?stamp .
+        }
+
+        WHERE {
+            ?template ?prop ?value ;
+                    crow:hasDetectorName ?det_name .
+            FILTER NOT EXISTS { ?template crow:hasUuid ?uuid }
+            FILTER NOT EXISTS { ?any crow:hasAbsoluteLocation ?value }
+            FILTER NOT EXISTS { ?any crow:hasPclDimensions ?value }
+        }"""
     _query_tangible_leaf = """SELECT ?cls
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
@@ -43,15 +96,24 @@ class CrowtologyClient():
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
         }"""
-    _query_present = """SELECT ?obj
+    _query_present = """SELECT DISTINCT ?obj
         WHERE {
             ?obj crow:hasId ?c .
             ?obj rdf:type ?cls .
             ?cls rdfs:subClassOf* crow:TangibleObject .
         }"""
-    _query_present_and_disabled_nocls = """SELECT ?obj
+    _query_present_and_disabled_nocls = """SELECT DISTINCT ?obj
         WHERE {
             ?obj crow:hasTimestamp ?c .
+        }"""
+    _query_present_nocls = """SELECT DISTINCT ?obj
+        WHERE {
+            ?obj crow:hasId ?c .
+        }"""
+    _query_check_time_enable_disable = """SELECT DISTINCT ?obj ?stamp ?enabled
+        WHERE {
+            ?obj crow:hasTimestamp ?stamp .
+            BIND(EXISTS{?obj crow:hasId ?id} AS ?enabled)
         }"""
     _query_present_props = """SELECT ?obj ?id ?cls ?col ?colczname ?colenname ?czname ?enname ?x ?y ?z
         WHERE {
@@ -67,6 +129,24 @@ class CrowtologyClient():
             ?loc crow:x ?x .
             ?loc crow:y ?y .
             ?loc crow:z ?z .
+        }"""
+    _query_get_location = """SELECT ?x ?y ?z
+        WHERE {
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+        }"""
+    _query_get_dimensions = """SELECT ?x ?y ?z
+        WHERE {
+            ?obj crow:hasPclDimensions ?pcl .
+            ?pcl crow:x ?x .
+            ?pcl crow:y ?y .
+            ?pcl crow:z ?z .
+        }"""
+    _query_get_timestamp = """SELECT ?stamp
+        WHERE {
+            ?obj crow:hasTimestamp ?stamp .
         }"""
     _query_actions_props = """SELECT ?obj ?name ?start ?stop ?uuid
         WHERE {
@@ -106,19 +186,15 @@ class CrowtologyClient():
             ?obj crow:hasMarkerId ?id .
             ?obj crow:hasSquareLength ?square_len .
         }"""
-    _query_present_nocls = """SELECT ?obj
-        WHERE {
-            ?obj crow:hasId ?c .
-        }"""
     _query_colors = """SELECT ?obj
         WHERE {
             ?obj rdf:type crow:NamedColor .
         }"""
     _query_colors_nlp = """SELECT ?name
-        WHERE {{
+        WHERE {
             ?obj a crow:NamedColor .
-            ?obj crow:hasNlpName{language} ?name .
-        }}"""
+            ?obj ?language ?name .
+        }"""
     _query_filter_properties = """SELECT DISTINCT ?name ?col ?sigma
         WHERE {
             ?obj crow:hasDetectorName ?name .
@@ -131,7 +207,6 @@ class CrowtologyClient():
             ?cls crow:world_name ?wname .
             }
         '''
-
     _query_area_polyhedron = """
         SELECT ?x ?y ?z
 
@@ -139,10 +214,9 @@ class CrowtologyClient():
             ?area crow:hasPolyhedron ?poly .
             ?poly crow:hasPoint3D ?pt .
             ?pt crow:x ?x .
-            ?pt crow:x ?y .
-            ?pt crow:x ?z .
+            ?pt crow:y ?y .
+            ?pt crow:z ?z .
         }"""
-
     _query_area_polygon = """
         SELECT ?x ?y ?z
 
@@ -150,29 +224,44 @@ class CrowtologyClient():
             ?area crow:hasPolygon ?poly .
             ?poly crow:hasPoint3D ?pt .
             ?pt crow:x ?x .
-            ?pt crow:x ?y .
-            ?pt crow:x ?z .
+            ?pt crow:y ?y .
+            ?pt crow:z ?z .
         }"""
-
     _query_all_tangible_nlp = """
         SELECT ?name
 
-        WHERE {{
+        WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
-            FILTER NOT EXISTS {{?nan rdfs:subClassOf ?cls .}}
-            FILTER NOT EXISTS {{?cls crow:hasId ?id .}}
-            ?cls crow:hasNlpName{language} ?name .
-        }}"""
-
+            FILTER NOT EXISTS { ?nan rdfs:subClassOf ?cls . }
+            FILTER NOT EXISTS { ?cls crow:hasId ?id . }
+            ?cls ?language ?name .
+        }"""
     _query_present_tangible_nlp = """
         SELECT ?name
 
-        WHERE {{
+        WHERE {
             ?obj crow:hasId ?c .
             ?obj rdf:type ?cls .
             ?cls rdfs:subClassOf* crow:TangibleObject .
-            ?cls crow:hasNlpName{language} ?name .
-        }}"""
+            ?cls ?language ?name .
+        }"""
+    _query_disable_object = """DELETE { ?individual crow:hasId ?id }
+        INSERT { ?individual crow:disabledId ?id }
+        WHERE {
+            ?individual crow:hasId ?id .
+        }"""
+    _query_enable_object = """DELETE { ?individual crow:disabledId ?id }
+        INSERT { ?individual crow:hasId ?id }
+        WHERE {
+            ?individual crow:disabledId ?id .
+        }"""
+    _query_delete_object = """DELETE {
+            ?s ?p ?o .
+        }
+        WHERE {
+            ?s ?p ?o .
+            FILTER (?s = ?individual || ?o = ?individual)
+        }"""
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
         """Creates and ontology client object. The client can be started in ROS mode,
@@ -339,6 +428,17 @@ class CrowtologyClient():
         res = self.onto.query(self._query_present)
         return [g["obj"] for g in res]
 
+    def getTangibleObjects_timestamp(self):
+        """Lists physical objects present on the workspace
+
+        Returns:
+            list: The objects.
+        """
+        res = self.onto.query(self._query_check_time_enable_disable)
+        # return res
+        # return list(res)
+        return [(g["obj"], g["stamp"], g["enabled"].toPython()) for g in res]
+
     def getTangibleObjectsProps(self):
         """Lists physical objects present on the workspace together with their properties
 
@@ -489,12 +589,14 @@ class CrowtologyClient():
         Returns:
             list of floats: xyz location, 1x3
         """
-        loc_obj = list(self.onto.objects(uri, self.CROW.hasAbsoluteLocation))
-        if len(loc_obj) > 0: # assume obj has max one location
+        result = self.onto.query(self._query_get_location, initBindings={
+            "obj": uri
+        })
+        if len(result) > 0: # assume obj has max one location
             try: # expect floats
-                loc = [float(list(self.onto.objects(loc_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+                loc = [float(c) for c in list(result)[0]]
             except: # but may be None (if not localized yet)
-                loc = [str(list(self.onto.objects(loc_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+                loc = [str(c) for c in list(result)[0]]
             return loc
         else:
             return [None]*3
@@ -508,15 +610,35 @@ class CrowtologyClient():
         Returns:
             list of floats: xyz dimension, 1x3
         """
-        dim_obj = list(self.onto.objects(uri, self.CROW.hasPclDimensions))
-        if len(dim_obj) > 0: # assume obj has max one dimensions
+        result = self.onto.query(self._query_get_dimensions, initBindings={
+            "obj": uri
+        })
+        if len(result) > 0: # assume obj has max one location
             try: # expect floats
-                dim = [float(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
+                loc = [float(c) for c in list(result)[0]]
             except: # but may be None (if not localized yet)
-                dim = [str(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
-            return dim
+                loc = [str(c) for c in list(result)[0]]
+            return loc
         else:
             return [None]*3
+
+    def get_timestamp_of_obj(self, uri):
+        """Get timestamp of detected object
+
+        Args:
+            uri (URIRef): URI of obj, 1
+
+        Returns:
+            timestamp in XSD.Timestamp format
+        """
+        result = self.onto.query(self._query_get_timestamp, initBindings={
+            "obj": uri
+        })
+        if len(result) > 0: # assume obj has max one location
+            stamp = str(list(result)[0][0])
+            return stamp
+        else:
+            return None
 
     def get_fixed_dimensions_of_obj(self, uri):
         """Get dimensions of detected object, specified by 3D models
@@ -681,7 +803,7 @@ class CrowtologyClient():
         # all_tangible_nlp = []
         # for tangible in all_tangible:
         #     all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
-        result = self.onto.query(self._query_all_tangible_nlp.format(language=language))
+        result = self.onto.query(self._query_all_tangible_nlp, initBindings={"language": self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ})
         return [x.name.toPython() for x in result]
 
     # B "which objects are in the scene?"
@@ -699,7 +821,7 @@ class CrowtologyClient():
         # for tangible in all_tangible:
         #     all_tangible_nlp.append(self.get_nlp_from_uri(tangible, language=language))
         # return all_tangible_nlp
-        result = self.onto.query(self._query_present_tangible_nlp.format(language=language))
+        result = self.onto.query(self._query_present_tangible_nlp, initBindings={"language": self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ})
         return [x.name.toPython() for x in result]
 
     def get_colors_nlp(self, language='EN'):
@@ -716,7 +838,8 @@ class CrowtologyClient():
         # for color in all_colors:
         #     all_colors_nlp.append(self.get_nlp_from_uri(color, language=language))
         # return all_colors_nlp
-        result = self.onto.query(self._query_colors_nlp.format(language=language), initNs={"rdf": RDF})
+
+        result = self.onto.query(self._query_colors_nlp, initBindings={"language": self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ}, initNs={"rdf": RDF})
         return [x.name.toPython() for x in result]
 
     def get_all_tools(self, all=False):
@@ -982,8 +1105,10 @@ class CrowtologyClient():
         res = self.onto.query(self._query_area_polyhedron, initBindings={'area': uri})
         if len(res) > 0:
             area_pts = [[float(x), float(y), float(z)] for x, y, z in res]
+            return area_pts
         else:
-            area_pts = [[None]]
+            raise Exception(f"Error trying to get polyhedron of storage space {uri}! The result was:\n{list(res)}")
+            # area_pts = [[None]]
 
     def get_polygon(self, uri):
         """Get location of points in polygon defining a storage space
@@ -994,11 +1119,13 @@ class CrowtologyClient():
         Returns:
             polygon (list of lists of floats): xyz locations
         """
+        print(uri)
         res = self.onto.query(self._query_area_polygon, initBindings={'area': uri})
         if len(res) > 0:
             area_pts = [[float(x), float(y), float(z)] for x, y, z in res]
+            return area_pts
         else:
-            area_pts = [[None]]
+            raise Exception(f"Error trying to get polygon of storage space {uri}! The result was:\n{list(res)}")
 
     def get_area_centroid(self, uri):
         """Get location of centroid of a storage space
@@ -1024,7 +1151,8 @@ class CrowtologyClient():
         """
         area_poly = self.get_polyhedron(area_uri)
         obj_location = self.get_location_of_obj(obj_uri)
-        print(f"* obj_location: {obj_location}")
+        # print(f"* obj_location: {obj_location}")
+        # print(f"* area_poly: {area_poly}")
         if area_poly != [[None]]:
             res = test_in_hull(obj_location, area_poly)
             return res
@@ -1230,17 +1358,30 @@ class CrowtologyClient():
         norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
         onto_name = self.CROW[norm_name]
         PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each position
-        self.onto.add((onto_name, RDF.type, self.CROW.Position))
-        self.onto.add((onto_name, self.CROW.hasName, Literal(name, datatype=XSD.string)))
-        self.onto.add((onto_name, self.CROW.hasUuid, Literal(position_uuid, datatype=XSD.string)))
-        self.onto.add((onto_name, self.CROW.isActive, Literal(True, datatype=XSD.boolean)))
-
         onto_location = PART['xyzAbsoluteLocation']
-        self.onto.add((onto_location, RDF.type, self.CROW.Location))
-        self.onto.add((onto_location, self.CROW.x, Literal(centroid[0], datatype=XSD.float)))
-        self.onto.add((onto_location, self.CROW.y, Literal(centroid[1], datatype=XSD.float)))
-        self.onto.add((onto_location, self.CROW.z, Literal(centroid[2], datatype=XSD.float)))
-        self.onto.add((onto_name, self.CROW.hasAbsoluteLocation, onto_location))
+        query = """INSERT DATA {{
+                {individual} a crow:Position .
+                {individual} crow:hasName {name} .
+                {individual} crow:hasUuid {uuid} .
+                {individual} crow:isActive {active} .
+
+                {loc_name} a crow:Location .
+                {loc_name} crow:x {loc_x} .
+                {loc_name} crow:y {loc_y} .
+                {loc_name} crow:z {loc_z} .
+                {individual} crow:hasAbsoluteLocation {loc_name} .
+            }}
+            """.format(**{
+                "individual": onto_name.n3(),
+                "name": Literal(name, datatype=XSD.string).n3(),
+                "uuid": Literal(position_uuid, datatype=XSD.string).n3(),
+                "active": Literal(True, datatype=XSD.boolean).n3(),
+                "loc_name": onto_location.n3(),
+                "loc_x": Literal(centroid[0], datatype=XSD.float).n3(),
+                "loc_y": Literal(centroid[1], datatype=XSD.float).n3(),
+                "loc_z": Literal(centroid[2], datatype=XSD.float).n3(),
+            })
+        self.onto.update(self.prepareQuery(query))
 
     def update_current_action(self, action_name, time):
         """
@@ -1276,6 +1417,47 @@ class CrowtologyClient():
         self.onto.add((self.CROW[individual_name], self.CROW.hasStartTimestamp, Literal(start, datatype=XSD.dateTimeStamp)))
         self.onto.add((self.CROW[individual_name], self.CROW.hasStopTimestamp, Literal(stop, datatype=XSD.dateTimeStamp)))
 
+    def update_object(self, object, location, size, timestamp):
+        query = """DELETE {
+                ?individual crow:hasTimestamp ?old_stamp .
+                ?loc crow:x ?old_x .
+                ?loc crow:y ?old_y .
+                ?loc crow:z ?old_z .
+                ?pcl crow:x ?old_pcl_x .
+                ?pcl crow:y ?old_pcl_y .
+                ?pcl crow:z ?old_pcl_z .
+            }
+            INSERT {
+                ?individual crow:hasTimestamp ?new_stamp .
+                ?loc crow:x ?new_x .
+                ?loc crow:y ?new_y .
+                ?loc crow:z ?new_z .
+                ?pcl crow:x ?new_pcl_x .
+                ?pcl crow:y ?new_pcl_y .
+                ?pcl crow:z ?new_pcl_z .
+            }
+            WHERE {
+                ?individual crow:hasTimestamp ?old_stamp .
+                ?individual crow:hasAbsoluteLocation ?loc .
+                ?individual crow:hasPclDimensions ?pcl .
+                ?loc crow:x ?old_x .
+                ?loc crow:y ?old_y .
+                ?loc crow:z ?old_z .
+                ?pcl crow:x ?old_pcl_x .
+                ?pcl crow:y ?old_pcl_y .
+                ?pcl crow:z ?old_pcl_z .
+            }"""
+        self.onto.update(query, initBindings={
+            "individual": object,
+            "new_stamp": Literal(timestamp, datatype=XSD.dateTimeStamp),
+            "new_x": Literal(location[0], datatype=XSD.float),
+            "new_y": Literal(location[1], datatype=XSD.float),
+            "new_z": Literal(location[2], datatype=XSD.float),
+            "new_pcl_x": Literal(size[0], datatype=XSD.float),
+            "new_pcl_y": Literal(size[1], datatype=XSD.float),
+            "new_pcl_z": Literal(size[2], datatype=XSD.float),
+        })
+
     def update_detected_object(self, object, location, size, uuid, timestamp):
         """
         Update info about an existing object after new detection for this object comes
@@ -1308,6 +1490,40 @@ class CrowtologyClient():
 
             self.lock.release()
 
+    def add_detected_object_no_template(self, object_name, location, size, uuid, timestamp, adder_id):
+        """
+        Add newly detected object and info about the object after a detection for this object comes
+
+        Args:
+            object_name (str): name of the object to be added (detector name)
+            location (list of floats): xyz of object's location received from detection
+            size (list of floats): xyz dimensions of object's pointcloud received from detection
+            uuid (str): id of object given by filter node (id of corresponding model in the filter)
+            timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
+            template (URIRef): template object from ontology corresponding to the detected object
+            adder_id (str): id of object given by adder node, according to the amount and order of overall object detections
+        """
+        individual_name = object_name + '_od_'+str(adder_id)
+        PART = Namespace(f"{ONTO_IRI}/{individual_name}#")
+
+        initBindings = {
+            "individual": self.CROW[individual_name],
+            "loc_name": PART.xyzAbsoluteLocation,
+            "loc_x": Literal(location[0], datatype=XSD.float),
+            "loc_y": Literal(location[1], datatype=XSD.float),
+            "loc_z": Literal(location[2], datatype=XSD.float),
+            "pcl_name": PART.hasPclDimensions,
+            "pcl_x": Literal(size[0], datatype=XSD.float),
+            "pcl_y": Literal(size[1], datatype=XSD.float),
+            "pcl_z": Literal(size[2], datatype=XSD.float),
+            "det_name": Literal(object_name, datatype=XSD.string),
+            "adder_id": Literal('od_'+str(adder_id), datatype=XSD.string),
+            "uuid": Literal(uuid, datatype=XSD.string),
+            "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp)
+        }
+        self.onto.update(self._query_add_object_no_template, initBindings=initBindings)
+        self.node.get_logger().info(f"Added object {individual_name} with uuid {uuid} and id od_{adder_id}")
+
     def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
         """
         Add newly detected object and info about the object after a detection for this object comes
@@ -1321,109 +1537,37 @@ class CrowtologyClient():
             template (URIRef): template object from ontology corresponding to the detected object
             adder_id (str): id of object given by adder node, according to the amount and order of overall object detections
         """
-        # start = time.time()
-        # # Find template object
-        # all_props = list(self.onto.triples((template, None, None)))
-        # individual_name = object_name + '_od_'+str(adder_id)
-        # PART = Namespace(f"{ONTO_IRI}/{individual_name}#") #ns for each object (/cube_holes_1#)
-        # self.__node.get_logger().info("ADDING object {}, timestamp: {}, location: [{:.2f},{:.2f},{:.2f}].".format(individual_name, timestamp, *location))
-
-        # if self.lock.acquire(1):
-        #     # Add common object properties
-        #     for prop in all_props:
-        #         #add idividual_name_ns#hole1 for all objectParts of template
-        #         if prop[1] == self.CROW.hasObjectPart:
-        #             all_object_part_props = list(self.onto.triples((prop[2], None, None)))
-        #             prop_name = PART[str(prop[2]).split('#')[-1]]
-        #             self.onto.add((self.CROW[individual_name], prop[1], prop_name))
-        #             for object_part_prop in all_object_part_props:
-        #                 self.onto.add((prop_name, object_part_prop[1], object_part_prop[2]))
-        #         #add other properties based on template
-        #         else:
-        #             self.onto.add((self.CROW[individual_name], prop[1], prop[2]))
-        #     # correct references between holes in property 'extendsTo'
-        #     all_object_parts = list(self.onto.objects(self.CROW[individual_name], self.CROW.hasObjectPart))
-        #     for object_part in all_object_parts:
-        #         extendsto_obj = list(self.onto.objects(object_part, self.CROW.extendsTo))
-        #         if len(extendsto_obj) > 0:
-        #             correct_obj = PART[str(extendsto_obj[0]).split('#')[-1]]
-        #             self.onto.set((object_part, self.CROW.extendsTo, correct_obj))
-
-        #     # Add AbsoluteLocaton (object specific)
-        #     prop_name = PART.xyzAbsoluteLocation
-        #     prop_range = list(self.onto.objects(self.CROW.hasAbsoluteLocation, RDFS.range))[0]
-        #     self.onto.add((prop_name, RDF.type, prop_range))
-        #     self.onto.add((prop_name, self.CROW.x, Literal(location[0], datatype=XSD.float)))
-        #     self.onto.add((prop_name, self.CROW.y, Literal(location[1], datatype=XSD.float)))
-        #     self.onto.add((prop_name, self.CROW.z, Literal(location[2], datatype=XSD.float)))
-        #     self.onto.set((self.CROW[individual_name], self.CROW.hasAbsoluteLocation, prop_name))
-
-        #     # Add PclDimensions (object specific)
-        #     prop_name = PART.xyzPclDimensions
-        #     prop_range = list(self.onto.objects(self.CROW.hasPclDimensions, RDFS.range))[0]
-        #     self.onto.add((prop_name, RDF.type, prop_range))
-        #     self.onto.add((prop_name, self.CROW.x, Literal(size[0], datatype=XSD.float)))
-        #     self.onto.add((prop_name, self.CROW.y, Literal(size[1], datatype=XSD.float)))
-        #     self.onto.add((prop_name, self.CROW.z, Literal(size[2], datatype=XSD.float)))
-        #     self.onto.set((self.CROW[individual_name], self.CROW.hasPclDimensions, prop_name))
-
-        #     # Add unique ID and timestamp
-        #     self.onto.add((self.CROW[individual_name], self.CROW.hasId, Literal('od_'+str(adder_id), datatype=XSD.string)))
-        #     self.onto.add((self.CROW[individual_name], self.CROW.hasUuid, Literal(uuid, datatype=XSD.string)))
-        #     self.onto.add((self.CROW[individual_name], self.CROW.hasTimestamp, Literal(timestamp, datatype=XSD.dateTimeStamp)))
-
-        #     self.lock.release()
-        # print(f"Run time {str(time.time() - start)}")
         individual_name = object_name + '_od_'+str(adder_id)
         PART = Namespace(f"{ONTO_IRI}/{individual_name}#")
 
+        initBindings = {
+            "individual": self.CROW[individual_name],
+            "loc_name": PART.xyzAbsoluteLocation,
+            "loc_x": Literal(location[0], datatype=XSD.float),
+            "loc_y": Literal(location[1], datatype=XSD.float),
+            "loc_z": Literal(location[2], datatype=XSD.float),
+            "pcl_name": PART.hasPclDimensions,
+            "pcl_x": Literal(size[0], datatype=XSD.float),
+            "pcl_y": Literal(size[1], datatype=XSD.float),
+            "pcl_z": Literal(size[2], datatype=XSD.float),
+            "template": template,
+            "adder_id": Literal('od_'+str(adder_id), datatype=XSD.string),
+            "uuid": Literal(uuid, datatype=XSD.string),
+            "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp)
+        }
+        self.onto.update(self._query_add_object, initBindings=initBindings)
+
+    def get_objects_by_uuid(self, uuids):
+        """ Returns a list of object URIs for every UUID that exists in the database.
+        """
+        if type(uuids) is not list:
+            uuids = [uuids]
         query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         prefix owl: <http://www.w3.org/2002/07/owl#>
         prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
 
-        INSERT {{
-            {individual} ?prop ?value .
-            {individual} crow:hasAbsoluteLocation {loc_name} .
-            {loc_name} a crow:xyzAbsoluteLocation .
-            {loc_name} crow:x {loc_x} .
-            {loc_name} crow:y {loc_y} .
-            {loc_name} crow:z {loc_z} .
-            {pcl_name} a crow:hasPclDimensions .
-            {pcl_name} crow:x {pcl_x} .
-            {pcl_name} crow:y {pcl_y} .
-            {pcl_name} crow:z {pcl_z} .
-            {individual} crow:hasId {adder_id} .
-            {individual} crow:hasUuid {uuid} .
-            {individual} crow:hasTimestamp {stamp} .
-        }}
-
-        WHERE {{
-            {template} ?prop ?value .
-            FILTER NOT EXISTS {{ ?any crow:hasAbsoluteLocation ?value }}
-            FILTER NOT EXISTS {{ ?any crow:hasPclDimensions ?value }}
-        }}
-        """.format(**{
-            "individual": self.CROW[individual_name].n3(),
-            "loc_name": PART.xyzAbsoluteLocation.n3(),
-            "loc_x": Literal(location[0], datatype=XSD.float).n3(),
-            "loc_y": Literal(location[1], datatype=XSD.float).n3(),
-            "loc_z": Literal(location[2], datatype=XSD.float).n3(),
-            "pcl_name": PART.hasPclDimensions.n3(),
-            "pcl_x": Literal(size[0], datatype=XSD.float).n3(),
-            "pcl_y": Literal(size[1], datatype=XSD.float).n3(),
-            "pcl_z": Literal(size[2], datatype=XSD.float).n3(),
-            "template": template.n3(),
-            "adder_id": Literal('od_'+str(adder_id), datatype=XSD.string).n3(),
-            "uuid": Literal(uuid, datatype=XSD.string).n3(),
-            "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp).n3()
-        })
-        self.onto.update(self.prepareQuery(query))
-
-    def get_objects_by_uuid(self, uuids):
-        if type(uuids) is not list:
-            uuids = [uuids]
-        query = """SELECT DISTINCT ?obj ?uuid
+        SELECT DISTINCT ?obj ?uuid
 
         WHERE {{
             # ?obj a ?cls .
@@ -1433,7 +1577,7 @@ class CrowtologyClient():
             FILTER (?uuid IN ({list_of_uuid}))
 
         }}""".format(list_of_uuid=",".join([f"'{u}'" for u in uuids]))
-        result = self.onto.query(prepareQuery(query))
+        result = self.onto.query(self.prepareQuery(query))
         return list(result)
 
     def delete_object(self, obj):
@@ -1443,12 +1587,6 @@ class CrowtologyClient():
         Args:
             object (URIRef): existing object to be deleated
         """
-        # self.lock.acquire()
-        # if len(list(self.onto.triples((obj, RDF.type, OWL.NamedIndividual)))) > 0:
-        #     self.__node.get_logger().info("DELETING object {}.".format(obj.split('#')[-1]))
-        #     self.onto.remove((obj, None, None))
-        #     self.onto.remove((None, None, obj))
-        # self.lock.release()
         self.__node.get_logger().info("DELETING object {}.".format(obj.split('#')[-1]))
         query = """DELETE {{
                 ?s ?p ?o .
@@ -1473,13 +1611,7 @@ class CrowtologyClient():
         #         self.onto.remove((obj, self.CROW.hasId, None))
         #         self.onto.add((obj, self.CROW.disabledId, id[0]))
         self.__node.get_logger().info("DISABLING object {}.".format(obj.split('#')[-1]))
-        query = """DELETE {{ ?obj crow:hasId ?id }}
-        INSERT {{ ?obj crow:disabledId ?id }}
-        WHERE {{
-            BIND ({obj} AS ?obj)
-            ?obj crow:hasId ?id .
-        }}""".format(obj=obj.n3())
-        self.onto.update(self.prepareQuery(query))
+        self.onto.update(self._query_disable_object, initBindings={"individual": obj})
 
     def enable_object(self, obj):
         """
@@ -1495,13 +1627,7 @@ class CrowtologyClient():
         #         self.onto.remove((obj, self.CROW.disabledId, None))
         #         self.onto.add((obj, self.CROW.hasId, id[0]))
         self.__node.get_logger().info("ENABLING object {}.".format(obj.split('#')[-1]))
-        query = """DELETE {{ ?obj crow:disabledId ?id }}
-        INSERT {{ ?obj crow:hasId ?id }}
-        WHERE {{
-            BIND ({obj} AS ?obj)
-            ?obj crow:disabledId ?id .
-        }}""".format(obj=obj.n3())
-        self.onto.update(self.prepareQuery(query))
+        self.onto.update(self._query_enable_object, initBindings={"individual": obj})
 
     @property
     def client_id(self):

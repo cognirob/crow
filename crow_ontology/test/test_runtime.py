@@ -15,15 +15,17 @@ from uuid import uuid4
 
 CROW = Namespace(f'http://imitrob.ciirc.cvut.cz/ontologies/crow#')
 
+TIME_LIMIT = 1
+REPS = 5
 
-def speed_test(func, repeat=5):
+def speed_test(func, repeat=REPS, time_limit=TIME_LIMIT):
 
     def wrapped(in_mean=0, in_median=0, in_min=0, in_max=0):
         start = time()
         _ = func()
         prerun_time = time() - start
 
-        n = int(np.ceil(1 / prerun_time))
+        n = int(np.ceil(time_limit / prerun_time))
         if n == 1:
             warnings.warn(f"The function runtime is very long! ({prerun_time} seconds)")
         results = timeit.repeat(stmt=func, repeat=repeat, number=n)
@@ -51,8 +53,8 @@ ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 
 
 class SpeedTester():
-    CROW_OBJECTS = ["cube_holes", "sphere_holes", "wheel", "wafer", "peg", "screw", "screw_driver", "hammer", "wrench"]
-    CROW_TEMPLATES = ["CUBE", "SPHERE", "WHEEL", "WAFER", "PEG", "SCREW", "SCREW_DRIVER", "HAMMER", "WRENCH"]
+    CROW_OBJECTS = ["cube_holes", "sphere_holes", "wheel", "wafer", "peg_screw", "screw_round", "screwdriver", "hammer", "wrench"]
+    CROW_TEMPLATES = ["CUBE", "SPHERE", "WHEEL", "WAFER", "PEG", "SCREW", "FLATSCREWDRIVER", "HAMMER", "WRENCH"]
     SEPLEN = 30
 
     def __init__(self):
@@ -106,21 +108,41 @@ class SpeedTester():
         self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, template, adder_id)
         return self.crowracle.CROW[object_name + '_od_'+str(adder_id)]
 
-    @enabled(is_enabled=False)
+    @enabled(is_enabled=True)
     def test_add_object(self):
         self.crowracle.reset_database()
         print("Testing if add_detected_object is working...")
         objs = [self.add_object() for i in range(5)]
         for obj in objs:
             current_objects = self.crowracle.getTangibleObjects()
-            assert obj in current_objects, "Object missing from database after addition!"
+            assert obj in current_objects, f"Object {obj} missing from database after addition!\nObjects: {current_objects}"
         print("Success!")
         self.crowracle.reset_database()
 
         self.run_prep_and_func(self.get_me_an_object, self.crowracle.add_detected_object)
         self.crowracle.reset_database()
 
-    @enabled(is_enabled=False)
+    @enabled(is_enabled=True)
+    def test_add_no_template(self):
+        def get_no_template():
+            object_name, location, size, uuid, timestamp, template, adder_id = self.get_me_an_object()
+            return object_name, location, size, uuid, timestamp, adder_id
+
+        self.crowracle.reset_database()
+        print("Testing if add_detected_object is working...")
+        for i in range(5):
+            object_name, location, size, uuid, timestamp, adder_id = get_no_template()
+            self.crowracle.add_detected_object_no_template(object_name, location, size, uuid, timestamp, adder_id)
+            current_objects = self.crowracle.getTangibleObjects()
+            obj = self.crowracle.CROW[object_name + '_od_'+str(adder_id)]
+            assert obj in current_objects, f"Object {obj} missing from database after addition!\nObjects: {current_objects}"
+        print("Success!")
+        self.crowracle.reset_database()
+
+        self.run_prep_and_func(get_no_template, self.crowracle.add_detected_object_no_template)
+        self.crowracle.reset_database()
+
+    @enabled(is_enabled=True)
     def test_delete_object(self):
         self.crowracle.reset_database()
         print("Testing if delete_object is working...")
@@ -131,10 +153,27 @@ class SpeedTester():
             self.crowracle.delete_object(obj)
             current_objects = self.crowracle.getTangibleObjects()
             # print(current_objects, obj)
-            assert obj not in current_objects, "Object still exists in database after deletion!"
+            assert obj not in current_objects, f"Object {obj} still exists in database after deletion!\nObjects:\n{current_objects}"
         print("Success!")
 
         self.run_prep_and_func(self.add_object, self.crowracle.delete_object)
+        self.crowracle.reset_database()
+
+    @enabled(is_enabled=True)
+    def test_getloc_object(self):
+        def add_obj_return_loc():
+            object_name, location, size, uuid, timestamp, template, adder_id = self.get_me_an_object()
+            obj = self.crowracle.CROW[object_name + '_od_'+str(adder_id)]
+            self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, template, adder_id)
+            return obj, location
+
+        self.crowracle.reset_database()
+        for i in range(5):
+            obj, location = add_obj_return_loc()
+            assert np.allclose(self.crowracle.get_location_of_obj(obj), location), f"Location of object {obj} is not correct:\nreturned: {self.crowracle.get_location_of_obj(obj)}\nexpected: {location}"
+        print("Success!")
+
+        self.run_prep_and_func(self.add_object, self.crowracle.get_location_of_obj)
         self.crowracle.reset_database()
 
     @enabled(is_enabled=True)
@@ -142,19 +181,43 @@ class SpeedTester():
         self.crowracle.reset_database()
         print("Testing if update_object is working...")
         objs = [self.add_object() for i in range(5)]
-        # for obj in objs:
-        #     current_objects = self.crowracle.getTangibleObjects()
-        #     assert obj in current_objects, "Object missing from database. Maybe error in add_object?"
-        #     self.crowracle.delete_object(obj)
-        #     current_objects = self.crowracle.getTangibleObjects()
-        #     # print(current_objects, obj)
-        #     assert obj not in current_objects, "Object still exists in database after deletion!"
+        for i in range(5):
+            object_name, location, size, uuid, timestamp, template, adder_id = self.get_me_an_object()
+            obj = self.crowracle.CROW[object_name + '_od_'+str(adder_id)]
+            self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, template, adder_id)
+            current_objects = self.crowracle.getTangibleObjects()
+            assert obj in current_objects, "Object missing from database. Maybe error in add_object?"
+            old_location = self.crowracle.get_location_of_obj(obj)
+            assert np.allclose(old_location, location), f"Location of object {obj} is not correct:\nreturned: {old_location}\nexpected: {location}"
+            old_size = self.crowracle.get_pcl_dimensions_of_obj(obj)
+            assert np.allclose(old_size, size), f"Updated size of object {obj} is not correct:\nreturned: {old_size}\nexpected: {size}"
+            old_timestamp = self.crowracle.get_timestamp_of_obj(obj)
+            assert old_timestamp == timestamp, f"Updated timestamp of object {obj} is not correct:\nreturned: {old_timestamp}\nexpected: {timestamp}"
+
+            update_location = np.random.randn(3) * 5
+            update_size = (np.random.rand(3) * 2 + 0.5) / 10
+            update_timestamp = dt.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+            self.crowracle.update_object(obj, update_location, update_size, update_timestamp)
+
+            new_location = self.crowracle.get_location_of_obj(obj)
+            assert np.allclose(new_location, update_location), f"Updated location of object {obj} is not correct:\nreturned: {new_location}\nexpected: {update_location}\nprevious: {location}"
+            new_size = self.crowracle.get_pcl_dimensions_of_obj(obj)
+            assert np.allclose(new_size, update_size), f"Updated size of object {obj} is not correct:\nreturned: {new_size}\nexpected: {update_size}\nprevious: {size}"
+            new_timestamp = self.crowracle.get_timestamp_of_obj(obj)
+            assert new_timestamp == update_timestamp, f"Updated timestamp of object {obj} is not correct:\nreturned: {new_timestamp}\nexpected: {update_timestamp}\nprevious: {timestamp}"
         print("Success!")
 
-        # self.run_prep_and_func(self.add_object, self.crowracle.delete_object)
-        # self.crowracle.reset_database()
+        def add_and_gen_update():
+            obj = self.add_object()
+            update_location = np.random.randn(3) * 5
+            update_size = (np.random.rand(3) * 2 + 0.5) / 10
+            update_timestamp = dt.datetime.now().strftime('%Y-%m-%dT%H:%M:%SZ')
+            return obj, update_location, update_size, update_timestamp
 
-    @enabled(is_enabled=False)
+        self.run_prep_and_func(add_and_gen_update, self.crowracle.update_object)
+        self.crowracle.reset_database()
+
+    @enabled(is_enabled=True)
     def test_disable_enable_object(self):
         self.crowracle.reset_database()
         objs = [self.add_object() for i in range(5)]
@@ -169,7 +232,7 @@ class SpeedTester():
             assert obj in current_objects, "Object disappeared from database after disabling!"
             self.crowracle.enable_object(obj)
             current_objects = self.crowracle.getTangibleObjects()
-            assert obj in current_objects, "Object not returned by getTangibleObjects after enabling!"
+            assert obj in current_objects, f"Object {obj} not returned by getTangibleObjects after enabling!\n"
         print("Success!")
         self.crowracle.reset_database()
 
@@ -189,7 +252,7 @@ class SpeedTester():
             if type(test_function) is str:
                 print(f"Skipping {test_function}...")
             else:
-                print(f"Running test function {test_function.__name__}...")
+                print(f">>> Running test function {test_function.__name__}...")
                 test_function()
 
 
