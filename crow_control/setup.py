@@ -13,7 +13,9 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('lib/' + package_name, ['scripts/run_all.sh']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
-        (os.path.join('share', package_name, 'config'), glob('config/*.yaml'))
+        (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+        (os.path.join('share', package_name, 'crow_control/data'), glob('crow_control/data/*.yaml')),
+        (os.path.join('share', package_name, 'data'), glob('crow_control/data/*.yaml'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,
