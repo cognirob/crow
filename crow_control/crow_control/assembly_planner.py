@@ -110,7 +110,7 @@ class AssemblyPlanner(Node):
             # self.location = [0.53381, 0.18881, 0.22759]  # temporary "robot default" position
             # self.location_type = 'xyz'
             obj_to_add_lang = self.templ_det[self.LANG][str.lower(obj_to_add)]
-            input_sentence = 'polož '+ obj_to_add_lang + " do skladu"
+            input_sentence = 'polož '+ obj_to_add_lang + " na stůl"
             print(input_sentence)
             input_sentence = input_sentence.lower()
             nl_processor = NLProcessor(language=self.LANG, client=self.crowracle)
