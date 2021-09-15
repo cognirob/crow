@@ -61,7 +61,11 @@ class CrowtologyClient():
             FILTER NOT EXISTS { ?any crow:hasAbsoluteLocation ?value }
             FILTER NOT EXISTS { ?any crow:hasPclDimensions ?value }
         }"""
-    _query_add_object_no_template = """
+    _query_add_object_no_template = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
         INSERT {
             ?individual ?prop ?value .
             ?individual crow:hasAbsoluteLocation ?loc_name .
@@ -245,22 +249,71 @@ class CrowtologyClient():
             ?cls rdfs:subClassOf* crow:TangibleObject .
             ?cls ?language ?name .
         }"""
-    _query_disable_object = """DELETE { ?individual crow:hasId ?id }
+    _query_disable_object = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        DELETE { ?individual crow:hasId ?id }
         INSERT { ?individual crow:disabledId ?id }
         WHERE {
             ?individual crow:hasId ?id .
         }"""
-    _query_enable_object = """DELETE { ?individual crow:disabledId ?id }
+    _query_enable_object = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        DELETE { ?individual crow:disabledId ?id }
         INSERT { ?individual crow:hasId ?id }
         WHERE {
             ?individual crow:disabledId ?id .
         }"""
-    _query_delete_object = """DELETE {
+    _query_delete_object = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        DELETE {
             ?s ?p ?o .
         }
         WHERE {
             ?s ?p ?o .
             FILTER (?s = ?individual || ?o = ?individual)
+        }"""
+    _query_update_object = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        DELETE {
+            ?individual crow:hasTimestamp ?old_stamp .
+            ?loc crow:x ?old_x .
+            ?loc crow:y ?old_y .
+            ?loc crow:z ?old_z .
+            ?pcl crow:x ?old_pcl_x .
+            ?pcl crow:y ?old_pcl_y .
+            ?pcl crow:z ?old_pcl_z .
+        }
+        INSERT {
+            ?individual crow:hasTimestamp ?new_stamp .
+            ?loc crow:x ?new_x .
+            ?loc crow:y ?new_y .
+            ?loc crow:z ?new_z .
+            ?pcl crow:x ?new_pcl_x .
+            ?pcl crow:y ?new_pcl_y .
+            ?pcl crow:z ?new_pcl_z .
+        }
+        WHERE {
+            ?individual crow:hasTimestamp ?old_stamp .
+            ?individual crow:hasAbsoluteLocation ?loc .
+            ?individual crow:hasPclDimensions ?pcl .
+            ?loc crow:x ?old_x .
+            ?loc crow:y ?old_y .
+            ?loc crow:z ?old_z .
+            ?pcl crow:x ?old_pcl_x .
+            ?pcl crow:y ?old_pcl_y .
+            ?pcl crow:z ?old_pcl_z .
         }"""
 
     def __init__(self, *, credential_file_path=None, node=None, local_mode=False):
@@ -323,10 +376,12 @@ class CrowtologyClient():
         if self.__config.store == "alchemy":  # SQLAlchemy store needs "prepareQuery"
             setattr(self, "prepareQuery", prepareQuery)
             # prepare queries
-            queries = [getattr(self, qs) for qs in dir(self) if qs.startswith("_query_")]
-            for q in queries:
+            queries = [(getattr(self, qs), qs) for qs in dir(self) if qs.startswith("_query_")]
+            for q, qs in queries:
+                if "INSERT" in q or "DELETE" in q:
+                    continue
                 print(q)
-                self.prepareQuery(q, initNs={"owl": OWL, "crow": self.CROW, "rdf": RDF, "rdfs": RDFS})
+                setattr(self, qs, self.prepareQuery(q, initNs={"owl": OWL, "crow": self.CROW, "rdf": RDF, "rdfs": RDFS}))
         elif self.__config.store == "fuseki":  # fuseki uses plain string
             setattr(self, "prepareQuery", lambda qs, *args, **kwargs: qs)
         else:
@@ -1359,7 +1414,12 @@ class CrowtologyClient():
         onto_name = self.CROW[norm_name]
         PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each position
         onto_location = PART['xyzAbsoluteLocation']
-        query = """INSERT DATA {{
+        query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+            INSERT DATA {{
                 {individual} a crow:Position .
                 {individual} crow:hasName {name} .
                 {individual} crow:hasUuid {uuid} .
@@ -1381,7 +1441,8 @@ class CrowtologyClient():
                 "loc_y": Literal(centroid[1], datatype=XSD.float).n3(),
                 "loc_z": Literal(centroid[2], datatype=XSD.float).n3(),
             })
-        self.onto.update(self.prepareQuery(query))
+        self.onto.update(query)
+        # self.onto.update(self.prepareQuery(query))
 
     def update_current_action(self, action_name, time):
         """
@@ -1418,36 +1479,7 @@ class CrowtologyClient():
         self.onto.add((self.CROW[individual_name], self.CROW.hasStopTimestamp, Literal(stop, datatype=XSD.dateTimeStamp)))
 
     def update_object(self, object, location, size, timestamp):
-        query = """DELETE {
-                ?individual crow:hasTimestamp ?old_stamp .
-                ?loc crow:x ?old_x .
-                ?loc crow:y ?old_y .
-                ?loc crow:z ?old_z .
-                ?pcl crow:x ?old_pcl_x .
-                ?pcl crow:y ?old_pcl_y .
-                ?pcl crow:z ?old_pcl_z .
-            }
-            INSERT {
-                ?individual crow:hasTimestamp ?new_stamp .
-                ?loc crow:x ?new_x .
-                ?loc crow:y ?new_y .
-                ?loc crow:z ?new_z .
-                ?pcl crow:x ?new_pcl_x .
-                ?pcl crow:y ?new_pcl_y .
-                ?pcl crow:z ?new_pcl_z .
-            }
-            WHERE {
-                ?individual crow:hasTimestamp ?old_stamp .
-                ?individual crow:hasAbsoluteLocation ?loc .
-                ?individual crow:hasPclDimensions ?pcl .
-                ?loc crow:x ?old_x .
-                ?loc crow:y ?old_y .
-                ?loc crow:z ?old_z .
-                ?pcl crow:x ?old_pcl_x .
-                ?pcl crow:y ?old_pcl_y .
-                ?pcl crow:z ?old_pcl_z .
-            }"""
-        self.onto.update(query, initBindings={
+        self.onto.update(self._query_update_object, initBindings={
             "individual": object,
             "new_stamp": Literal(timestamp, datatype=XSD.dateTimeStamp),
             "new_x": Literal(location[0], datatype=XSD.float),
@@ -1595,7 +1627,8 @@ class CrowtologyClient():
                 ?s ?p ?o .
                 FILTER (?s = {individual} || ?p = {individual})
             }}""".format(individual=obj.n3())
-        self.onto.update(self.prepareQuery(query))
+        # self.onto.update(self.prepareQuery(query))
+        self.onto.update(query)
 
     def disable_object(self, obj):
         """
