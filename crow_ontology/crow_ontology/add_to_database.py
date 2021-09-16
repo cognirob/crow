@@ -73,23 +73,41 @@ class OntoAdder(Node):
         self.storage_space_added = False
 
     def timer_callback(self):
-        obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
         # now_time = datetime.now()
         tmsg = self.get_clock().now().to_msg()
         now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
-        for obj in obj_in_database:
-            try:
-                last_obj_time = next(self.onto.objects(obj, CROW.hasTimestamp))
-            except StopIteration as se:
+        for obj, last_obj_time, enabled in self.crowracle.getTangibleObjects_timestamp():
+            if last_obj_time is None:
+                self.get_logger().warn(f'Trying to check timestamp of object {obj} failed. It has not timestamp!')
                 continue
             last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
-            time_diff = now_time - last_obj_time
-            if time_diff.seconds >= DELETION_TIME_LIMIT:
+            time_diff = (now_time - last_obj_time).total_seconds()
+            if time_diff >= DELETION_TIME_LIMIT:
                 self.crowracle.delete_object(obj)
-            elif time_diff.seconds >= DISABLING_TIME_LIMIT:
-                self.crowracle.disable_object(obj)
-            else:
+            elif time_diff >= DISABLING_TIME_LIMIT:
+                self.get_logger().warn(f'Disabling limit reached for object {obj}. Status: {enabled}')
+                if enabled:
+                    self.crowracle.disable_object(obj)
+            elif not enabled:
+                self.get_logger().warn(f'Trying to enable. Status: {enabled}')
                 self.crowracle.enable_object(obj)
+        # obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
+        # # now_time = datetime.now()
+        # tmsg = self.get_clock().now().to_msg()
+        # now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
+        # for obj in obj_in_database:
+        #     try:
+        #         last_obj_time = next(self.onto.objects(obj, CROW.hasTimestamp))
+        #     except StopIteration as se:
+        #         continue
+        #     last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
+        #     time_diff = now_time - last_obj_time
+        #     if time_diff.seconds >= DELETION_TIME_LIMIT:
+        #         self.crowracle.delete_object(obj)
+        #     elif time_diff.seconds >= DISABLING_TIME_LIMIT:
+        #         self.crowracle.disable_object(obj)
+        #     else:
+        #         self.crowracle.enable_object(obj)
 
         # Add new storage - testing
         if self.storage_space_added:
@@ -114,12 +132,31 @@ class OntoAdder(Node):
             return
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
 
+        update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
+        # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
+        existing_objects = self.crowracle.get_objects_by_uuid(pose_array_msg.uuid)
         # update location of existing objects
+        # print(existing_objects)
+        # print(update_dict.items())
+        for obj, uuid in existing_objects:
+            str_uuid = uuid.toPython()
+            if str_uuid not in update_dict:
+                self.get_logger().info(f"Skipping updating of object {obj} with uuid: {uuid}. For some reason, it is missing from the update_dict: {update_dict}")
+                continue
+            up = update_dict[str_uuid]
+            self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
+            self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
+            del update_dict[str_uuid]
         # add new objects (not found by uuid)
+        for uuid, (class_name, pose, size, tracked) in update_dict.items():
+            # corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=XSD.string)))
+            self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
+            self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id)
+            self.id += 1
 
-        for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
-            self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
+        # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
+        #     self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
 
     def input_action_callback(self, action_array_msg):
         if not action_array_msg.avg_class_name:
@@ -156,7 +193,6 @@ class OntoAdder(Node):
             return -1
 
     def process_detected_object(self, object_name, location, size, uuid, tracked, timestamp):
-
         if object_name in ['kuka', 'kuka_gripper']:  # we don't want the robot in the DB
             return
         #self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
