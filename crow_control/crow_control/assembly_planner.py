@@ -34,9 +34,9 @@ class AssemblyPlanner(Node):
         self.max_node_prev = -1
         self.LANG='cs'
         # TODO save after building the tree the tree and just load the saved object
-        build_file = 'data/build_snake'
+        # build_file = 'data/build_snake'
 
-        # build_file = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake")
+        build_file = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake")
         onto_file = "../../ontology/onto_draft_02.owl"
         self.ui = UserInputManager(language = self.LANG)
         self.templ_det = self.ui.load_file('templates_detection.json')
@@ -52,6 +52,8 @@ class AssemblyPlanner(Node):
         self.pclient.define("det_obj_name", "-")
         self.pclient.define("det_obj_in_ws", "-")
         self.pclient.define("status", "-")
+
+        self.obj_to_add = ""
 
         if os.path.exists(self.am.graph_name):
             self.gp = pickle.load(open(self.am.graph_name, 'rb'))
@@ -95,7 +97,7 @@ class AssemblyPlanner(Node):
         self.get_logger().info(f"Got some action probabilities: {str(self._translate_action(actions.probabilities))}")
         if self.obj_to_add == 'peg' or self.obj_to_add == 'screw':
             Pa = dict(self._translate_action(actions.probabilities))
-            self.am.update_graph(self.gp, Po=[], Pa=Pa)
+            self.am.update_graph(self.gp, Pa=Pa)
             self.max_node = self.am.detect_most_probable_state(self.gp)
             [next_node, self.obj_to_add] = self.am.detect_next_state(self.gp, self.max_node)
             self.send_request_to_robot()
@@ -156,25 +158,26 @@ class AssemblyPlanner(Node):
                     found_in_ws = False
 
                 self.send_status("zpracovavam", template_type, object_detected, found_in_ws)
-                if dict1.get('action', False):
-                    data.append(dict1)
-                    actions = json.dumps(data)
-                    msg = StampedString()
-                    msg.header.stamp = self.get_clock().now().to_msg()
-                    msg.data = actions
-                    print(f'will publish {msg.data}')
-            # {"action": 64, "action_type": "uka\u017e", "target_type": "onto_uri",
-            #  "target": ["http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1",
-            #             "http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_2",
-            #             "http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_3"],
-            #  "target_ph_cls": "http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube"}
-                    self.assembly_publisher.publish(msg)
-                    self.send_status("pozadavek odeslan", template_type, object_detected, found_in_ws)
-                    self.wait_then_talk()
-                    self.pclient.processor_busy_flag = False
-                else:
-                    self.send_status("neznamy")
-                    self.wait_then_talk()
+                if found_in_ws:
+                    if dict1.get('action', False):
+                        data.append(dict1)
+                        actions = json.dumps(data)
+                        msg = StampedString()
+                        msg.header.stamp = self.get_clock().now().to_msg()
+                        msg.data = actions
+                        print(f'will publish {msg.data}')
+                # {"action": 64, "action_type": "uka\u017e", "target_type": "onto_uri",
+                #  "target": ["http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1",
+                #             "http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_2",
+                #             "http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_3"],
+                #  "target_ph_cls": "http://imitrob.ciirc.cvut.cz/ontologies/crow#Cube"}
+                        self.assembly_publisher.publish(msg)
+                        self.send_status("pozadavek odeslan", template_type, object_detected, found_in_ws)
+                        self.wait_then_talk()
+                        self.pclient.processor_busy_flag = False
+                    else:
+                        self.send_status("neznamy")
+                        self.wait_then_talk()
             except AttributeError as  e:
                 print('No template found error')
                 self.send_status("neznamy prikaz")
