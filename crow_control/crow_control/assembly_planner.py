@@ -19,6 +19,7 @@ from crow_nlp.nlp_crow.processing.ProgramRunner import ProgramRunner
 from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
 
 from crow_control.utils import ParamClient
+from importlib.util import find_spec
 
 
 class AssemblyPlanner(Node):
@@ -34,6 +35,7 @@ class AssemblyPlanner(Node):
         self.LANG='cs'
         # TODO save after building the tree the tree and just load the saved object
         build_file = 'data/build_snake'
+        # build_file = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake")
         onto_file = "../../ontology/onto_draft_02.owl"
         self.ui = UserInputManager(language = self.LANG)
         self.templ_det = self.ui.load_file('templates_detection.json')
