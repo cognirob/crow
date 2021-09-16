@@ -21,9 +21,15 @@ class AssemblyMonitor(Node):
 
     FAKE_MODE = "timer"  # timer or sequence
     # FAKE_MODE = "sequence"  # timer or sequence
-    NOISE_LEVEL = 0.2
+    NOISE_LEVEL = 0.0
 
-    BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake_fixed.yaml")
+    ASSEMBLY = 'snake'
+    if ASSEMBLY=='snake':
+        BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake_fixed.yaml")
+    elif ASSEMBLY == 'dog':
+        BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_dog.yaml")
+    elif ASSEMBLY == 'car':
+        BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_car.yaml")
 
     def __init__(self):
         super().__init__("assembly_fake_monitor")
@@ -49,12 +55,26 @@ class AssemblyMonitor(Node):
             self.components, self.acts = self.load_assembly()
             self.idx = 0
             self.idx_mode = False
-            self.create_timer(10, self.send_data)
+            self.create_timer(1, self.send_data)
 
     def send_data(self):
         if self.idx_mode:
-            ob = self.components[sel]
-            self.send_objects()
+            ob = self.components[self.idx].lower()
+            probs = np.zeros(len(self.objects))
+            probs[self.objects.index(ob)] = 1
+            probs += np.random.rand() * self.NOISE_LEVEL
+            probs /= probs.sum()
+            self.send_objects(probs)
+            self.idx_mode = False
+        else:
+            ob = self.components[self.idx].lower()
+            probs = np.zeros(len(self.objects))
+            probs[self.objects.index(ob)] = 1
+            probs += np.random.rand() * self.NOISE_LEVEL
+            probs /= probs.sum()
+            self.send_objects(probs)
+            self.idx_mode = True
+            self.idx += 1
 
 
     def _translate_action(self, actions: List[float]) -> Dict[str, float]:
@@ -82,10 +102,12 @@ class AssemblyMonitor(Node):
     def send_actions(self, actions):
         aap = AssemblyActionProbability(probabilities=actions)
         self.action_pub.publish(aap)
+        self.get_logger().info(f"Published: {app}")
 
     def send_objects(self, objects):
         aop = AssemblyObjectProbability(probabilities=objects)
         self.object_pub.publish(aop)
+        self.get_logger().info(f"Published: {aop}")
 
     def generate_random_actions(self):
         r = np.random.rand(len(self.actions))
@@ -145,8 +167,15 @@ class AssemblyMonitor(Node):
         #         elif felms[1] == selms[1]:
         #             c += [felms[1], selms[0]]
         # print(c)
-        c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Peg', 'Cube']
-        a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer','Hammer']
+        if self.build_assembly=='snake':
+            c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Peg', 'Cube']
+            a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer','Hammer']
+        elif self.build_assembly=='dog':
+            c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Screw', 'Wafer', 'Screw', 'Wafer']
+            a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer', 'Screwdriver', 'Nothing', 'Screwdriver', 'Nothing']
+        elif self.build_assembly=='car':
+            c = ['Cube', 'Peg', 'Cube', 'Peg', 'Cube', 'Screw', 'Wheel', 'Screw', 'Wheel']
+            a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer', 'Screwdriver', 'Nothing', 'Screwdriver', 'Nothing']
         return c, a
 
 
