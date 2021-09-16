@@ -33,7 +33,7 @@ class AssemblyPlanner(Node):
         self.max_node_prev = -1
         self.LANG='cs'
         # TODO save after building the tree the tree and just load the saved object
-        build_file = 'data/build_snake'
+        build_file = 'data/build_dog'
         onto_file = "../../ontology/onto_draft_02.owl"
         self.ui = UserInputManager(language = self.LANG)
         self.templ_det = self.ui.load_file('templates_detection.json')
