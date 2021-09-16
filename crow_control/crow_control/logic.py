@@ -64,6 +64,7 @@ class UsefullRobotStatus():
 
 class ControlLogic(Node):
     NLP_ACTION_TOPIC = "/nlp/command"  # processed human requests/commands
+    PLANNER_ACTION_TOPIC = "/nlp/command_planner"  # requests/commands from assembly planner
     STORAGE_TOPIC = "/new_storage"
     POSITION_TOPIC = "/new_position"
     # ROBOT_ACTIONS = {
@@ -110,6 +111,11 @@ class ControlLogic(Node):
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
                                  callback=self.command_cb,
+                                 callback_group=ReentrantCallbackGroup(),
+                                 qos_profile=qos)
+        self.create_subscription(msg_type=StampedString,
+                                 topic=self.PLANNER_ACTION_TOPIC,
+                                 callback=self.command_planner_cb,
                                  callback_group=ReentrantCallbackGroup(),
                                  qos_profile=qos)
         self.robot_point_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_POINT)
@@ -232,9 +238,19 @@ class ControlLogic(Node):
         data = json.loads(msg.data)
         if type(data) is dict:
             data = [data]
-        # for p, o in self.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
-        #     print(p, " --- ", o)
 
+        self.get_logger().info(f"Received {len(data)} command(s):")
+        self.get_logger().info(f"Received {data}")
+        self.process_actions(data)
+        StatTimer.exit("command callback")
+
+    def command_planner_cb(self, msg):
+        StatTimer.enter("command callback")
+        self.get_logger().info("Received planner command msg!")
+        data = json.loads(msg.data)
+        if type(data) is dict:
+            data = [data]
+        # TODO: priority
         self.get_logger().info(f"Received {len(data)} command(s):")
         self.get_logger().info(f"Received {data}")
         self.process_actions(data)
