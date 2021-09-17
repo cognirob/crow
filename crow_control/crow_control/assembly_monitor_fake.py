@@ -18,10 +18,12 @@ import time
 class AssemblyMonitor(Node):
     ASSEMBLY_ACTION_TOPIC = 'assembly_action'
     ASSEMBLY_OBJECT_TOPIC = 'assembly_object'
+    build_assembly = "snake"
 
-    FAKE_MODE = "timer"  # timer or sequence
-    # FAKE_MODE = "sequence"  # timer or sequence
-    NOISE_LEVEL = 0.0
+    # FAKE_MODE = "timer"  # timer or sequence
+    FAKE_MODE = "sequence"  # timer or sequence
+    NOISE_LEVEL = 0.02
+    TIMER_DELAY = 1
 
     ASSEMBLY = 'snake'
     if ASSEMBLY=='snake':
@@ -55,9 +57,10 @@ class AssemblyMonitor(Node):
             self.components, self.acts = self.load_assembly()
             self.idx = 0
             self.idx_mode = False
-            self.create_timer(1, self.send_data)
+            self.create_timer(self.TIMER_DELAY, self.send_data)
 
     def send_data(self):
+        input("Press any key")
         if self.idx_mode:
             ob = self.components[self.idx].lower()
             probs = np.zeros(len(self.objects))
@@ -168,8 +171,8 @@ class AssemblyMonitor(Node):
         #             c += [felms[1], selms[0]]
         # print(c)
         if self.build_assembly=='snake':
-            c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Peg', 'Cube']
-            a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer','Hammer']
+            c = ['Cube', 'Peg', 'Sphere','Peg', 'Cube','Peg', 'Cube']
+            a = ['Hammer', 'Hammer', 'Hammer','Hammer', 'Hammer', 'Hammer','Hammer']
         elif self.build_assembly=='dog':
             c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Screw', 'Wafer', 'Screw', 'Wafer']
             a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer', 'Screwdriver', 'Nothing', 'Screwdriver', 'Nothing']

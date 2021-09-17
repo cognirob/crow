@@ -111,6 +111,8 @@ class AssemblyPlanner(Node):
         self.send_request_to_robot()
 
     def send_request_to_robot(self):
+        if self.obj_to_add == 'Peg':
+                self.max_node_prev = -1
         if self.max_node == self.max_node_prev:
             print('same node as previously. No action.')
         else:
