@@ -1,3 +1,4 @@
+#  -*- coding: utf-8 -*-
 from rdflib.namespace import FOAF, RDFS, RDF, OWL, XMLNS, Namespace
 from rdflib.extras.infixowl import Class, TermDeletionHelper
 from rdflib import BNode, URIRef, Literal
@@ -15,6 +16,7 @@ try:
 except:  # noqa
     pass  # TODO make nicer
 import subprocess
+import time
 
 
 DB_PARAM_NAMES = ["database_host", "database_port", "database_uri", "database_name", "database_store"]
@@ -43,7 +45,7 @@ class CrowtologyServer():
     BACKUP_ON_CLEAR = False
     CLEAR_ON_START = True  # if clearing is False, backup has no effect (i.e. only bkp if clearing)
     ALLOW_CLIENTS_CLEARING_DATA = True  # if true, ROS service to clear/reset the DB will be created
-    FUSEKI_PORT = 4242
+    FUSEKI_PORT = 3030
     MODE = "ros"  # "ros" or "local" mode
 
     def __init__(self, config_path=None, base_onto_path=None):
@@ -83,6 +85,7 @@ class CrowtologyServer():
         else:
             raise Exception(f'Unknown store type {self.__cfg["store"]}!')
 
+        # time.sleep(10)
         self.__onto = OntologyAPI(self.__dbconf)
         if self.CLEAR_ON_START:
             self.clear_data()
@@ -101,7 +104,16 @@ class CrowtologyServer():
                     self.onto.closelink()
                     self.__onto = OntologyAPI(self.__dbconf)
                 elif self.__dbconf.store == "fuseki":
-                    self.onto.remove((None, None, None))  # remove all triples
+                    self.onto.update("""
+                    DELETE {
+                        ?s ?p ?o
+                    }
+                    WHERE {
+                        ?s ?p ?o .
+                    }
+                    """)
+                        # (None, None, None))  # remove all triples
+                    # self.onto.remove((None, None, None))  # remove all triples
                 else:
                     raise Exception(f"Unknown DB store type: {self.__dbconf.store}")
             except Exception as e:
@@ -121,12 +133,14 @@ class CrowtologyServer():
         self.fuseki_run_cmd = os.path.join(fuseki_path, 'fuseki')
         fuseki_env = {
                 "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
+                # "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2"
             }
+        # print(fuseki_env)
         if os.path.exists(self.fuseki_run_cmd):
             self.log(f'Running fuseki as service from {self.fuseki_run_cmd}...')
         else:
             raise Exception(f'Fuseki executable not found in: {self.fuseki_run_cmd}!')
-        if self.get_fuseki_status():
+        if False and self.get_fuseki_status():
             self.log('Fuseki is already running! Trying to kill it first!')
             ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'stop']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
             if ret.returncode > 0:
@@ -136,8 +150,8 @@ class CrowtologyServer():
                     raise Exception(f"Trying to stop Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout}")
                 else:
                     self.log(f"{ret.stdout.decode('utf-8')}\nFuseki service stopped.")
-        # else:
-        ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'start']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
+        else:
+            ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'start']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
         if ret.returncode > 0:
             raise Exception(f"Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-8')}")
         else:
