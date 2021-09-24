@@ -1340,7 +1340,6 @@ class CrowtologyClient():
         query += f"""WHERE {{
             {wheres}
         }}"""
-        # print(query)
         self.onto.update(query)
         if len(inserts) > 0:
             query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -1364,7 +1363,7 @@ class CrowtologyClient():
         }}"""
         # print(query)
         result = self.onto.query(query)
-        return list(result)
+        return [u[0] for u in list(result)]
 
     def check_position_in_workspace_area(self, xyz_list):
         """
