@@ -800,32 +800,28 @@ class CrowtologyClient():
         Returns:
             list of strings: nlp names of the given uri, 0...N
         """
-        # nlp names have classes or colors
-        if len(list(self.onto.triples((uri, RDF.type, OWL.Class)))) > 0:
-            uri = uri # if ent is a class, then proceed
-        elif len(list(self.onto.triples((uri, RDF.type, self.CROW.NamedColor)))) > 0:
-            uri = uri # if ent is named color, then proceed
-        else: # uri is a object, it's class should have nlp name
-            class_uri = list(self.onto.objects(uri, RDF.type))
-            if len(class_uri) > 0:
-                uri = class_uri[0]
-            else:
-                uri = uri # ent is not class nor color, assuming it's an object but didn't find it's class
+        nlp_name_property = self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ
+        query = f"""
+        PREFIX crow:    <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-        if language == 'EN':
-            nlp_name_property = self.CROW.hasNlpNameEN
-        elif language == 'CZ':
-            nlp_name_property = self.CROW.hasNlpNameCZ
-        else:
-            "Invalid language choice (EN or CZ), taking default EN option"
-            nlp_name_property = self.CROW.hasNlpNameEN
+        SELECT DISTINCT ?name
 
-        nlp_name_uri = list(self.onto.objects(uri, nlp_name_property))
+        WHERE {{
+            BIND({uri.n3()} AS ?obj)
+            ?obj a ?cls .
+            BIND(IF(?cls = crow:NamedColor || ?cls = owl:Class, ?obj, ?cls) AS ?target)
+            ?target {nlp_name_property.n3()} ?name .
+        }}"""
+        nlp_name_uri = list(self.onto.query(query))
+
         if len(nlp_name_uri) < 1: # no nlp name -> create new from the uri string
             nlp_name = [uri.split('#')[-1]]
             self.onto.add((uri, nlp_name_property, Literal(nlp_name[0], datatype=XSD.string)))
         else:
-            nlp_name = [x.toPython() for x in nlp_name_uri]
+            nlp_name = [x[0].toPython() for x in nlp_name_uri]
         return nlp_name
 
     def get_prop_from_name(self, py_name):
