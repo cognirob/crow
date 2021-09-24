@@ -423,8 +423,6 @@ class ControlLogic(Node):
         size = target_info[1]
         if np.any(np.isnan(size)):
             size = [0.0, 0.0, 0.0]
-        # print('************)', size)
-        # print('************)', np.any(np.isnan(size)))
         goal_msg = self.composeRobotActionMessage(
                 target_xyz=target_info[0],
                 # target_size=target_info[1],
@@ -433,7 +431,6 @@ class ControlLogic(Node):
                 location_xyz=location
             )
         # print('>>>>')
-        print(goal_msg)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
@@ -569,19 +566,23 @@ class ControlLogic(Node):
     def sendTidyAction(self, disp_name='', **kwargs):
         """Tidy: find all objects, perform FetchTo (to backstage) with each of them
         """
-        StatTimer.enter("Sending command")
         self.get_logger().info("Performing Tidy action")
-        objs = self.crowracle.get()
-        while len(objs) > 0:
-            if (self.status & self.STATUS_IDLE):
-                self._set_status(self.STATUS_PROCESSING)
-                self.pclient.robot_done = False
-                target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
-                kwargs['target_info'] = target_info
-                self.sendFetchToAction(**kwargs)
-                objs = self.crowracle.getTangibleObjects()
-                #TODO: keep only objs in the workspace area (not in the storage, etc.)
-        StatTimer.exit("Sending command")
+        try:
+            objs = self.crowracle.get_objects_from_area("front_stage")
+            while len(objs) > 0:
+                if (self.status & self.STATUS_IDLE):
+                    self._set_status(self.STATUS_PROCESSING)
+                    self.pclient.robot_done = False
+                    target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
+                    kwargs['target_info'] = target_info
+                    self.sendFetchToAction(**kwargs)
+                    objs = self.crowracle.get_objects_from_area("front_stage")
+                    #TODO: keep only objs in the workspace area (not in the storage, etc.)
+        except BaseException as e:
+            print(f"Error while trying to tidy stuff up: {e}")
+            tb.print_exc()
+        else:
+            self.get_logger().info("No more objects to tidy up.")
 
     def composeRobotActionMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None, robot_id=-1):
         goal_msg = RobotAction.Goal()
