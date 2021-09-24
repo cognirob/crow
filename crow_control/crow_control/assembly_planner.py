@@ -8,6 +8,7 @@ from rclpy.node import Node
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from crow_msgs.msg import AssemblyObjectProbability, AssemblyActionProbability
 from rclpy.executors import MultiThreadedExecutor
+import traceback as tb
 from crow_control.utils.yaml_to_graph import AssemblyGraphMaker
 from crow_ontology.crowracle_client import CrowtologyClient
 from rclpy.qos import QoSProfile
@@ -226,6 +227,7 @@ def main():
         print("User requested shutdown.")
     except BaseException as e:
         print(f"Some error had occured: {e}")
+        tb.print_exc()
 
 
 if __name__ == '__main__':
