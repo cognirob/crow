@@ -400,7 +400,7 @@ class CrowtologyClient():
             for q, qs in queries:
                 if "INSERT" in q or "DELETE" in q:
                     continue
-                print(q)
+                # print(q)
                 setattr(self, qs, self.prepareQuery(q, initNs={"owl": OWL, "crow": self.CROW, "rdf": RDF, "rdfs": RDFS}))
         elif self.__config.store == "fuseki":  # fuseki uses plain string
             setattr(self, "prepareQuery", lambda qs, *args, **kwargs: qs)
@@ -511,7 +511,7 @@ class CrowtologyClient():
         """
         res = self.onto.query(self._query_check_time_enable_disable)
         # return res
-        # return list(res)
+        print(list(res))
         return [(g["obj"], g["stamp"], g["enabled"].toPython()) for g in res]
 
     def getTangibleObjectsProps(self):

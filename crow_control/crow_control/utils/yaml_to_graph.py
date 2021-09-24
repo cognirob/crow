@@ -257,7 +257,7 @@ class AssemblyGraphMaker():
         return Gp
 
 
-    def update_graph(self, G, Po=[], Pa=[]):
+    def update_graph(self, G, Po={}, Pa={}):
         # updates the probabilities of the nodes of the incoming graph G based on the observed probability of the observed
         # object and action
         # Po - dictionary with probability distribution over objects
@@ -272,7 +272,14 @@ class AssemblyGraphMaker():
         nx.set_node_attributes(G, {0: 0}, name='prob') #make it smarter
         print('set probability for node {} to to p = {}%'.format(0, (orig_prob/100)*100))
         prob_other = self.compute_prob_other_object(Po)
-
+        if len(Pa) > 0:
+            Po['peg'] = Pa['hammer']
+            Po['screw'] = Pa['screw']
+            Po['cube'] = 0
+            Po['sphere'] = 0
+            Po['wheel'] = 0
+            Po['wafer'] = 0
+            Po['other'] = 1-Po['screw'] - Po['peg']
         for n, props in Gp.nodes.data():
             prob_node = []
             in_edges = Gp.in_edges(n)
@@ -280,9 +287,11 @@ class AssemblyGraphMaker():
                 # print(props)
                 if not inE == outE:
                     objectE = Gp.get_edge_data(inE, outE)['object']
+                    actionE = Gp.get_edge_data(inE, outE)['action']
                     probsE = Gp.get_edge_data(inE, outE)['prob']
                     actionE = Gp.get_edge_data(inE, outE)['action']
                     objectE_p = Po[str.lower(objectE)]
+                    # actionE_p = Pa[str.lower(actionE)]
                     prob_node.append(Gp.nodes[inE]['prob']*objectE_p*probsE)
             if n>0:
                 prob_node.append(Gp.nodes[n]['prob']*Gp.get_edge_data(n, n)['prob']*prob_other)

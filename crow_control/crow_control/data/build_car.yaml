@@ -1,0 +1,118 @@
+assembly_name: Car
+# Object definitions
+objects:
+  cube_front:
+    type: Cube
+
+  cube_middle:
+    type: Cube
+
+  cube_back:
+    type: Cube
+
+  sphere_head:
+    type: Sphere
+
+  peg_front:
+    type: Peg
+
+  peg_middle:
+    type: Peg
+
+  screw_front:
+    type: Screw
+
+  screw_back:
+    type: Screw
+
+  wheel_front2:
+    type: Wheel
+
+  wheel_back2:
+    type: Wheel
+
+# Connection definitions
+operations:
+  front1:
+    type: InsertFixedConnection
+    provider: peg_front
+    consumer: cube_front
+
+  front2:
+    type: InsertFixedConnection
+    provider: peg_front
+    consumer: cube_middle
+
+  back1:
+    type: InsertFixedConnection
+    provider: peg_middle
+    consumer: cube_middle
+
+  back2:
+    type: InsertFixedConnection
+    provider: peg_middle
+    consumer: cube_back
+
+  wheel1:
+    type: InsertLooseConnection
+    provider: screw_front
+    consumer: cube_front
+    uses: Thread
+    length: 50
+
+  wheel2:
+    type: InsertLooseConnection
+    provider: screw_front
+    consumer: wheel_front
+
+  wheel3:
+    type: ThreadedConnection
+    provider: screw_back
+    consumer: cube_back
+
+  wheel4:
+    type: InsertLooseConnection
+    provider: screw_back
+    consumer: wheel_back
+
+# Relation definitions
+relations:
+  - type: OppositeRelation
+    operations: [front2, back1]
+    reference: cube_middle
+
+# Order definitions
+order_hints:
+  - type: RequiredOrder
+    first: front1
+    then: front2
+
+  - type: RequiredOrder
+    first: front2
+    then: front3
+
+  - type: RequiredOrder
+    first: front3
+    then: thread_front
+
+  - type: RequiredOrder
+    first: back1
+    then: back2
+
+  - type: RequiredOrder
+    first: back2
+    then: back3
+
+  - type: RequiredOrder
+    first: back3
+    then: thread_back
+
+  - type: RequiredOrder
+    first: front1
+    then: back1
+
+  - type: AnyOrder
+    operations: [body1, body2]
+
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]

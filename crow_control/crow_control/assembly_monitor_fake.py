@@ -18,12 +18,20 @@ import time
 class AssemblyMonitor(Node):
     ASSEMBLY_ACTION_TOPIC = 'assembly_action'
     ASSEMBLY_OBJECT_TOPIC = 'assembly_object'
+    build_assembly = "snake"
 
-    FAKE_MODE = "timer"  # timer or sequence
-    # FAKE_MODE = "sequence"  # timer or sequence
-    NOISE_LEVEL = 0.2
+    # FAKE_MODE = "timer"  # timer or sequence
+    FAKE_MODE = "sequence"  # timer or sequence
+    NOISE_LEVEL = 0.02
+    TIMER_DELAY = 1
 
-    BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake_fixed.yaml")
+    ASSEMBLY = 'snake'
+    if ASSEMBLY=='snake':
+        BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_snake_fixed.yaml")
+    elif ASSEMBLY == 'dog':
+        BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_dog.yaml")
+    elif ASSEMBLY == 'car':
+        BUILD_FILE = os.path.join(find_spec("crow_control").submodule_search_locations[0], "data", "build_car.yaml")
 
     def __init__(self):
         super().__init__("assembly_fake_monitor")
@@ -49,12 +57,27 @@ class AssemblyMonitor(Node):
             self.components, self.acts = self.load_assembly()
             self.idx = 0
             self.idx_mode = False
-            self.create_timer(10, self.send_data)
+            self.create_timer(self.TIMER_DELAY, self.send_data)
 
     def send_data(self):
+        input("Press any key")
         if self.idx_mode:
-            ob = self.components[sel]
-            self.send_objects()
+            ob = self.components[self.idx].lower()
+            probs = np.zeros(len(self.objects))
+            probs[self.objects.index(ob)] = 1
+            probs += np.random.rand() * self.NOISE_LEVEL
+            probs /= probs.sum()
+            self.send_objects(probs)
+            self.idx_mode = False
+        else:
+            ob = self.components[self.idx].lower()
+            probs = np.zeros(len(self.objects))
+            probs[self.objects.index(ob)] = 1
+            probs += np.random.rand() * self.NOISE_LEVEL
+            probs /= probs.sum()
+            self.send_objects(probs)
+            self.idx_mode = True
+            self.idx += 1
 
 
     def _translate_action(self, actions: List[float]) -> Dict[str, float]:
@@ -82,10 +105,12 @@ class AssemblyMonitor(Node):
     def send_actions(self, actions):
         aap = AssemblyActionProbability(probabilities=actions)
         self.action_pub.publish(aap)
+        self.get_logger().info(f"Published: {app}")
 
     def send_objects(self, objects):
         aop = AssemblyObjectProbability(probabilities=objects)
         self.object_pub.publish(aop)
+        self.get_logger().info(f"Published: {aop}")
 
     def generate_random_actions(self):
         r = np.random.rand(len(self.actions))
@@ -110,43 +135,50 @@ class AssemblyMonitor(Node):
 
     # def load_assembly(self, assembly_name: str):
     def load_assembly(self):
-        graph, recipe_name, assembly_name, base_filename = self.builder.buildGraph(self.BUILD_FILE)
-        first = {}
-        second = {}
-        for edge in graph.edges_iter():
-            if "! >" in edge[0]:
-                idx = int(edge[0][3:])
-                second[idx] = edge[1]
-            elif "! >" in edge[1]:
-                idx = int(edge[1][3:])
-                first[idx] = edge[0]
-        # c = []
-        # for i in range(len(first) - 1):
-        #     f, s = first[i], second[i]
-        #     felms = [a if f in b else b for (a, b) in [elm for elm in graph.edges(f) if not ("! >" in elm[0] or "! >" in elm[1])]]
-        #     selms = [a if s in b else b for (a, b) in [elm for elm in graph.edges(s) if not ("! >" in elm[0] or "! >" in elm[1])]]
-        #     print(felms, selms)
-        #     if i == 0:
-        #         if felms[0] == selms[0]:
-        #             c += [felms[1], felms[0], selms[1]]
-        #         elif felms[0] == selms[1]:
-        #             c += [felms[1], felms[0], selms[0]]
-        #         elif felms[1] == selms[0]:
-        #             c += [felms[0], felms[1], selms[1]]
-        #         elif felms[1] == selms[1]:
-        #             c += [felms[0], felms[1], selms[0]]
-        #     else:
-        #         if felms[0] == selms[0]:
-        #             c += [felms[1], selms[1]]
-        #         elif felms[0] == selms[1]:
-        #             c += [felms[0], selms[0]]
-        #         elif felms[1] == selms[0]:
-        #             c += [felms[1], selms[1]]
-        #         elif felms[1] == selms[1]:
-        #             c += [felms[1], selms[0]]
-        # print(c)
-        c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Peg', 'Cube']
-        a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer','Hammer']
+        # graph, recipe_name, assembly_name, base_filename = self.builder.buildGraph(self.BUILD_FILE)
+        # first = {}
+        # second = {}
+        # for edge in graph.edges_iter():
+        #     if "! >" in edge[0]:
+        #         idx = int(edge[0][3:])
+        #         second[idx] = edge[1]
+        #     elif "! >" in edge[1]:
+        #         idx = int(edge[1][3:])
+        #         first[idx] = edge[0]
+        # # c = []
+        # # for i in range(len(first) - 1):
+        # #     f, s = first[i], second[i]
+        # #     felms = [a if f in b else b for (a, b) in [elm for elm in graph.edges(f) if not ("! >" in elm[0] or "! >" in elm[1])]]
+        # #     selms = [a if s in b else b for (a, b) in [elm for elm in graph.edges(s) if not ("! >" in elm[0] or "! >" in elm[1])]]
+        # #     print(felms, selms)
+        # #     if i == 0:
+        # #         if felms[0] == selms[0]:
+        # #             c += [felms[1], felms[0], selms[1]]
+        # #         elif felms[0] == selms[1]:
+        # #             c += [felms[1], felms[0], selms[0]]
+        # #         elif felms[1] == selms[0]:
+        # #             c += [felms[0], felms[1], selms[1]]
+        # #         elif felms[1] == selms[1]:
+        # #             c += [felms[0], felms[1], selms[0]]
+        # #     else:
+        # #         if felms[0] == selms[0]:
+        # #             c += [felms[1], selms[1]]
+        # #         elif felms[0] == selms[1]:
+        # #             c += [felms[0], selms[0]]
+        # #         elif felms[1] == selms[0]:
+        # #             c += [felms[1], selms[1]]
+        # #         elif felms[1] == selms[1]:
+        # #             c += [felms[1], selms[0]]
+        # # print(c)
+        if self.build_assembly=='snake':
+            c = ['Sphere', 'Peg', 'Cube', 'Peg','Cube', 'Peg', 'Cube']
+            a = ['Hammer', 'Hammer', 'Hammer','Hammer', 'Hammer', 'Hammer','Hammer']
+        elif self.build_assembly=='dog':
+            c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Screw', 'Wafer', 'Screw', 'Wafer']
+            a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer', 'Screwdriver', 'Nothing', 'Screwdriver', 'Nothing']
+        elif self.build_assembly=='car':
+            c = ['Cube', 'Peg', 'Cube', 'Peg', 'Cube', 'Screw', 'Wheel', 'Screw', 'Wheel']
+            a = ['Hammer', 'Hammer', 'Hammer', 'Hammer', 'Hammer', 'Screwdriver', 'Nothing', 'Screwdriver', 'Nothing']
         return c, a
 
 

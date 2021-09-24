@@ -1,0 +1,151 @@
+assembly_name: Dog
+# Object definitions
+objects:
+  cube_front:
+    type: Cube
+
+  cube_back:
+    type: Cube
+
+  sphere_head:
+    type: Sphere
+
+  peg_neck:
+    type: Peg
+
+  peg_body:
+    type: Peg
+
+  screw_front:
+    type: Screw
+
+  screw_back:
+    type: Screw
+
+  nut_front:
+    type: Nut
+
+  nut_back:
+    type: Nut
+
+  wafer_front2:
+    type: Wafer
+
+  wafer_back2:
+    type: Wafer
+
+# Connection definitions
+operations:
+  neck1:
+    type: InsertFixedConnection
+    provider: peg_neck
+    consumer: cube_front
+
+  neck2:
+    type: InsertFixedConnection
+    provider: peg_neck
+    consumer: sphere_head
+
+  body1:
+    type: InsertFixedConnection
+    provider: peg_body
+    consumer: cube_front
+
+  body2:
+    type: InsertFixedConnection
+    provider: peg_body
+    consumer: cube_back
+
+  front2:
+    type: InsertLooseConnection
+    provider: screw_front
+    consumer: cube_front
+    uses: Thread
+    length: 50
+
+  front3:
+    type: InsertLooseConnection
+    provider: screw_front
+    consumer: wafer_front2
+    uses: Thread
+    length: 5
+
+  back2:
+    type: InsertLooseConnection
+    provider: screw_back
+    consumer: cube_back
+    uses: Thread
+    length: 50
+
+  back3:
+    type: InsertLooseConnection
+    provider: screw_back
+    consumer: wafer_back2
+    uses: Thread
+    length: 5
+
+# Relation definitions
+relations:
+  - type: PerpendicularRelation
+    operations: [nose, neck2]
+    reference: sphere_head
+
+  - type: PerpendicularRelation
+    operations: [neck1, body1]
+    reference: cube_front
+
+  - type: PerpendicularRelation
+    operations: [front2, body1]
+    reference: cube_front
+
+  - type: PerpendicularRelation
+    operations: [front2, neck1]
+    reference: cube_front
+
+  - type: PerpendicularRelation
+    operations: [back2, body2]
+    reference: cube_back
+
+  - type: PerpendicularRelation
+    operations: [front2, neck1]
+    reference: cube_back
+
+  - type: OppositeRelation
+    operations: [tail, body2]
+    reference: cube_back
+
+# Order definitions
+order_hints:
+  - type: RequiredOrder
+    first: front1
+    then: front2
+
+  - type: RequiredOrder
+    first: front2
+    then: front3
+
+  - type: RequiredOrder
+    first: front3
+    then: thread_front
+
+  - type: RequiredOrder
+    first: back1
+    then: back2
+
+  - type: RequiredOrder
+    first: back2
+    then: back3
+
+  - type: RequiredOrder
+    first: back3
+    then: thread_back
+
+  - type: RequiredOrder
+    first: front1
+    then: back1
+
+  - type: AnyOrder
+    operations: [body1, body2]
+
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]
