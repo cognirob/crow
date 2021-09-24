@@ -24,7 +24,7 @@ from rcl_interfaces.srv import GetParameters
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 7  # seconds
-DISABLING_TIME_LIMIT = 3  # seconds
+DISABLING_TIME_LIMIT = 4  # seconds
 TIMER_FREQ = 0.5  # seconds
 
 
@@ -44,7 +44,7 @@ class OntoAdder(Node):
         self.loc_threshold = 0.05  # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
         self.ad = self.get_last_action_id() + 1
-        self.get_logger().set_level(40)
+        # self.get_logger().set_level(40)
 
         # client = self.create_client(GetParameters, f'/calibrator/get_parameters')
         # if not client.wait_for_service(10):
@@ -76,6 +76,24 @@ class OntoAdder(Node):
 
         # Storage
         self.storage_space_added = False
+        self.crowracle.add_storage_space_flat("front_stage", [
+            [1.25, 1],
+            [-0.2, 1],
+            [-0.2, 0.3],
+            [1.25, 0.3],
+        ], isMainArea=True)
+        self.crowracle.add_storage_space_flat("back_stage", [
+            [1.25, 0.3],
+            [-0.2, 0.3],
+            [-0.2, -0.4],
+            [1.25, -0.4],
+        ], isMainArea=True)
+        self.crowracle.add_storage_space_flat("workspace", [
+            [0.65, 1],
+            [0.35, 1],
+            [0.35, 0.6],
+            [0.65, 0.6],
+        ], isMainArea=True)
 
     def timer_callback(self):
         # start = time.time()
@@ -97,23 +115,24 @@ class OntoAdder(Node):
                 self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
                 self.crowracle.enable_object(obj)
 
+        self.crowracle.pair_objects_to_areas_wq()
         # Add new storage - testing
-        if self.storage_space_added:
-            self.crowracle.pair_objects_to_areas_wq(verbose=True)
-        else:
-            self.storage_space_added = True
-            # add new storage
-            name = "workspace"
-            polygon = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3],
-                       [0.44, 0.3, 0.3], [0.2, 0.3, 0.3]]
-            polyhedron = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3], [0.44, 0.3, 0.3], [0.2, 0.3, 0.3],  [
-                0.2, 0.53, -0.3], [0.44, 0.53, -0.3], [0.44, 0.3, -0.3], [0.2, 0.3, -0.3]]
-            area = 1
-            volume = 1
-            centroid = [0.275, 0.55, 1]
-            self.crowracle.add_storage_space(name=name, polygon=polygon, polyhedron=polyhedron, area=area, volume=volume, centroid=centroid)
-        ##
-        # print(f"{time.time() - start:0.4f}")
+        # if self.storage_space_added:
+        #     self.crowracle.pair_objects_to_areas_wq(verbose=True)
+        # else:
+        #     self.storage_space_added = True
+        #     # add new storage
+        #     name = "workspace"
+        #     polygon = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3],
+        #                [0.44, 0.3, 0.3], [0.2, 0.3, 0.3]]
+        #     polyhedron = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3], [0.44, 0.3, 0.3], [0.2, 0.3, 0.3],  [
+        #         0.2, 0.53, -0.3], [0.44, 0.53, -0.3], [0.44, 0.3, -0.3], [0.2, 0.3, -0.3]]
+        #     area = 1
+        #     volume = 1
+        #     centroid = [0.275, 0.55, 1]
+        #     self.crowracle.add_storage_space(name=name, polygon=polygon, polyhedron=polyhedron, area=area, volume=volume, centroid=centroid)
+        # ##
+        # # print(f"{time.time() - start:0.4f}")
 
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
