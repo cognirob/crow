@@ -135,43 +135,43 @@ class AssemblyMonitor(Node):
 
     # def load_assembly(self, assembly_name: str):
     def load_assembly(self):
-        graph, recipe_name, assembly_name, base_filename = self.builder.buildGraph(self.BUILD_FILE)
-        first = {}
-        second = {}
-        for edge in graph.edges_iter():
-            if "! >" in edge[0]:
-                idx = int(edge[0][3:])
-                second[idx] = edge[1]
-            elif "! >" in edge[1]:
-                idx = int(edge[1][3:])
-                first[idx] = edge[0]
-        # c = []
-        # for i in range(len(first) - 1):
-        #     f, s = first[i], second[i]
-        #     felms = [a if f in b else b for (a, b) in [elm for elm in graph.edges(f) if not ("! >" in elm[0] or "! >" in elm[1])]]
-        #     selms = [a if s in b else b for (a, b) in [elm for elm in graph.edges(s) if not ("! >" in elm[0] or "! >" in elm[1])]]
-        #     print(felms, selms)
-        #     if i == 0:
-        #         if felms[0] == selms[0]:
-        #             c += [felms[1], felms[0], selms[1]]
-        #         elif felms[0] == selms[1]:
-        #             c += [felms[1], felms[0], selms[0]]
-        #         elif felms[1] == selms[0]:
-        #             c += [felms[0], felms[1], selms[1]]
-        #         elif felms[1] == selms[1]:
-        #             c += [felms[0], felms[1], selms[0]]
-        #     else:
-        #         if felms[0] == selms[0]:
-        #             c += [felms[1], selms[1]]
-        #         elif felms[0] == selms[1]:
-        #             c += [felms[0], selms[0]]
-        #         elif felms[1] == selms[0]:
-        #             c += [felms[1], selms[1]]
-        #         elif felms[1] == selms[1]:
-        #             c += [felms[1], selms[0]]
-        # print(c)
+        # graph, recipe_name, assembly_name, base_filename = self.builder.buildGraph(self.BUILD_FILE)
+        # first = {}
+        # second = {}
+        # for edge in graph.edges_iter():
+        #     if "! >" in edge[0]:
+        #         idx = int(edge[0][3:])
+        #         second[idx] = edge[1]
+        #     elif "! >" in edge[1]:
+        #         idx = int(edge[1][3:])
+        #         first[idx] = edge[0]
+        # # c = []
+        # # for i in range(len(first) - 1):
+        # #     f, s = first[i], second[i]
+        # #     felms = [a if f in b else b for (a, b) in [elm for elm in graph.edges(f) if not ("! >" in elm[0] or "! >" in elm[1])]]
+        # #     selms = [a if s in b else b for (a, b) in [elm for elm in graph.edges(s) if not ("! >" in elm[0] or "! >" in elm[1])]]
+        # #     print(felms, selms)
+        # #     if i == 0:
+        # #         if felms[0] == selms[0]:
+        # #             c += [felms[1], felms[0], selms[1]]
+        # #         elif felms[0] == selms[1]:
+        # #             c += [felms[1], felms[0], selms[0]]
+        # #         elif felms[1] == selms[0]:
+        # #             c += [felms[0], felms[1], selms[1]]
+        # #         elif felms[1] == selms[1]:
+        # #             c += [felms[0], felms[1], selms[0]]
+        # #     else:
+        # #         if felms[0] == selms[0]:
+        # #             c += [felms[1], selms[1]]
+        # #         elif felms[0] == selms[1]:
+        # #             c += [felms[0], selms[0]]
+        # #         elif felms[1] == selms[0]:
+        # #             c += [felms[1], selms[1]]
+        # #         elif felms[1] == selms[1]:
+        # #             c += [felms[1], selms[0]]
+        # # print(c)
         if self.build_assembly=='snake':
-            c = ['Cube', 'Peg', 'Sphere','Peg', 'Cube','Peg', 'Cube']
+            c = ['Sphere', 'Peg', 'Cube', 'Peg','Cube', 'Peg', 'Cube']
             a = ['Hammer', 'Hammer', 'Hammer','Hammer', 'Hammer', 'Hammer','Hammer']
         elif self.build_assembly=='dog':
             c = ['Sphere', 'Peg', 'Cube', 'Peg', 'Cube', 'Screw', 'Wafer', 'Screw', 'Wafer']
