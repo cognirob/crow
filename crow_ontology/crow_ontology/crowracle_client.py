@@ -491,7 +491,7 @@ class CrowtologyClient():
         """
         res = self.onto.query(self._query_check_time_enable_disable)
         # return res
-        print(list(res))
+        # print(list(res))
         return [(g["obj"], g["stamp"], g["enabled"].toPython()) for g in res]
 
     def getTangibleObjectsProps(self):
