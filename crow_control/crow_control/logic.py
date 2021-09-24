@@ -171,20 +171,25 @@ class ControlLogic(Node):
         Returns:
             tuple: (<position>, <size>, <type>) - None where not applicable.
         """
+        # print(target)
+        # print(target_type)
+        # print(target_ph_cls)
+        # print(target_ph_loc)
+        StatTimer.enter("onto data retrieval uri", severity=Runtime.S_MINOR)
         if target_type == "xyz":
             return (np.array(target), [1e-9, 1e-9, 1e-9], ObjectType.POINT)
         elif target_type == "onto_id":
             try:
                 uri = next(self.onto.subjects(self.crowracle.CROW.hasId, target))
-                # uri = next(self.onto.objects(self.crowracle.CROW.hasId, target))
             except:
+                self.get_logger().error(f"Action target was set to '{target_type}' but object with the ID '{target}' is not in the database!")
+                return None
                 try:
                     uri = next(self.onto.subjects(self.crowracle.CROW.disabledId, target))
                 except StopIteration:
-                    self.get_logger().error(f"Action target was set to '{target_type}' but object with the ID '{target}' is not in the database!")
                     return None
         elif target_type == "onto_uri":
-            uri = target
+            uri = URIRef(target + "a")
         elif target_type == "properties":
             color = self.crowracle.get_uri_from_nlp(target_ph_color)
             uri = (self.crowracle.get_obj_of_properties(target_ph_cls, {'color': color}, all=False))[0]
@@ -200,15 +205,17 @@ class ControlLogic(Node):
 
         try:
             # xyz = np.array([-0.00334, 0.00232, 0.6905])
-            StatTimer.enter("onto data retrieval uri", severity=Runtime.S_MINOR)
-            xyz = self.crowracle.get_location_of_obj(uri)
-            size = self.crowracle.get_pcl_dimensions_of_obj(uri)
-            typ = self._extract_obj_type(self.crowracle.get_world_name_from_uri(uri))
-            StatTimer.exit("onto data retrieval uri")
+            res = self.crowracle.get_target_from_uri(uri)
+            if res is None:
+                res = self.crowracle.get_target_from_type(URIRef(target_ph_cls))
+            xyz, size, typ = res
+            typ = self._extract_obj_type(typ)
         except:
-            self.get_logger().error(f"Action target was set to '{target_type}' but object '{target}' is not in the database!")
+            self.get_logger().error(f"Action target was set to '{target_type}' but object '{target}' is not in the database! Trying another {target_ph_cls}")
+            StatTimer.exit("onto data retrieval uri")
             return None
         else:
+            StatTimer.exit("onto data retrieval uri")
             if ('None' not in xyz) and (None not in xyz):
                 return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
             else:
@@ -292,7 +299,7 @@ class ControlLogic(Node):
             target = [target]
         while (target_info is None) and (duration.seconds <= self.TARGET_BUFFERING_TIME):
             for t in target:
-                target_info = self.processTarget(t, target_type)
+                target_info = self.processTarget(t, target_type, **kwargs)
                 if target_info:
                     break
             duration = datetime.now() - start_time
@@ -564,7 +571,7 @@ class ControlLogic(Node):
         """
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Tidy action")
-        objs = self.crowracle.getTangibleObjects()
+        objs = self.crowracle.get()
         while len(objs) > 0:
             if (self.status & self.STATUS_IDLE):
                 self._set_status(self.STATUS_PROCESSING)

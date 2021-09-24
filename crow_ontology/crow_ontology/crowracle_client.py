@@ -213,12 +213,6 @@ class CrowtologyClient():
             ?obj crow:hasFilterColor ?col .
             ?obj crow:hasSigma ?sigma .
         }"""
-    _query_wname = '''SELECT ?wname
-        WHERE {
-            ?obj rdf:type ?cls .
-            ?cls crow:world_name ?wname .
-            }
-        '''
     _query_area_polyhedron = """
         SELECT ?x ?y ?z
 
@@ -1066,11 +1060,78 @@ class CrowtologyClient():
             str
         """
         try:
-            result = self.onto.query(self._query_wname, initBindings={'?obj': uri})
+            _query_wname = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                prefix owl: <http://www.w3.org/2002/07/owl#>
+                prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+                SELECT DISTINCT ?wname
+                WHERE {{
+                    {uri.n3()} rdf:type ?cls .
+                    ?cls crow:world_name ?wname .
+                }}"""
+            result = self.onto.query(_query_wname)
             world_name = str(list(result)[0][0])
         except:
             return "UNKNOWN"
         return world_name
+
+    def get_target_from_type(self, obj_type):
+        obj_type = obj_type.n3()
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+            SELECT DISTINCT ?x ?y ?z ?sx ?sy ?sz ?wname
+            WHERE {{
+                ?obj rdf:type ?cls .
+                FILTER(?cls = {obj_type})
+                ?cls crow:world_name ?wname .
+                ?obj crow:hasAbsoluteLocation ?loc .
+                ?loc crow:x ?x .
+                ?loc crow:y ?y .
+                ?loc crow:z ?z .
+                FILTER(?x != "None" && ?y != "None" && ?z != "None")
+                ?obj crow:hasPclDimensions ?pcl .
+                ?pcl crow:x ?sx .
+                ?pcl crow:y ?sy .
+                ?pcl crow:z ?sz .
+            }}
+            LIMIT 1"""
+        result = self.onto.query(query)
+        if len(result) == 0:
+            return
+        r = list(result)[0]
+        *xyz, sx, sy, sz = [x.toPython() for x in r[:-1]]
+        return xyz, [sx, sy, sz], str(r[-1])
+
+    def get_target_from_uri(self, uri):
+        obj = uri.n3()
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+            SELECT DISTINCT ?x ?y ?z ?sx ?sy ?sz ?wname
+            WHERE {{
+                {obj} rdf:type ?cls .
+                ?cls crow:world_name ?wname .
+                {obj} crow:hasAbsoluteLocation ?loc .
+                ?loc crow:x ?x .
+                ?loc crow:y ?y .
+                ?loc crow:z ?z .
+                {obj} crow:hasPclDimensions ?pcl .
+                ?pcl crow:x ?sx .
+                ?pcl crow:y ?sy .
+                ?pcl crow:z ?sz .
+            }}"""
+        result = self.onto.query(query)
+        if len(result) == 0:
+            return
+        r = list(result)[0]
+        *xyz, sx, sy, sz = [x.toPython() for x in r[:-1]]
+        return xyz, [sx, sy, sz], str(r[-1])
 
     def getCurrentAction(self):
         """Get current action's name and last update time
