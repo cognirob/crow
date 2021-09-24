@@ -7,7 +7,9 @@ from rclpy.qos import QoSReliabilityPolicy
 from crow_msgs.msg import DetectionMask, FilteredPose, ActionDetection
 from geometry_msgs.msg import PoseArray
 import message_filters
-
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
+import traceback as tb
 import curses
 import time
 import numpy as np
@@ -21,8 +23,8 @@ from rcl_interfaces.srv import GetParameters
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 10  # seconds
-DISABLING_TIME_LIMIT = 7  # seconds
+DELETION_TIME_LIMIT = 7  # seconds
+DISABLING_TIME_LIMIT = 3  # seconds
 TIMER_FREQ = 0.5  # seconds
 
 
@@ -42,6 +44,7 @@ class OntoAdder(Node):
         self.loc_threshold = 0.05  # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
         self.ad = self.get_last_action_id() + 1
+        self.get_logger().set_level(40)
 
         # client = self.create_client(GetParameters, f'/calibrator/get_parameters')
         # if not client.wait_for_service(10):
@@ -54,18 +57,20 @@ class OntoAdder(Node):
         #     self.image_topics, self.cameras, self.camera_instrinsics, self.camera_frames = [p.string_array_value for p in call_get_parameters(node=self, node_name="/calibrator", parameter_names=["image_topics", "camera_namespaces", "camera_intrinsics", "camera_frames"]).values]
 
         # create timer for crawler - periodically delete old objects from database
-        self.create_timer(TIMER_FREQ, self.timer_callback)
+        self.create_timer(TIMER_FREQ, self.timer_callback, callback_group=MutuallyExclusiveCallbackGroup())
 
         # create listeners
-        qos = QoSProfile(depth=30, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        qos = QoSProfile(depth=3, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=FilteredPose,
                                  topic=self.FILTERED_POSES_TOPIC,
                                  callback=self.input_filter_callback,
+                                 callback_group=MutuallyExclusiveCallbackGroup(),
                                  qos_profile=qos)
         self.get_logger().info(f'Input listener created on topic: {self.FILTERED_POSES_TOPIC}')
         self.create_subscription(msg_type=ActionDetection,
                                  topic=self.ACTION_TOPIC,
                                  callback=self.input_action_callback,
+                                 callback_group=MutuallyExclusiveCallbackGroup(),
                                  qos_profile=qos)
         self.get_logger().info(f'Input listener created on topic: {self.ACTION_TOPIC}')
 
@@ -73,7 +78,7 @@ class OntoAdder(Node):
         self.storage_space_added = False
 
     def timer_callback(self):
-        # now_time = datetime.now()
+        # start = time.time()
         tmsg = self.get_clock().now().to_msg()
         now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
         for obj, last_obj_time, enabled in self.crowracle.getTangibleObjects_timestamp():
@@ -89,25 +94,8 @@ class OntoAdder(Node):
                 if enabled:
                     self.crowracle.disable_object(obj)
             elif not enabled:
-                self.get_logger().warn(f'Trying to enable. Status: {enabled}')
+                self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
                 self.crowracle.enable_object(obj)
-        # obj_in_database = self.crowracle.getTangibleObjects_disabled_nocls()
-        # # now_time = datetime.now()
-        # tmsg = self.get_clock().now().to_msg()
-        # now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
-        # for obj in obj_in_database:
-        #     try:
-        #         last_obj_time = next(self.onto.objects(obj, CROW.hasTimestamp))
-        #     except StopIteration as se:
-        #         continue
-        #     last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
-        #     time_diff = now_time - last_obj_time
-        #     if time_diff.seconds >= DELETION_TIME_LIMIT:
-        #         self.crowracle.delete_object(obj)
-        #     elif time_diff.seconds >= DISABLING_TIME_LIMIT:
-        #         self.crowracle.disable_object(obj)
-        #     else:
-        #         self.crowracle.enable_object(obj)
 
         # Add new storage - testing
         if self.storage_space_added:
@@ -125,14 +113,14 @@ class OntoAdder(Node):
             centroid = [0.275, 0.55, 1]
             self.crowracle.add_storage_space(name=name, polygon=polygon, polyhedron=polyhedron, area=area, volume=volume, centroid=centroid)
         ##
+        # print(f"{time.time() - start:0.4f}")
 
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses received. Quitting early.")
             return
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
-
-        update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
+        update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
         existing_objects = self.crowracle.get_objects_by_uuid(pose_array_msg.uuid)
@@ -256,9 +244,17 @@ def main():
     rclpy.init()
     time.sleep(1)
     adder = OntoAdder()
-
-    rclpy.spin(adder)
-    adder.destroy_node()
+    n_threads = 2 # 1 for timer and 1 for pose updates
+    try:
+        # rclpy.spin(adder)
+        mte = MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
+        rclpy.spin(adder, executor=mte)
+    except KeyboardInterrupt:
+        adder.destroy_node()
+        print("User requested shutdown.")
+    except BaseException as e:
+        print(f"Some error had occured: {e}")
+        tb.print_exc()
 
 
 if __name__ == "__main__":
