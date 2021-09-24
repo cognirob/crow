@@ -2,14 +2,15 @@ from typing import Union
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
-from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import RobotAction
 from geometry_msgs.msg import Pose
-
+import traceback as tb
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
@@ -108,15 +109,16 @@ class ControlLogic(Node):
         self.pclient.define("can_start_talking", True) # If true, can start playing buffered sentences
 
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        reentrant_group = ReentrantCallbackGroup()  # no restrictions on re-entry of callbacks
         self.create_subscription(msg_type=StampedString,
                                  topic=self.NLP_ACTION_TOPIC,
                                  callback=self.command_cb,
-                                 callback_group=ReentrantCallbackGroup(),
+                                 callback_group=reentrant_group,
                                  qos_profile=qos)
         self.create_subscription(msg_type=StampedString,
                                  topic=self.PLANNER_ACTION_TOPIC,
                                  callback=self.command_planner_cb,
-                                 callback_group=ReentrantCallbackGroup(),
+                                 callback_group=reentrant_group,
                                  qos_profile=qos)
         self.robot_point_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_POINT)
         self.robot_pnp_client = ActionClient(self, RobotAction, self.ROBOT_ACTION_PNP)
@@ -129,12 +131,12 @@ class ControlLogic(Node):
         # self.get_logger().info(f"Connected to robot pnp action: {self.robot_pnp_client.wait_for_server()}")
         # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
 
-        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=ReentrantCallbackGroup())
+        self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=reentrant_group)
         # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
-        self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=ReentrantCallbackGroup())
-        self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=ReentrantCallbackGroup())
+        self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=MutuallyExclusiveCallbackGroup())
+        self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=MutuallyExclusiveCallbackGroup())
         self.command_main_buffer = QueueServer(maxlen=self.MAX_QUEUE_LENGTH, queue_name='main')
         self.command_meanwhile_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
         self.main_buffer_count = 1
@@ -751,7 +753,7 @@ def main():
     cl = ControlLogic()
     try:
         n_threads = 4 # nr of callbacks in group, +1 as backup
-        mte = rclpy.executors.MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
+        mte = MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
         rclpy.spin_once(cl, executor=mte)
         # for p, o in cl.onto.predicate_objects("http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_1"):
         #     print(p, " --- ", o)
@@ -770,6 +772,7 @@ def main():
         print("User requested shutdown.")
     except BaseException as e:
         print(f"Some error had occured: {e}")
+        tb.print_exc()
     finally:
         cl.pclient.robot_failed = False
         cl.pclient.robot_done = True
