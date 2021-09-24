@@ -141,6 +141,14 @@ class CrowtologyClient():
             ?loc crow:y ?y .
             ?loc crow:z ?z .
         }"""
+    _query_present_tangible_location = """SELECT DISTINCT ?obj ?x ?y ?z
+        WHERE {
+    		?obj crow:hasId ?id .
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+        }"""
     _query_get_dimensions = """SELECT ?x ?y ?z
         WHERE {
             ?obj crow:hasPclDimensions ?pcl .
@@ -230,6 +238,18 @@ class CrowtologyClient():
             ?pt crow:x ?x .
             ?pt crow:y ?y .
             ?pt crow:z ?z .
+        }"""
+    _query_main_areas = """
+        SELECT DISTINCT ?area ?x ?y ?z
+
+        WHERE {
+            ?area a crow:StorageSpace .
+            ?area crow:hasPolyhedron ?poly .
+            ?poly crow:hasPoint3D ?pt .
+            ?pt crow:x ?x .
+            ?pt crow:y ?y .
+            ?pt crow:z ?z .
+            FILTER EXISTS { ?area crow:areaType 'main' }
         }"""
     _query_all_tangible_nlp = """
         SELECT ?name
@@ -1225,27 +1245,69 @@ class CrowtologyClient():
         Returns:
             -
         """
-        areas_uris = self.getStoragesProps()
-        scene_objs_uris = self.getTangibleObjects()
+        areas = self.onto.query(self._query_main_areas)
+        # print(list(areas))
+        objs = self.onto.query(self._query_present_tangible_location)
+        # print(list(objs))
 
-        for scene_obj_uri in scene_objs_uris:
-            # Remove all previous occurences and if objects is within some area -
-            # append it to it
-            self.onto.remove((scene_obj_uri, self.CROW.insideOf, None))
+        # build areas
+        dict_areas = {}
+        for ap in areas:
+            a, *points = ap
+            a = a.n3()
+            if a not in dict_areas:
+                dict_areas[a] = []
+            dict_areas[a].append([p.toPython() for p in points])
 
-            for area_uri in areas_uris:
-                obj_scene_test_ret = self.test_obj_in_area(obj_uri=scene_obj_uri, area_uri=area_uri['uri'])
-                if obj_scene_test_ret == True:
-                    self.onto.add((scene_obj_uri, self.CROW.insideOf, area_uri['uri']))
+        inserts = ""
+        deletes = ""
+        wheres = ""
+        for obj in objs:
+            o, *opoints = obj
+            o = o.n3()
+            s = f"{o} crow:insideOf ?a .\n"
+            deletes += s
+            wheres += s
+            opoints = [p.toPython() for p in opoints]
+            for aname, apoints in dict_areas.items():
+                if test_in_hull(opoints, apoints):
+                    inserts += f"{o} crow:insideOf {aname} .\n"
+                    inserts += f"{aname} crow:contains {o} .\n"
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+            DELETE {{
+                {deletes}
+            }}\n"""
+        query += f"""WHERE {{
+            {wheres}
+        }}"""
+        # print(query)
+        self.onto.update(query)
+        if len(inserts) > 0:
+            query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                prefix owl: <http://www.w3.org/2002/07/owl#>
+                prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
 
-        if verbose:
-            print("* All objects in all spaces:")
-            all = self.onto.triples((None, self.CROW.insideOf, None))
-            i = 1
-            for bit in all:
-                print(f"#{i} triple: {bit}")
-                i += 1
-        return
+                INSERT DATA {{
+                    {inserts}
+                }}\n"""
+            self.onto.update(query)
+
+    def get_objects_from_area(self, area_name):
+        if type(area_name) is URIRef:
+            area_name = area_name.n3()
+        else:
+            area_name = self.CROW[area_name].n3()
+        query = f"""SELECT DISTINCT ?obj
+        WHERE {{
+            ?obj crow:insideOf {area_name} .
+        }}"""
+        # print(query)
+        result = self.onto.query(query)
+        return list(result)
 
     def check_position_in_workspace_area(self, xyz_list):
         """
@@ -1398,6 +1460,109 @@ class CrowtologyClient():
             self.onto.add((point_name, self.CROW.z, Literal(point[2], datatype=XSD.float)))
             self.onto.add((onto_polyhedron, self.CROW.hasPoint3D, point_name))
         self.onto.add((onto_name, self.CROW.hasPolyhedron, onto_polyhedron))
+
+    def add_storage_space_flat(self, name, polygon, centroid=None, height=0.3, isMainArea=False):
+        """
+        Add new storage space. Without the need to specify polyhedron, area, and volume.
+        If centroid is None, mean of the polygon is used as centroid.
+
+        Args:
+            name (str): name of storage space
+            polygon (list of lists): 2d points defining the base of the storage space (assumes "shape" = (Nx2) or (Nx3))
+            centroid (list): location of the storage space (the base)
+            height (float): height of the storage space (polyhedron)
+        """
+        storage_uuid = str(uuid4()).replace("-", "_")
+        norm_name = name.replace(" ", "_")
+        norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
+        onto_name = self.CROW[norm_name]
+        PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each storage space
+        onto_location = PART['xyzAbsoluteLocation'].n3()
+        onto_polygon = PART['Polygon'].n3()
+        onto_polyhedron = PART['Polyhedron'].n3()
+
+        if type(polygon) is list:
+            polygon = np.array(polygon, dtype=float)
+        if polygon.shape[1] == 2:
+            polygon = np.hstack((polygon, np.zeros((polygon.shape[0], 1))))
+        # compute the centroid
+        if centroid is None:
+            centroid = np.mean(polygon, axis=0)
+        # compute the area
+        n = len(polygon)
+        area = []
+        for i in range(1,n-1):
+            area.append(0.5 * np.cross(polygon[i] - polygon[0], polygon[(i+1)%n] - polygon[0]))
+        area = np.asarray(area).sum(axis = 0)
+        area = np.linalg.norm(area)
+        # "extrude" polygon to polyhedron
+        polyhedron = np.vstack((polygon, polygon + np.r_[0, 0, height]))
+        # compute the volume of the polyhedron
+        volume = area * height
+
+        self.__node.get_logger().info("CREATING storage {}, location: [{:.2f},{:.2f},{:.2f}].".format(name, *centroid))
+        query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+            INSERT DATA {{
+                {individual} a crow:StorageSpace .
+                {individual} crow:hasName {name} .
+                {individual} crow:hasUuid {uuid} .
+                {individual} crow:isActive {active} .
+                {individual} crow:hasArea {area} .
+                {individual} crow:hasVolume {volume} .
+
+                {loc_name} a crow:Location .
+                {loc_name} crow:x {loc_x} .
+                {loc_name} crow:y {loc_y} .
+                {loc_name} crow:z {loc_z} .
+                {individual} crow:hasAbsoluteLocation {loc_name} .
+
+                {onto_polygon} a crow:Vector .
+                {individual} crow:hasPolygon {onto_polygon} .
+                {onto_polyhedron} a crow:Vector .
+                {individual} crow:hasPolyhedron {onto_polyhedron} .
+
+            """.format(**{
+                "individual": onto_name.n3(),
+                "name": Literal(name, datatype=XSD.string).n3(),
+                "uuid": Literal(storage_uuid, datatype=XSD.string).n3(),
+                "active": Literal(True, datatype=XSD.boolean).n3(),
+                "area": Literal(area, datatype=XSD.float).n3(),
+                "volume": Literal(volume, datatype=XSD.float).n3(),
+                "loc_name": onto_location,
+                "loc_x": Literal(centroid[0], datatype=XSD.float).n3(),
+                "loc_y": Literal(centroid[1], datatype=XSD.float).n3(),
+                "loc_z": Literal(centroid[2], datatype=XSD.float).n3(),
+                "onto_polygon": onto_polygon,
+                "onto_polyhedron": onto_polyhedron,
+            })
+
+        if isMainArea:
+            query += f"{onto_name.n3()} crow:areaType 'main' .\n"
+
+        for idx, point in enumerate(polygon):
+            point_name = PART['PolygonPoint{}'.format(idx)].n3()
+            query += f"{point_name} a crow:Point3D .\n"
+            query += f"{point_name} crow:x {Literal(point[0], datatype=XSD.float).n3()} .\n"
+            query += f"{point_name} crow:y {Literal(point[1], datatype=XSD.float).n3()} .\n"
+            query += f"{point_name} crow:z {Literal(point[2], datatype=XSD.float).n3()} .\n"
+            query += f"{onto_polygon} crow:hasPoint3D {point_name} .\n"
+
+        for idx, point in enumerate(polyhedron):
+            point_name = PART['PolyhedronPoint{}'.format(idx)].n3()
+            query += f"{point_name} a crow:Point3D .\n"
+            query += f"{point_name} crow:x {Literal(point[0], datatype=XSD.float).n3()} .\n"
+            query += f"{point_name} crow:y {Literal(point[1], datatype=XSD.float).n3()} .\n"
+            query += f"{point_name} crow:z {Literal(point[2], datatype=XSD.float).n3()} .\n"
+            query += f"{onto_polyhedron} crow:hasPoint3D {point_name} .\n"
+
+        query += "\n}" # add the ending bracket
+        # print(query)
+
+        self.onto.update(query)
 
     def add_position(self, name, centroid):
         """

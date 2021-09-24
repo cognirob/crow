@@ -58,6 +58,9 @@ class ParamClient():
         self.poller_thread = Thread(target=self._poll, daemon=True)
         self.poller_thread.start()
 
+    def get_all(self):
+        return self._params
+
     def wait_for_param(self, param, timeout=0):
         msg = self.wait_receive_param(param, timeout)
         if msg is None:
@@ -169,20 +172,26 @@ class ParamClient():
             self._params[param.decode()] = cpl.loads(msg)
 
 
-class UniversalParamClient(ParamClient):
+class ParamSubscriber(ParamClient):
+    """The same as ParamClient, but calls a function.
+    when receiving a parameter.
+    """
 
     def __init__(self, start_port=25652, addr="127.0.0.1", protocol="tcp"):
         super().__init__(start_port, addr, protocol)
-        self._cb = None
-
-        # Subscribe to all
-        self._subscriber.setsockopt(zmq.SUBSCRIBE, b"")
+        self._cb = lambda para, msg: None  # default "empty" callback function
 
     def set_callback(self, cb):
         self._cb = cb
 
-    def get_all(self):
-        return self._params
+
+class UniversalParamClient(ParamSubscriber):
+
+    def __init__(self, start_port=25652, addr="127.0.0.1", protocol="tcp"):
+        super().__init__(start_port, addr, protocol)
+
+        # Subscribe to all
+        self._subscriber.setsockopt(zmq.SUBSCRIBE, b"")
 
     def attach(self, param, default_value=None, force=False):
         # just adds the param to the class
@@ -207,5 +216,4 @@ class UniversalParamClient(ParamClient):
             param = rcv_param.decode()
             # print(param, msg)
             self._params[param] = msg
-            if self._cb is not None:
-                self._cb(param, msg)
+            self._cb(param, msg)

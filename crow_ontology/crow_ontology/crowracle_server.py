@@ -91,34 +91,36 @@ class CrowtologyServer():
             self.clear_data()
 
     def clear_data(self):
-        if len(self.onto) > 0:  # try to make a backup
-            if self.BACKUP_ON_CLEAR:
+        try:
+            if len(self.onto) > 0:  # try to make a backup
+                if self.BACKUP_ON_CLEAR:
+                    try:
+                        bkp_path = os.path.join(self.modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
+                        self.onto.graph.serialize(bkp_path, format="xml")
+                    except Exception as e:
+                        self.log(f"Tried backing up the ontology but failed because: {e}")
                 try:
-                    bkp_path = os.path.join(self.modulePath, "..", "data", "backup", f"bkp_{uuid4()}.owl")
-                    self.onto.graph.serialize(bkp_path, format="xml")
+                    if self.__dbconf.store == "alchemy":
+                        self.onto.destroy("I know what I am doing")
+                        self.onto.closelink()
+                        self.__onto = OntologyAPI(self.__dbconf)
+                    elif self.__dbconf.store == "fuseki":
+                        self.onto.update("""
+                        DELETE {
+                            ?s ?p ?o
+                        }
+                        WHERE {
+                            ?s ?p ?o .
+                        }
+                        """)
+                            # (None, None, None))  # remove all triples
+                        # self.onto.remove((None, None, None))  # remove all triples
+                    else:
+                        raise Exception(f"Unknown DB store type: {self.__dbconf.store}")
                 except Exception as e:
-                    self.log(f"Tried backing up the ontology but failed because: {e}")
-            try:
-                if self.__dbconf.store == "alchemy":
-                    self.onto.destroy("I know what I am doing")
-                    self.onto.closelink()
-                    self.__onto = OntologyAPI(self.__dbconf)
-                elif self.__dbconf.store == "fuseki":
-                    self.onto.update("""
-                    DELETE {
-                        ?s ?p ?o
-                    }
-                    WHERE {
-                        ?s ?p ?o .
-                    }
-                    """)
-                        # (None, None, None))  # remove all triples
-                    # self.onto.remove((None, None, None))  # remove all triples
-                else:
-                    raise Exception(f"Unknown DB store type: {self.__dbconf.store}")
-            except Exception as e:
-                self.log(f"Tried cleaning up the ontology but failed because: {e}")
-
+                    self.log(f"Tried cleaning up the ontology but failed because: {e}")
+        except Exception as e:
+            self.log(f"Tried checking the size of ontology, but failed bacause: {e}")
         self.onto.mergeFileIntoDB(self.base_onto_path)
 
     def log(self, msg):
