@@ -62,8 +62,13 @@ class OntoTester(Node):
 
             self.stdscr.addstr(1 + i, 0, f"{uri}", flags)
             if not dead:
-                self.stdscr.addstr(1 + i, 100, f"loc: {loc}", flags)
-                self.stdscr.addstr(1 + i, 200, f"ID: {id}", flags)
+                try:
+                    self.stdscr.addstr(1 + i, 100, f"loc: {loc}", flags)
+                    self.stdscr.addstr(1 + i, 200, f"ID: {id}", flags)
+                except curses.error as e:
+                    self.get_logger().error(str(e))
+                    self.get_logger().debug('ID: {} \n flags: {}'.format(id, flags))
+
 
         self.stdscr.refresh()
         self.old_objects = new_objects
