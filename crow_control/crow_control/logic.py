@@ -568,16 +568,27 @@ class ControlLogic(Node):
         """
         self.get_logger().info("Performing Tidy action")
         try:
-            objs = self.crowracle.get_objects_from_area("front_stage")
-            while len(objs) > 0:
+            objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
+            self.get_logger().info(f"objects: {objs} @ {x}, {y}, {z} with dims {dx}, {dy}, {dz} of type {obj_type}")
+            while objs is not None:
+                # print(f'looping in tidy objects: STATUS {self.status} {self.STATUS_IDLE}')
                 if (self.status & self.STATUS_IDLE):
+                    print('ready to work in tidy objects')
+
                     self._set_status(self.STATUS_PROCESSING)
                     self.pclient.robot_done = False
-                    target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
-                    kwargs['target_info'] = target_info
-                    self.sendFetchToAction(**kwargs)
-                    objs = self.crowracle.get_objects_from_area("front_stage")
+                    print(f'Tidying object {objs} @ {x}, {y}, {z}')
+
+
+                    #TODO objs list is out of date when the action is sent. The objects are newly detected and get higher index.
+                    # print(f"selected object: {objs[0]}")
+                    # target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
+                    # kwargs['target_info'] = target_info
+                    self.sendFetchToAction(target_info=[[0.400, 0.065, 0.0],[dx, dy, dz], obj_type], location=[x, y, z])
+                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
                     #TODO: keep only objs in the workspace area (not in the storage, etc.)
+                    # self._set_status(self.STATUS_IDLE)
+
         except BaseException as e:
             print(f"Error while trying to tidy stuff up: {e}")
             tb.print_exc()

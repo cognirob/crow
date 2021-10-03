@@ -1365,6 +1365,48 @@ class CrowtologyClient():
         result = self.onto.query(query)
         return [u[0] for u in list(result)]
 
+    
+    def get_objects_with_poses_from_area(self, area_name):
+        if type(area_name) is URIRef:
+            area_name = area_name.n3()
+        else:
+            area_name = self.CROW[area_name].n3()
+        
+        query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z
+        WHERE {{
+            ?obj crow:insideOf {area_name} .
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+            ?obj crow:hasPclDimensions ?pcl_name . 
+            ?pcl_name crow:x ?pcl_x .
+            ?pcl_name crow:y ?pcl_y .
+            ?pcl_name crow:z ?pcl_z .
+        }}"""
+        # print(query)
+        result = self.onto.query(query)
+        print(list(result))
+        if len(list(result)) > 0:
+            u = list(result)
+            obj = u[0][0]
+            x = float(u[0][1])
+            y = float(u[0][2])
+            z = float(u[0][3])
+            dx = float(u[0][4])
+            dy = float(u[0][5])
+            dz = float(u[0][6])
+            # obj_type = u[0][7]
+
+
+            return obj, x, y, z, dx, dy, dz, 1
+        return None, NaN, NaN, NaN, NaN, NaN, NaN, 0
+
+        # data sample for query
+        # data = [(rdflib.term.URIRef('http://imitrob.ciirc.cvut.cz/ontologies/crow#hammer_od_713'), rdflib.term.Literal('0.76065123', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.74001455', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.014921662', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float'))), (rdflib.term.URIRef('http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_od_732'), rdflib.term.Literal('0.6685969', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.49664876', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.046712816', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')))]
+
+
+
     def check_position_in_workspace_area(self, xyz_list):
         """
         Check position xyz_list=[x,y,z] in area with name 'workspace'
