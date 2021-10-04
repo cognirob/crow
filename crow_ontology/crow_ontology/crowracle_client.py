@@ -1,4 +1,5 @@
 from typing import List
+from numpy.core.numeric import NaN
 from rdflib.namespace import FOAF, RDFS, RDF, OWL, XMLNS, XSD, Namespace
 from rdflib.extras.infixowl import Class
 from rdflib import BNode, URIRef, Literal
@@ -795,6 +796,8 @@ class CrowtologyClient():
             list of strings: nlp names of the given uri, 0...N
         """
         nlp_name_property = self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ
+        if type(uri)== list:
+            uri = uri[0]
         query = f"""
         PREFIX crow:    <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -802,7 +805,7 @@ class CrowtologyClient():
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
         SELECT DISTINCT ?name
-
+        
         WHERE {{
             BIND({uri.n3()} AS ?obj)
             ?obj a ?cls .
@@ -810,7 +813,6 @@ class CrowtologyClient():
             ?target {nlp_name_property.n3()} ?name .
         }}"""
         nlp_name_uri = list(self.onto.query(query))
-
         if len(nlp_name_uri) < 1: # no nlp name -> create new from the uri string
             nlp_name = [uri.split('#')[-1]]
             self.onto.add((uri, nlp_name_property, Literal(nlp_name[0], datatype=XSD.string)))
