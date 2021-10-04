@@ -396,9 +396,9 @@ class ControlLogic(Node):
         marker_msg = MarkerMsg()
         marker_msg.group_name = marker_group_name
         marker_msg.define_name = define_name
+        self.marker_storage_publisher.publish(marker_msg)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self.marker_storage_publisher.publish(marker_msg)
 
     def definePosition(self, disp_name='', define_name=None, marker_group_name=None, **kwargs):
         """Marker Detector detects chosen markers, if successful, adds named position to database
@@ -408,9 +408,10 @@ class ControlLogic(Node):
         marker_msg = MarkerMsg()
         marker_msg.group_name = marker_group_name
         marker_msg.define_name = define_name
+        self.marker_position_publisher.publish(marker_msg)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-        self.marker_position_publisher.publish(marker_msg)
+        self.get_logger().debug("Publishig marker: {}".format(marker_msg))
 
     def sendPointAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs): #@TODO: sendPointAction
         """Point: move to target
@@ -431,10 +432,10 @@ class ControlLogic(Node):
                 location_xyz=location
             )
         # print('>>>>')
-        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
-        self.wait_then_talk()
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
         StatTimer.exit("Sending command")
 
     def sendPickAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
@@ -455,10 +456,10 @@ class ControlLogic(Node):
                 target_type=target_info[2],
                 # location_xyz=location  # temporary "robot default" position - in PickTask.py template
             )
-        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
-        self.wait_then_talk()
         self._send_goal_future = self.robot_pick_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
         StatTimer.exit("Sending command")
 
     def sendFetchAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
@@ -496,10 +497,10 @@ class ControlLogic(Node):
             client = self.robot_fetch_client
 
         self._set_status(self.STATUS_PROCESSING)
-        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
-        self.wait_then_talk()
         self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
         StatTimer.exit("Sending command")
 
     def sendFetchToAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
@@ -536,10 +537,10 @@ class ControlLogic(Node):
                     location_xyz=location
                 )
         self._set_status(self.STATUS_PROCESSING)
-        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
-        self.wait_then_talk()
         self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
         StatTimer.exit("Sending command")
 
         # wait for 'touch'
@@ -557,10 +558,10 @@ class ControlLogic(Node):
             self.make_robot_fail_to_start()
             return
         goal_msg = self.composeRobotActionMessage(robot_id=0)
-        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
-        self.wait_then_talk()
         self._send_goal_future = self.gripper_open_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
         StatTimer.exit("Sending command")
 
     def sendTidyAction(self, disp_name='', **kwargs):
@@ -584,7 +585,7 @@ class ControlLogic(Node):
                     # print(f"selected object: {objs[0]}")
                     # target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
                     # kwargs['target_info'] = target_info
-                    self.sendFetchToAction(target_info=[[0.400, 0.065, 0.0],[dx, dy, dz], obj_type], location=[x, y, z])
+                    self.sendFetchToAction(target_info=[[x, y, z],[dx, dy, dz], obj_type], location=[0.400, 0.065, 0.0])
                     objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
                     #TODO: keep only objs in the workspace area (not in the storage, etc.)
                     # self._set_status(self.STATUS_IDLE)
