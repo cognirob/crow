@@ -30,6 +30,7 @@ from collections import deque
 from crow_control.utils.profiling import StatTimer
 from crow_control.utils import ParamClient, QueueServer
 from crow_nlp.nlp_crow.modules.UserInputManager import UserInputManager
+import threading
 
 
 class UsefullRobotStatus():
@@ -135,8 +136,10 @@ class ControlLogic(Node):
         # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
 
         self.status = self.STATUS_IDLE
-        self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=MutuallyExclusiveCallbackGroup())
-        self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=MutuallyExclusiveCallbackGroup())
+        self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=ReentrantCallbackGroup())
+        self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=ReentrantCallbackGroup())
+        # self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=MutuallyExclusiveCallbackGroup())
+        # self.create_timer(self.UPDATE_INTERVAL, self.update_meanwhile_cb, callback_group=MutuallyExclusiveCallbackGroup())
         self.command_main_buffer = QueueServer(maxlen=self.MAX_QUEUE_LENGTH, queue_name='main')
         self.command_meanwhile_buffer = deque(maxlen=self.MAX_QUEUE_LENGTH)
         self.main_buffer_count = 1
@@ -315,11 +318,13 @@ class ControlLogic(Node):
 
     def update_main_cb(self):
         if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
+            self._set_status(self.STATUS_PROCESSING)
+            # print("ready")
             try:
                 disp_name, action, command_name, kwargs = self.command_main_buffer.pop()
                 kwargs['disp_name'] = disp_name
             except IndexError as ie:  # no new commands to process
-                pass  # noqa
+                self._set_status(self.STATUS_IDLE)
             else:
                 command = self.COMMAND_DICT.get(action, self.command_error)
                 if 'target' in kwargs.keys():
@@ -332,18 +337,22 @@ class ControlLogic(Node):
                     location = self.processLocation(kwargs['location'], kwargs['location_type'])
                     print('locs', location)
                     kwargs['location'] = location
-                if (self.status & self.STATUS_IDLE) and ((kwargs.get('target_info') or kwargs.get('location')) is not None):
+                if kwargs.get('target_info') is not None or kwargs.get('location') is not None:
                     try:
                         command(**kwargs)
                     except Exception as e:
                         self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. The error was:\n{e}")
                         self.make_robot_fail_to_start()
                     finally:
-                        self._set_status(self.STATUS_IDLE)
+                        self._cleanup_after_action()
                 else:
-                    command(**kwargs)
+                    # TODO: pop the command back into queue and try again later
+                    self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. The error was:\n{e}")
+                    self.make_robot_fail_to_start()
             finally:
                 pass
+        # else:
+        #     print("busy")
 
     def update_meanwhile_cb(self):
         try:
@@ -689,6 +698,8 @@ class ControlLogic(Node):
         else:
             self.get_logger().info(f'Action failed because: {result.action_result_flag}')
             self.make_robot_fail()
+        self._cleanup_after_action()
+        self.get_logger().info(f'Robot action done.')
 
     def robot_feedback_cb(self, feedback_msg):
         feedback = feedback_msg.feedback
@@ -737,6 +748,11 @@ class ControlLogic(Node):
             return False
 
     def wait_then_talk(self):
+        return
+        th = threading.Thread(target=self._async_talk, daemon=True)
+        th.start()
+    
+    def _async_talk(self):
         if self.pclient.silent_mode > 1:
             while self.pclient.can_start_talking == False:
                 time.sleep(0.2)
