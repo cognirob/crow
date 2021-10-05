@@ -60,7 +60,10 @@ class OntoTester(Node):
             if not dead and (id is None or "error" in id):
                 flags = curses.color_pair(4)
 
-            self.stdscr.addstr(1 + i, 0, f"{uri}", flags)
+            try:
+                self.stdscr.addstr(1 + i, 0, f"{uri}", flags)
+            except curses.error as e:
+                self.get_logger().error(str(e))
             if not dead:
                 try:
                     self.stdscr.addstr(1 + i, 100, f"loc: {loc}", flags)
