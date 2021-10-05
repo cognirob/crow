@@ -22,11 +22,11 @@ class DummyActionRobot(Node):
     ACTION_TOPICS = ["point", "pick_n_place", 'release', 'pick_n_home', 'place_n_home', 'pick_n_pass', 'pass']  # names of actions to be created
     ROBOT_SERVICE_STATUS = 'get_robot_status'
     PNP_FAIL = False
-    PNP_RANDOMLY_FAIL = True  # will cause the PNP action (or any action using the PNP format) to fail 50% of the time
+    PNP_RANDOMLY_FAIL = False  # will cause the PNP action (or any action using the PNP format) to fail 50% of the time
     # RELEASE_FAIL = False
     # RELEASE_RANDOMLY_FAIL = True  # will cause the RELEASE action (or any action using the RELEASE format) to fail 50% of the time
     GRIP_ALWAYS_FULL = False
-    GRIP_RANDOMLY_FULL = True  # will result in the gripper to be closed 50% of the time
+    GRIP_RANDOMLY_FULL = False  # will result in the gripper to be closed 50% of the time
     ROBOT_ALWAYS_NOT_READY = False
     ROBOT_RANDOMLY_NOT_READY = False  # will return robot_is_ready=False 50% of the time (when asking for RobotStatus)
     FAIL_OPTIONS = [ActionResultFlag.NOK_ANOTHER_PROCESS_IN_PROGRESS,
@@ -36,7 +36,7 @@ class DummyActionRobot(Node):
                     ActionResultFlag.NOK_ROBOT_NOT_ACCEPTED,
                     ActionResultFlag.NOK_ROBOT_FAIL,
                     ActionResultFlag.NOK_ROBOT_NOT_FEASIBLE]
-    SLEEP_TIME = 2
+    SLEEP_TIME = 1
 
     def __init__(self):
         super().__init__('dummy_action_robot')
