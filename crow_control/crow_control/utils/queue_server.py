@@ -30,10 +30,15 @@ class QueueServer():
         self.__broadcast()
 
     def pop(self):
-        data = self.buffer.popleft()
-        self.__broadcast()
-        self.__broadcast_popped(data)
-        return data
+        try:
+            data = self.buffer.popleft()
+        except IndexError as ie:
+            # print("buffer empty")
+            raise IndexError(self.buffer)
+        else:
+            self.__broadcast()
+            self.__broadcast_popped(data)
+            return data
 
     def remove(self, index):
         del self.buffer[index]
@@ -53,6 +58,8 @@ class QueueServer():
         self.__publisher.send_multipart([self.__queue_name + b'.update', cpl.dumps(self.buffer)])
 
     def __broadcast_popped(self, data):
+        print("#####################")
+        print(data)
         self.__publisher.send_multipart([self.__queue_name + b'.popped', cpl.dumps(data)])
 
     def __len__(self):

@@ -10,6 +10,7 @@ import zmq
 from threading import Thread
 from warnings import warn
 import cloudpickle as cpl
+from zmq.sugar.constants import ROUTER_MANDATORY
 
 
 class ParamServer():
@@ -113,7 +114,11 @@ class ParamServer():
                 print(f"Someone {'' if sub == 1 else 'un'}subscribed on {param}")
 
             if self.changer in socks:  # handle param changes
-                param, value = self.changer.recv_multipart()
+                try:
+                    param, value = self.changer.recv_multipart()
+                except BaseException as e:
+                    print(f"Error changing a parameter!\n{e}")
+                    continue
                 param = param.decode()
                 if param in self.__params:
                     # self.__params[param] = cpl.loads(value)
