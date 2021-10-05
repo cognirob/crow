@@ -572,6 +572,8 @@ class Visualizator(wx.Frame):
         else:
             self.cmd_queue_grid.SetCellValue(row, 0, str(action))
 
+        print("action ", self.translator["action"])
+        print("action ", action)
         infoText = ''
         if "target" in kwargs:
             infoText += f'{self.translator["field"]["target"]} = {str(kwargs["target"])}'
@@ -587,7 +589,8 @@ class Visualizator(wx.Frame):
     def update_cmd_queue(self, _=None):
         noUpdates = wx.grid.GridUpdateLocker(self.cmd_queue_grid)  # pauses grid update until this scope is exited
         vcache = self.qclient.last_value_cache
-        # print(vcache)
+        print("44444444444444444")
+        print(vcache)
         self.cmd_queue_grid.ClearSelection()
         self.button_command_rm.Disable()
         if self.cmd_queue_grid.GetCellValue(1, 0):
@@ -595,6 +598,7 @@ class Visualizator(wx.Frame):
             if self.cmd_queue_grid.GetCellValue(0, 0):  # backup the current command
                 bkp = [self.cmd_queue_grid.GetCellValue(0, i) for i in range(3)]
             self.cmd_queue_grid.ClearGrid()
+            print(bkp)
             if bkp:
                 for i, f in enumerate(bkp):
                     self.cmd_queue_grid.SetCellValue(0, i, f)
