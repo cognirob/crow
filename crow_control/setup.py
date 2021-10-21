@@ -35,6 +35,7 @@ setup(
             'aplanner = crow_control.assembly_planner:main',
             # 'amonitor = crow_control.assembly_monitor:main',
             'famonitor = crow_control.assembly_monitor_fake:main',
+            'monitor = crow_control.monitor:main',
             'wxvis = crow_control.wx_visualizator:main'
         ],
     },

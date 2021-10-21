@@ -20,6 +20,8 @@ from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF, XSD
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 from rcl_interfaces.srv import GetParameters
+from crow_control.utils import ParamClient
+
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
@@ -74,6 +76,9 @@ class OntoAdder(Node):
                                  qos_profile=qos)
         self.get_logger().info(f'Input listener created on topic: {self.ACTION_TOPIC}')
 
+        self.pclient = ParamClient()
+        self.pclient.define("adder_alive", True)
+
         # Storage
         self.storage_space_added = False
         self.crowracle.add_storage_space_flat("front_stage", [
@@ -96,6 +101,7 @@ class OntoAdder(Node):
         ], isMainArea=True)
 
     def timer_callback(self):
+        self.pclient.adder_alive = True
         # start = time.time()
         tmsg = self.get_clock().now().to_msg()
         now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)

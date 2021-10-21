@@ -102,6 +102,7 @@ class ControlLogic(Node):
 
         self.pclient = ParamClient()
         self.pclient.define("robot_done", True) # If true, the robot has received a goal and completed it.
+        self.pclient.define("logic_alive", True)
         self.pclient.define("robot_failed", False) # If true, the robot had failed to perform the requested action.
         self.pclient.define("robot_planning", False) # If true, the robot has received a goal and is currently planning a trajectory for it.
         self.pclient.define("robot_executing", False) # If true, the robot has received a goal and is currently executing it.
@@ -317,6 +318,7 @@ class ControlLogic(Node):
             return target_info
 
     def update_main_cb(self):
+        self.pclient.logic_alive = True
         if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
             self._set_status(self.STATUS_PROCESSING)
             # print("ready")
@@ -751,7 +753,7 @@ class ControlLogic(Node):
         return
         th = threading.Thread(target=self._async_talk, daemon=True)
         th.start()
-    
+
     def _async_talk(self):
         if self.pclient.silent_mode > 1:
             while self.pclient.can_start_talking == False:
