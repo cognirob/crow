@@ -1388,7 +1388,7 @@ class CrowtologyClient():
         }}"""
         # print(query)
         result = self.onto.query(query)
-        print(list(result))
+        # print(list(result))
         if len(list(result)) > 0:
             u = list(result)
             obj = u[0][0]
