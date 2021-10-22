@@ -7,7 +7,7 @@ Created on Wed May 26 14:56:16 2021
 """
 
 import zmq
-from threading import Thread
+from threading import Thread, RLock
 from warnings import warn
 import cloudpickle as cpl
 from zmq.backend import zmq_errno
@@ -35,6 +35,9 @@ class ParamClient():
             protocol (str, optional): Protocol to use for communication.
         """
         self.__context = zmq.Context()
+
+        self._change_lock = RLock()
+        self._define_lock = RLock()
 
         # subscirbe to parameter changes
         self.__addr_pub = f"{protocol}://{addr}:{str(start_port)}"
@@ -148,19 +151,22 @@ class ParamClient():
         self._definer.close()
 
     def __send_definition(self, param, value, overwrite):
+        self._define_lock.acquire()
         self._definer.send_multipart([param.encode('utf-8'), cpl.dumps(value), asbytes(chr(overwrite))])
         response = self._definer.recv().decode()
         if response == "false":
             raise AttributeError(f"Could not declare the parameter {param} (value={value}).")
-
+        self._define_lock.release()
         self.subscribe(param)
 
     def _set_param(self, param, value):
+        self._change_lock.acquire()
         self._changer.send_multipart([param.encode('utf-8'), cpl.dumps(value)])
         response = self._changer.recv().decode()
         # print(response)
         if response == "true":
             self._params[param] = value
+        self._change_lock.release()
 
     def _poll(self):
         while self.active:
