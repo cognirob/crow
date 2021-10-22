@@ -37,6 +37,7 @@ class DummyActionRobot(Node):
                     ActionResultFlag.NOK_ROBOT_FAIL,
                     ActionResultFlag.NOK_ROBOT_NOT_FEASIBLE]
     SLEEP_TIME = 1
+    DELAY_BEFORE_ACCEPTING_GOAL = 0.5
 
     def __init__(self):
         super().__init__('dummy_action_robot')
@@ -72,6 +73,7 @@ class DummyActionRobot(Node):
 
     def goal_callback(self, goal_request, interface="/"):
         """Accept or reject a client request to begin an action."""
+        time.sleep(self.DELAY_BEFORE_ACCEPTING_GOAL)
         self.get_logger().info(f'Received goal request for {interface} action on robot {goal_request.robot_id}.')
         return GoalResponse.ACCEPT
 
