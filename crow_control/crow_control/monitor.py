@@ -27,19 +27,35 @@ from npyscreen import TitleMultiSelect
 from sensor_msgs.msg import CameraInfo
 from threading import Thread
 from datetime import datetime as dt
+import numpy as np
 
 
 npyscreen.CheckBox.True_box = '[o]'
 
 
-class MainForm(npyscreen.SplitForm):
-    # MAIN_WIDGET_CLASS = npyscreen.BufferPager
-    # COMMAND_WIDGET_CLASS = OTerm
+class MainForm(npyscreen.TitleForm):
     MAX_CAMERA_DELAY = rclpy.time.Duration(seconds=0.5)
     CAMERA_MESSAGE_BUFFER_LEN = 10
+    ALIVE_STAMP_BUFFER_LEN = 30
+    FIX_MINIMUM_SIZE_WHEN_CREATED = False
 
     def create(self):
+        self.min_l = 15
         self.node = self.parentApp.node
+
+        self.nextrelx = 3
+        self.add(npyscreen.Textfield, name='CAMERAS', value='CAMERAS', editable=False)
+        self.nextrelx = 43
+        self.nextrely -= 1
+        self.add(npyscreen.Textfield, name='NODES', value='NODES', editable=False)
+        self.nextrelx = 70
+        self.nextrely -= 1
+        self.add(npyscreen.Textfield, name='[last seen]', value='[last seen]', editable=False)
+        self.nextrelx = 93
+        self.nextrely -= 1
+        self.add(npyscreen.Textfield, name='[alive signal delay stats]', value='[alive signal delay stats]', editable=False)
+        self.nextrely += 1
+        self.nextrelx = 1
 
         calib_client = self.node.create_client(GetParameters, '/calibrator/get_parameters')
         self.node.get_logger().info("Waiting for calibrator to setup cameras")
@@ -72,21 +88,27 @@ class MainForm(npyscreen.SplitForm):
 
         self.node.create_timer(0.5, self.update)
 
-        self.nextrelx = 50
-        self.nextrely = 2
+        self.nextrelx = 40
+        self.nextrely = 4
         self.pclient = self.parentApp.pclient
         self.alive_params = ["logic_alive", "detector_alive", "locator_alive", "filter_alive", "adder_alive", "nlp_alive"]
         self.alive_chb = {}
         self.alive_seen = {}
         self.alive_last = {}
+        self.alive_stats = {}
+        self.alive_stamps = {}
         for p in self.alive_params:
             self.pclient.declare(p, False)
-            self.alive_chb[p] = self.add(npyscreen.CheckBox, name=p, editable=False)
-            self.nextrelx += 25
+            self.alive_chb[p] = self.add(npyscreen.CheckBox, name=p + '_chkb', editable=False)
+            self.nextrelx += 30
             self.nextrely -= 1
-            self.alive_seen[p] = self.add(npyscreen.Textfield, name=p, editable=False)
-            self.nextrelx -= 25
+            self.alive_seen[p] = self.add(npyscreen.Textfield, name=p + '_last', editable=False)
+            self.nextrelx += 20
+            self.nextrely -= 1
+            self.alive_stats[p] = self.add(npyscreen.Textfield, name=p + '_stats', editable=False)
+            self.nextrelx -= 50
             self.alive_last[p] = None
+            self.alive_stamps[p] = deque(maxlen=self.ALIVE_STAMP_BUFFER_LEN)
 
         self.th = Thread(target=self.spin, daemon=True)
         self.th.start()
@@ -111,6 +133,18 @@ class MainForm(npyscreen.SplitForm):
         else:
             return 0
 
+    def _count_delay_stats(self, dq):
+        if len(dq) > 1:
+            total = []
+            for i, q in enumerate(dq):
+                if i == 0:
+                    continue
+                total.append(q - dq[i - 1])
+            total = np.array(total)
+            return total.mean(), total.min(), total.max(), total.std()
+        else:
+            return -1, -1, -1, -1
+
     def update(self):
         now = self.node.get_clock().now()
         for cam in self.cameras.keys():
@@ -127,12 +161,13 @@ class MainForm(npyscreen.SplitForm):
 
         for p in self.alive_params:
             is_alive = getattr(self.pclient, p)
-            self.alive_chb[p].value = is_alive
-            setattr(self.pclient, p, False)  # reset the alive indicator
-            if is_alive:
+            self.alive_chb[p].value = is_alive > -1
+            setattr(self.pclient, p, -1)  # reset the alive indicator
+            if is_alive > -1:
                 self.alive_last[p] = now
                 when = "now"
                 self.alive_chb[p].label_area.color = 'SAFE'
+                self.alive_stamps[p].append(is_alive)
             else:
                 self.alive_chb[p].label_area.color = 'DANGER'
                 if self.alive_last[p] is None:
@@ -140,7 +175,15 @@ class MainForm(npyscreen.SplitForm):
                 else:
                     diff = int((now - self.alive_last[p]).nanoseconds * 1e-9)
                     when = f'{diff} seconds ago'
-            self.alive_seen[p].value = f'[last seen: {when}]'
+            self.alive_seen[p].value = f'[{when}]'
+
+            amean, amin, amax, astd = self._count_delay_stats(self.alive_stamps[p])
+            if amean > 0:
+                self.alive_stats[p].value = f'[mean: {amean:0.02f}\xB1{astd:0.02f}; [{amin:0.02f} - {amax:0.02f}]]'
+                # print(self.alive_stamps[p])
+                # print(amean, amin, amax, astd)
+            else:
+                self.alive_stats[p].value = f'[ N/A ]'
 
         self.display()
 

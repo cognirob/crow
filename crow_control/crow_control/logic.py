@@ -85,7 +85,7 @@ class ControlLogic(Node):
     MAX_QUEUE_LENGTH = 10
     TARGET_BUFFERING_TIME = 0.3 # seconds
 
-    STATUS_IDLE = 1
+    STATUS_IDLE = 0
     STATUS_PROCESSING = 2
     STATUS_EXECUTING = 4
 
@@ -318,8 +318,12 @@ class ControlLogic(Node):
             return target_info
 
     def update_main_cb(self):
-        self.pclient.logic_alive = True
-        if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
+        self.pclient.logic_alive = time.time()
+        # print(self.pclient.logic_alive)
+        # s, n = self.get_clock().now().seconds_nanoseconds()
+        # self.pclient.logic_alive = s + n * 1e-9
+        # if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
+        if self.status == 0: #replace IDLE by 90%DONE
             self._set_status(self.STATUS_PROCESSING)
             # print("ready")
             try:
@@ -352,7 +356,8 @@ class ControlLogic(Node):
                     self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. The error was:\n{e}")
                     self.make_robot_fail_to_start()
             finally:
-                pass
+                # self._set_status(self.STATUS_IDLE)
+                self.status = self.status & ~self.STATUS_PROCESSING
         # else:
         #     print("busy")
 
@@ -430,7 +435,6 @@ class ControlLogic(Node):
         StatTimer.enter("Sending command")
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
-        self._set_status(self.STATUS_PROCESSING)
         print(target_info)
         size = target_info[1]
         if np.any(np.isnan(size)):
@@ -443,6 +447,7 @@ class ControlLogic(Node):
                 location_xyz=location
             )
         # print('>>>>')
+        # self._set_status(self.STATUS_EXECUTING)
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
@@ -460,7 +465,7 @@ class ControlLogic(Node):
             self.make_robot_fail_to_start()
             return
         self.pclient.robot_done = False
-        self._set_status(self.STATUS_PROCESSING)
+        # self._set_status(self.STATUS_EXECUTING)
         goal_msg = self.composeRobotActionMessage(
                 target_xyz=target_info[0],
                 target_size=target_info[1],
@@ -507,7 +512,7 @@ class ControlLogic(Node):
                 )
             client = self.robot_fetch_client
 
-        self._set_status(self.STATUS_PROCESSING)
+        # self._set_status(self.STATUS_EXECUTING)
         self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
@@ -547,7 +552,7 @@ class ControlLogic(Node):
                     target_type=target_info[2],
                     location_xyz=location
                 )
-        self._set_status(self.STATUS_PROCESSING)
+        # self._set_status(self.STATUS_EXECUTING)
         self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
@@ -584,11 +589,11 @@ class ControlLogic(Node):
             self.get_logger().info(f"objects: {objs} @ {x}, {y}, {z} with dims {dx}, {dy}, {dz} of type {obj_type}")
             while objs is not None:
                 # print(f'looping in tidy objects: STATUS {self.status} {self.STATUS_IDLE}')
-                if (self.status & self.STATUS_IDLE):
+                if not(self.status & self.STATUS_EXECUTING):
                     print('ready to work in tidy objects')
 
-                    self._set_status(self.STATUS_PROCESSING)
-                    self.pclient.robot_done = False
+                    # self._set_status(self.STATUS_EXECUTING)
+                    # self.pclient.robot_done = False
                     print(f'Tidying object {objs} @ {x}, {y}, {z}')
 
 
@@ -596,6 +601,7 @@ class ControlLogic(Node):
                     # print(f"selected object: {objs[0]}")
                     # target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
                     # kwargs['target_info'] = target_info
+                    # self.status = self.status | self.STATUS_EXECUTING
                     self.sendFetchToAction(target_info=[[x, y, z],[dx, dy, dz], obj_type], location=[0.400, 0.065, 0.0])
                     objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
                     #TODO: keep only objs in the workspace area (not in the storage, etc.)
@@ -684,7 +690,8 @@ class ControlLogic(Node):
         self.ROBOT_ACTION_PHASE = 0
         StatTimer.enter("phase 0")
         self.get_logger().info('Goal accepted :)')
-        self._set_status(self.STATUS_EXECUTING)
+        # self._set_status(self.STATUS_EXECUTING)
+        self.status = self.status | self.STATUS_EXECUTING
 
         self._get_result_future = self.goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.robot_done_cb)
@@ -784,7 +791,8 @@ class ControlLogic(Node):
     def _cleanup_after_action(self):
         self.goal_handle = None
         self.pclient.robot_done = True
-        self._set_status(self.STATUS_IDLE)
+        self.status = self.status & ~self.STATUS_EXECUTING
+        # self._set_status(self.STATUS_IDLE)
 
 def main():
     rclpy.init()

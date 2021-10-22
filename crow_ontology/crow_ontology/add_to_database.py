@@ -25,9 +25,9 @@ from crow_control.utils import ParamClient
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 7  # seconds
-DISABLING_TIME_LIMIT = 4  # seconds
-TIMER_FREQ = 0.5  # seconds
+DELETION_TIME_LIMIT = 8  # seconds
+DISABLING_TIME_LIMIT = 7  # seconds
+TIMER_FREQ = 0.4  # seconds
 
 
 def distance(entry):
@@ -101,7 +101,7 @@ class OntoAdder(Node):
         ], isMainArea=True)
 
     def timer_callback(self):
-        self.pclient.adder_alive = True
+        self.pclient.adder_alive = time.time()
         # start = time.time()
         tmsg = self.get_clock().now().to_msg()
         now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
