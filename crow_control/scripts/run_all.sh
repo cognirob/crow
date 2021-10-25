@@ -179,7 +179,7 @@ if [ "$O_NO_NLP" != true ]; then
 
     new_tab $WID
     runcmd "echo -ne '\033]30;NL Input\007'"
-    runcmd "ros2 run crow_nlp nl_snow --lang cs --ends 0.5 --gain 0.5"
+    runcmd "ros2 run crow_nlp nl_snow --lang cs --ends 0.5 --gain 0.7"
 fi
 
 wmctrl -i -a $WID
