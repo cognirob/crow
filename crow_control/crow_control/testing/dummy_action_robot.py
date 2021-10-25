@@ -42,6 +42,7 @@ class DummyActionRobot(Node):
     def __init__(self):
         super().__init__('dummy_action_robot')
         self.actions = []
+        self.is_executing = False
         for atp in self.ACTION_TOPICS:
             self.get_logger().info(f"Creating action server at '{atp}'")
             self.actions.append(
@@ -75,6 +76,11 @@ class DummyActionRobot(Node):
         """Accept or reject a client request to begin an action."""
         time.sleep(self.DELAY_BEFORE_ACCEPTING_GOAL)
         self.get_logger().info(f'Received goal request for {interface} action on robot {goal_request.robot_id}.')
+        if self.is_executing:
+            self.get_logger().info(f'Received goal request but the robot is currently executing another action, rejecting request.')
+            return GoalResponse.REJECT
+
+        self.is_executing = True
         return GoalResponse.ACCEPT
 
     def cancel_callback(self, goal_handle, interface="/"):
@@ -102,6 +108,7 @@ class DummyActionRobot(Node):
                 result.done = False
                 result.action_result_flag = ActionResultFlag(flag=self.FAIL_OPTIONS[np.random.randint(0, len(self.FAIL_OPTIONS))])
                 self.get_logger().error("Action failed!")
+                self.is_executing = False
                 return result
 
             if goal_handle.is_cancel_requested:  # goal has been CANCELED externally
@@ -109,6 +116,7 @@ class DummyActionRobot(Node):
                 self.get_logger().info('Goal canceled')
                 result.done = False
                 result.action_result_flag = ActionResultFlag(flag=0)  # TODO: set to canceled
+                self.is_executing = False
                 return result
             time.sleep(self.SLEEP_TIME)
             self.get_logger().info(f'\trunning loop {i}')
@@ -122,6 +130,7 @@ class DummyActionRobot(Node):
         self.get_logger().info(f'\tDone.')
         result.done = True
         result.action_result_flag = ActionResultFlag(flag=ActionResultFlag.OK)
+        self.is_executing = False
         return result
 
     def destroy(self):
