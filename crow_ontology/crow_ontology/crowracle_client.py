@@ -1877,6 +1877,32 @@ class CrowtologyClient():
         result = self.onto.query(self.prepareQuery(query))
         return list(result)
 
+    def get_other_objects_by_uuid(self, uuids):
+        """ Returns a list of object URIs and XYZ coordinates for objects that do NOT have the provided UUIDs.
+        """
+        if type(uuids) is not list:
+            uuids = [uuids]
+        query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        SELECT DISTINCT ?obj ?x ?y ?z
+
+        WHERE {{
+            # ?obj a ?cls .
+            # ?cls rdfs:subClassOf+ crow:TangibleObject .
+            ?obj crow:hasUuid ?uuid .
+            FILTER EXISTS {{ ?obj crow:hasTimestamp ?any }}
+            FILTER (?uuid NOT IN ({list_of_uuid}))
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .            
+        }}""".format(list_of_uuid=",".join([f"'{u}'" for u in uuids]))
+        result = self.onto.query(self.prepareQuery(query))
+        return list(result)
+
     def delete_object(self, obj):
         """
         Delete existing object and all info about the object

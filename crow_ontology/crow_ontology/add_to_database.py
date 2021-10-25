@@ -21,13 +21,15 @@ from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 from rcl_interfaces.srv import GetParameters
 from crow_control.utils import ParamClient
+from threading import Thread, RLock
 
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 8  # seconds
-DISABLING_TIME_LIMIT = 7  # seconds
+DISABLING_TIME_LIMIT = 6  # seconds
 TIMER_FREQ = 0.4  # seconds
+CLOSE_THRESHOLD = 3e-2  # 1cm
 
 
 def distance(entry):
@@ -46,6 +48,8 @@ class OntoAdder(Node):
         self.loc_threshold = 0.05  # object detected within 5cm from an older detection will be considered as the same one
         self.id = self.get_last_id() + 1
         self.ad = self.get_last_action_id() + 1
+
+        self._rlock = RLock()
         # self.get_logger().set_level(40)
 
         # client = self.create_client(GetParameters, f'/calibrator/get_parameters')
@@ -122,23 +126,17 @@ class OntoAdder(Node):
                 self.crowracle.enable_object(obj)
 
         self.crowracle.pair_objects_to_areas_wq()
-        # Add new storage - testing
-        # if self.storage_space_added:
-        #     self.crowracle.pair_objects_to_areas_wq(verbose=True)
-        # else:
-        #     self.storage_space_added = True
-        #     # add new storage
-        #     name = "workspace"
-        #     polygon = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3],
-        #                [0.44, 0.3, 0.3], [0.2, 0.3, 0.3]]
-        #     polyhedron = [[0.2, 0.53, 0.3], [0.44, 0.53, 0.3], [0.44, 0.3, 0.3], [0.2, 0.3, 0.3],  [
-        #         0.2, 0.53, -0.3], [0.44, 0.53, -0.3], [0.44, 0.3, -0.3], [0.2, 0.3, -0.3]]
-        #     area = 1
-        #     volume = 1
-        #     centroid = [0.275, 0.55, 1]
-        #     self.crowracle.add_storage_space(name=name, polygon=polygon, polyhedron=polyhedron, area=area, volume=volume, centroid=centroid)
-        # ##
-        # # print(f"{time.time() - start:0.4f}")
+        # pairing_thread = Thread(target=self.pair_objects_2_areas, daemon=True)
+        # pairing_thread.start()
+
+    def pair_objects_2_areas(self):
+        try:
+            self._rlock.acquire()
+            self.crowracle.pair_objects_to_areas_wq()
+        except BaseException as e:
+            pass
+        finally:
+            self._rlock.release()
 
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
@@ -161,8 +159,27 @@ class OntoAdder(Node):
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
             self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
             del update_dict[str_uuid]
+
+        # get other objects for reference
+        old = list(self.crowracle.get_other_objects_by_uuid(pose_array_msg.uuid))
+        foundOld = len(old) > 0
+        if foundOld:  # found object with a different uuid but same location
+            old_uris, *old_xyz = zip(*old)
+            old_xyz = np.array(old_xyz).astype(float).T
+
         # add new objects (not found by uuid)
         for uuid, (class_name, pose, size, tracked) in update_dict.items():
+            pose = np.r_[pose]
+            if foundOld:
+                close = np.where(np.linalg.norm(old_xyz - pose, axis=1) < CLOSE_THRESHOLD)[0]
+                # TODO: add class name check
+                if len(close) > 0:
+                    close_index = close[0]
+                    obj = old_uris[close_index]
+                    self.get_logger().info(f"Updating object {obj}")
+                    self.crowracle.update_object(obj, pose, size, timestamp)  # TODO: add tracking
+                    continue
+
             # corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=XSD.string)))
             self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
             self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id)
