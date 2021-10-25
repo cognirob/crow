@@ -99,7 +99,7 @@ class MainForm(npyscreen.TitleForm):
         self.alive_stamps = {}
         for p in self.alive_params:
             self.pclient.declare(p, False)
-            self.alive_chb[p] = self.add(npyscreen.CheckBox, name=p + '_chkb', editable=False)
+            self.alive_chb[p] = self.add(npyscreen.CheckBox, name=p, editable=False)
             self.nextrelx += 30
             self.nextrely -= 1
             self.alive_seen[p] = self.add(npyscreen.Textfield, name=p + '_last', editable=False)
