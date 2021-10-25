@@ -85,9 +85,10 @@ class ControlLogic(Node):
     MAX_QUEUE_LENGTH = 10
     TARGET_BUFFERING_TIME = 0.3 # seconds
 
-    STATUS_IDLE = 0
-    STATUS_PROCESSING = 2
-    STATUS_EXECUTING = 4
+    STATUS_IDLE = 0  # nothing is happening
+    STATUS_PROCESSING = 2  # a command from the main buffer is being processed
+    STATUS_SENDING_GOAL = 4  # action goal is being processed end sent to the robot
+    STATUS_EXECUTING = 8  # robot is executing the goal
 
     ROBOT_ACTION_PHASE = 0
 
@@ -433,6 +434,7 @@ class ControlLogic(Node):
         """Point: move to target
         """
         StatTimer.enter("Sending command")
+        self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
         print(target_info)
@@ -458,6 +460,7 @@ class ControlLogic(Node):
         """Pick : move to target, pick, move to home position
         """
         StatTimer.enter("Sending command")
+        self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Pick action")
         if self.hands_full():
             self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
@@ -484,6 +487,7 @@ class ControlLogic(Node):
         """
         # print(kwargs)
         StatTimer.enter("Sending command")
+        self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Fetch action")
         self.pclient.robot_done = False
         pass_only = target_info is None
@@ -524,6 +528,7 @@ class ControlLogic(Node):
                          something is already picked, move to location, wait for 'touch', release gripper, go home
         """
         StatTimer.enter("Sending command")
+        self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing FetchTo action")
         self.pclient.robot_done = False
         pass_only = target_info is None
@@ -567,6 +572,7 @@ class ControlLogic(Node):
         """Release: open gripper (if holding something), move to home position
         """
         StatTimer.enter("Sending command")
+        self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Release action")
         if self.hands_empty():
             self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
@@ -589,11 +595,13 @@ class ControlLogic(Node):
             self.get_logger().info(f"objects: {objs} @ {x}, {y}, {z} with dims {dx}, {dy}, {dz} of type {obj_type}")
             while objs is not None:
                 # print(f'looping in tidy objects: STATUS {self.status} {self.STATUS_IDLE}')
-                if not(self.status & self.STATUS_EXECUTING):
+                # print("***", self.status)
+                if not(self.status & (self.STATUS_EXECUTING | self.STATUS_SENDING_GOAL)):
                     print('ready to work in tidy objects')
 
                     # self._set_status(self.STATUS_EXECUTING)
                     # self.pclient.robot_done = False
+                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
                     print(f'Tidying object {objs} @ {x}, {y}, {z}')
 
 
@@ -602,8 +610,12 @@ class ControlLogic(Node):
                     # target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
                     # kwargs['target_info'] = target_info
                     # self.status = self.status | self.STATUS_EXECUTING
-                    self.sendFetchToAction(target_info=[[x, y, z],[dx, dy, dz], obj_type], location=[0.400, 0.065, 0.0])
-                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
+                    try:
+                        self.sendFetchToAction(target_info=[[x, y, z],[dx, dy, dz], obj_type], location=[0.400, 0.065, 0.0])
+                    except BaseException as e:
+                        objs = None
+                        continue
+                    # print("---", self.status)
                     #TODO: keep only objs in the workspace area (not in the storage, etc.)
                     # self._set_status(self.STATUS_IDLE)
 
@@ -691,7 +703,7 @@ class ControlLogic(Node):
         StatTimer.enter("phase 0")
         self.get_logger().info('Goal accepted :)')
         # self._set_status(self.STATUS_EXECUTING)
-        self.status = self.status | self.STATUS_EXECUTING
+        self.status = (self.status & ~self.STATUS_SENDING_GOAL) | self.STATUS_EXECUTING
 
         self._get_result_future = self.goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.robot_done_cb)
@@ -791,7 +803,7 @@ class ControlLogic(Node):
     def _cleanup_after_action(self):
         self.goal_handle = None
         self.pclient.robot_done = True
-        self.status = self.status & ~self.STATUS_EXECUTING
+        self.status = self.status & ~(self.STATUS_EXECUTING | self.STATUS_SENDING_GOAL)
         # self._set_status(self.STATUS_IDLE)
 
 def main():
