@@ -101,6 +101,18 @@ class CrowtologyClient():
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
         }"""
+    _query_visualization_objects = """SELECT ?obj ?uuid ?id ?did ?x ?y ?z ?area_name
+        WHERE {
+            ?obj crow:hasUuid ?uuid .
+            OPTIONAL {?obj crow:hasId ?id }
+            OPTIONAL {?obj crow:disabledId ?did}
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+            OPTIONAL {?obj crow:insideOf ?area . ?area crow:hasName ?area_name .}
+        }"""
+
     _query_present = """SELECT DISTINCT ?obj
         WHERE {
             ?obj crow:hasId ?c .
@@ -805,7 +817,7 @@ class CrowtologyClient():
         PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
         SELECT DISTINCT ?name
-        
+
         WHERE {{
             BIND({uri.n3()} AS ?obj)
             ?obj a ?cls .
@@ -890,6 +902,10 @@ class CrowtologyClient():
         # return all_tangible_nlp
         result = self.onto.query(self._query_present_tangible_nlp, initBindings={"language": self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ})
         return [x.name.toPython() for x in result]
+
+    def get_object_visualization(self):
+        result = self.onto.query(self._query_visualization_objects)
+        return list(result)
 
     def get_colors_nlp(self, language='EN'):
         """Get nlp names of all colors in the database
@@ -1367,13 +1383,13 @@ class CrowtologyClient():
         result = self.onto.query(query)
         return [u[0] for u in list(result)]
 
-    
+
     def get_objects_with_poses_from_area(self, area_name):
         if type(area_name) is URIRef:
             area_name = area_name.n3()
         else:
             area_name = self.CROW[area_name].n3()
-        
+
         query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z
         WHERE {{
             ?obj crow:insideOf {area_name} .
@@ -1381,7 +1397,7 @@ class CrowtologyClient():
             ?loc crow:x ?x .
             ?loc crow:y ?y .
             ?loc crow:z ?z .
-            ?obj crow:hasPclDimensions ?pcl_name . 
+            ?obj crow:hasPclDimensions ?pcl_name .
             ?pcl_name crow:x ?pcl_x .
             ?pcl_name crow:y ?pcl_y .
             ?pcl_name crow:z ?pcl_z .
@@ -1800,7 +1816,7 @@ class CrowtologyClient():
                 ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
                 ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
             """
-    
+
         query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             prefix owl: <http://www.w3.org/2002/07/owl#>
             prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -1960,7 +1976,7 @@ class CrowtologyClient():
             ?obj crow:hasAbsoluteLocation ?loc .
             ?loc crow:x ?x .
             ?loc crow:y ?y .
-            ?loc crow:z ?z .            
+            ?loc crow:z ?z .
         }}""".format(list_of_uuid=",".join([f"'{u}'" for u in uuids]))
         result = self.onto.query(self.prepareQuery(query))
         return list(result)

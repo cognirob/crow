@@ -7,119 +7,148 @@ from rdflib.namespace import Namespace, RDF, RDFS, OWL, FOAF
 from rdflib import URIRef, BNode, Literal, Graph
 from rdflib.term import Identifier
 import time
+from npyscreen.wgmultiline import MultiLine
+import npyscreen
+import os
+from threading import Thread
+import numpy as np
+
 
 CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
 
 
-class OntoTester(Node):
-    GUI_UPDATE_INTERVAL = 0.3
+class MainForm(npyscreen.TitleForm):
+    MAX_LINES = 15
+    COLUMN_WIDTH = 20
 
-    def __init__(self, node_name="onto_tester"):
-        super().__init__(node_name)
-        self.crowracle = CrowtologyClient(node=self)
-        self.onto = self.crowracle.onto
-        # self.get_logger().info(self.onto)
-        self.create_timer(self.GUI_UPDATE_INTERVAL, self.update_cb)
-        self.old_objects = {}
+    def create(self):
+        self.min_l = 15
+        self.node = self.parentApp.node
+        self.crowracle = self.parentApp.crowracle
 
-    def update_cb(self):
-        # self.get_logger().info(str(list(self.crowracle.getTangibleObjectClasses())))
-        new_objects = {}
-        for s in self.crowracle.getTangibleObjects_nocls():
-            uri = s
-            try:
-                loc = self.crowracle.get_location_of_obj(s)
-                id = self.crowracle.get_id_of_obj(s)
-            except Exception as e:
-                loc = e
-                id = "error"
-            finally:
-                new_objects[uri] = (loc, id)
-        for l in self.crowracle.getStoragesProps():
-            new_objects[l["uri"]] = ("storage", l["name"])
-        for l in self.crowracle.getPositionsProps():
-            new_objects[l["uri"]] = ("position", l["name"])
-        self.render(new_objects)
+        # setup vis
+        self.objects = {}
+        self.elements = []
+        self.empty_lines = []
+        for n in range(self.MAX_LINES):
+            uri = self.add(npyscreen.Textfield, editable=False)
+            self.nextrelx += self.COLUMN_WIDTH
+            self.nextrely -= 1
+            loc = self.add(npyscreen.Textfield, editable=False)
+            self.nextrelx += self.COLUMN_WIDTH
+            self.nextrely -= 1
+            area = self.add(npyscreen.Textfield, editable=False)
+            self.nextrelx += self.COLUMN_WIDTH
+            self.nextrely -= 1
+            uuid = self.add(npyscreen.Textfield, editable=False)
+            self.nextrelx += self.COLUMN_WIDTH
+            self.nextrely -= 1
+            self.elements.append((uri, loc, area, uuid))
+            self.empty_lines.append(True)
+            self.nextrelx -= self.COLUMN_WIDTH * 4
 
-    def render(self, new_objects):
-        self.stdscr.clear()
-        self.stdscr.addstr(0, 0, "= Entities in ontology =")
-        combined_objects = {**self.old_objects, **new_objects}
-        for i, (uri, (loc, id)) in enumerate(combined_objects.items()):
-            dead = False
-            if uri in self.old_objects:
-                if uri not in new_objects:
-                    dead = True
-                    flags = curses.color_pair(3)
+        # start the updates
+        self.th = Thread(target=self.spin, daemon=True)
+        self.th.start()
+        self.node.create_timer(0.01, self.update)
+
+    def spin(self):
+        rclpy.spin(self.node)
+
+    def beforeEditing(self):
+        pass
+
+    def afterEditing(self):
+        self.parentApp.switchFormPrevious()
+
+    def update(self):
+        objs = self.crowracle.get_object_visualization()
+        updated_objs = []
+        current_objects = self.objects.keys()
+        new = None
+        for obj, uuid, id, did, x, y, z, area in objs:
+            new = obj not in current_objects
+            updated_objs.append(obj)
+            if new:  # new object
+                empty_line = np.where(self.empty_lines)[0]
+                if len(empty_line) > 0:
+                    empty_line = empty_line[0]
                 else:
-                    flags = curses.color_pair(0)
-            elif uri in new_objects:
-                flags = curses.color_pair(2)
+                    continue  # TODO: something safer
+
+                self.empty_lines[empty_line] = False
+                line = self.elements[empty_line]
+                entries = {
+                    "uri": line[0],
+                    "loc": line[1],
+                    "area": line[2],
+                    "uuid": line[3],
+                }
+                entries["uri"] = obj
+                self.objects[obj] = entries, empty_line, True, True
+            else:  # already detected object
+                entries, line, alive, new = self.objects[obj]
+
+            entries["loc"] = f"[{x:0.3f}, {y:0.3f}, {z:0.3f}]"
+            entries["area"] = area
+            entries["uuid"] = uuid
+
+        for obj, (entries, line, alive, new) in self.objects.items():
+            if new:
+                self.objects[obj][3] = False
+                entries["uri"].color = 'SAFE'
             else:
-                flags = curses.color_pair(5)
-            if not dead and (id is None or "error" in id):
-                flags = curses.color_pair(4)
-
-            try:
-                self.stdscr.addstr(1 + i, 0, f"{uri}", flags)
-            except curses.error as e:
-                self.get_logger().error(str(e))
-            if not dead:
-                try:
-                    self.stdscr.addstr(1 + i, 100, f"loc: {loc}", flags)
-                    self.stdscr.addstr(1 + i, 200, f"ID: {id}", flags)
-                except curses.error as e:
-                    self.get_logger().error(str(e))
-                    self.get_logger().debug('ID: {} \n flags: {}'.format(id, flags))
+                if alive:
+                    if obj in updated_objs:
+                        entries["uri"].color = 'DEFAULT'
+                    else:
+                        self.objects[obj][2] = False
+                        entries["uri"].color = 'DANGER'
+                else:
+                    self.empty_lines[line] = True
+                    entries["uri"].color = 'DEFAULT'
+                    entries["uri"] = ""
+                    entries["loc"] = ""
+                    entries["area"] = ""
+                    entries["uuid"] = ""
 
 
-        self.stdscr.refresh()
-        self.old_objects = new_objects
+class OViz(npyscreen.NPSAppManaged):
 
-    def start(self):
-        self.get_logger().info("Initialize!!!")
-        self.stdscr = curses.initscr()
-        curses.noecho()
-        curses.start_color()
-        curses.init_pair(1, curses.COLOR_BLUE, curses.COLOR_BLACK)
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-        curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-        curses.init_pair(4, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-        curses.init_pair(5, curses.COLOR_WHITE, curses.COLOR_RED)
-        self.stdscr.addstr(0, 0, "= Entities in ontology =")
-        self.stdscr.refresh()
-        # editwin = curses.newwin(5,30, 2,1)
+    def __init__(self, node):
+        super().__init__()
+        npyscreen.BufferPager.DEFAULT_MAXLEN = 500
+        npyscreen.Popup.DEFAULT_COLUMNS = 100
+        npyscreen.PopupWide.DEFAULT_LINES = 20
+        npyscreen.PopupWide.SHOW_ATY = 1
+        # initialize the ontology client
+        self.node = node
+        self.crowracle = CrowtologyClient(node=self.node)
 
-        # rectangle(stdscr, 1,0, 1+5+1, 1+30+1)
-        # stdscr.refresh()
+        self.onto = self.crowracle.onto
+        self.node.get_logger().set_level(rclpy.logging.LoggingSeverity.ERROR)
 
-        # box = Textbox(editwin)
+    def onStart(self):
+        # npyscreen.setTheme(npyscreen.Themes.TransparentThemeLightText)
+        self.addForm("MAIN", MainForm, name="Monitor")
+        return super().onStart()
 
-        # # Let the user edit until Ctrl-G is struck.
-        # box.edit()
-
-        # # Get resulting contents
-        # message = box.gather()
-
-    def destroy_node(self):
-        curses.echo()
-        curses.endwin()
-        # print(self.crowracle.getStoragesProps())
-        # print(self.crowracle.getPositionsProps())
-        super().destroy_node()
+    def onCleanExit(self):
+        print("Exited cleanly")
+        return super().onCleanExit()
 
 
 def main():
+    os.environ['ESCDELAY'] = "0.1"
+    rclpy.init()
+    node = Node("system_monitor_node")
+    ot = OViz(node)
     try:
-        rclpy.init()
-        ot = OntoTester()
-        ot.start()
-        rclpy.spin(ot)
-    finally:
-        curses.initscr() ### Throws error without this:  curses.error: must call initscr() first
-        curses.echo()
-        curses.endwin()
+        ot.run()
+    except KeyboardInterrupt:
+        ot.switchForm(None)
+        print("User requested shutdown.")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
