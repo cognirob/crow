@@ -1755,6 +1755,68 @@ class CrowtologyClient():
             "new_pcl_z": Literal(size[2], datatype=XSD.float),
         })
 
+    def update_object_batch(self, objects):
+        inserts = ""
+        deletes = ""
+        wheres = ""
+        for i, obj in enumerate(objects):
+            object, location, size, timestamp = obj
+            object = URIRef(object).n3()
+            new_stamp = Literal(timestamp, datatype=XSD.dateTimeStamp).n3()
+            new_x = Literal(location[0], datatype=XSD.float).n3()
+            new_y = Literal(location[1], datatype=XSD.float).n3()
+            new_z = Literal(location[2], datatype=XSD.float).n3()
+            new_pcl_x = Literal(size[0], datatype=XSD.float).n3()
+            new_pcl_y = Literal(size[1], datatype=XSD.float).n3()
+            new_pcl_z = Literal(size[2], datatype=XSD.float).n3()
+
+            deletes += f"""
+                {object} crow:hasTimestamp ?old_stamp{str(i)} .
+                ?loc{str(i)} crow:x ?old_x{str(i)} .
+                ?loc{str(i)} crow:y ?old_y{str(i)} .
+                ?loc{str(i)} crow:z ?old_z{str(i)} .
+                ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
+                ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
+                ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+            """
+            inserts += f"""
+                {object} crow:hasTimestamp {new_stamp} .
+                ?loc{str(i)} crow:x {new_x} .
+                ?loc{str(i)} crow:y {new_y} .
+                ?loc{str(i)} crow:z {new_z} .
+                ?pcl{str(i)} crow:x {new_pcl_x} .
+                ?pcl{str(i)} crow:y {new_pcl_y} .
+                ?pcl{str(i)} crow:z {new_pcl_z} .
+
+            """
+            wheres += f"""
+                {object} crow:hasTimestamp ?old_stamp{str(i)} .
+                {object} crow:hasAbsoluteLocation ?loc{str(i)} .
+                {object} crow:hasPclDimensions ?pcl{str(i)} .
+                ?loc{str(i)} crow:x ?old_x{str(i)} .
+                ?loc{str(i)} crow:y ?old_y{str(i)} .
+                ?loc{str(i)} crow:z ?old_z{str(i)} .
+                ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
+                ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
+                ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+            """
+    
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+            DELETE {{
+                {deletes}
+            }}\n"""
+        query += f"""INSERT {{
+                {inserts}
+            }}\n"""
+        query += f"""WHERE {{
+            {wheres}
+        }}"""
+        # print(query)
+        self.onto.update(query)
+
     def update_detected_object(self, object, location, size, uuid, timestamp):
         """
         Update info about an existing object after new detection for this object comes

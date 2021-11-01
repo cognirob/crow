@@ -26,10 +26,10 @@ from threading import Thread, RLock
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 8  # seconds
-DISABLING_TIME_LIMIT = 6  # seconds
+DELETION_TIME_LIMIT = 10  # seconds
+DISABLING_TIME_LIMIT = 3  # seconds
 TIMER_FREQ = 0.4  # seconds
-CLOSE_THRESHOLD = 3e-2  # 1cm
+CLOSE_THRESHOLD = 2e-2  # 1cm
 
 
 def distance(entry):
@@ -66,7 +66,7 @@ class OntoAdder(Node):
         self.create_timer(TIMER_FREQ, self.timer_callback, callback_group=MutuallyExclusiveCallbackGroup())
 
         # create listeners
-        qos = QoSProfile(depth=3, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=FilteredPose,
                                  topic=self.FILTERED_POSES_TOPIC,
                                  callback=self.input_filter_callback,
@@ -142,14 +142,19 @@ class OntoAdder(Node):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses received. Quitting early.")
             return
+        # start = time.time()
+        tmsg = self.get_clock().now()
+        self.get_logger().warn(f"Time difference is {(tmsg - rclpy.time.Time.from_msg(pose_array_msg.header.stamp)).nanoseconds * 1e-9:0.4f}")
+        # now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
+
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
         existing_objects = self.crowracle.get_objects_by_uuid(pose_array_msg.uuid)
         # update location of existing objects
-        # print(existing_objects)
-        # print(update_dict.items())
+        objects_to_be_updated = []
+
         for obj, uuid in existing_objects:
             str_uuid = uuid.toPython()
             if str_uuid not in update_dict:
@@ -157,7 +162,8 @@ class OntoAdder(Node):
                 continue
             up = update_dict[str_uuid]
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
-            self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
+            # self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
+            objects_to_be_updated.append((obj, up[1], up[2], timestamp))
             del update_dict[str_uuid]
 
         # get other objects for reference
@@ -177,7 +183,8 @@ class OntoAdder(Node):
                     close_index = close[0]
                     obj = old_uris[close_index]
                     self.get_logger().info(f"Updating object {obj}")
-                    self.crowracle.update_object(obj, pose, size, timestamp)  # TODO: add tracking
+                    # self.crowracle.update_object(obj, pose, size, timestamp)  # TODO: add tracking
+                    objects_to_be_updated.append((obj, pose, size, timestamp))
                     continue
 
             # corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=XSD.string)))
@@ -185,8 +192,11 @@ class OntoAdder(Node):
             self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id)
             self.id += 1
 
+        if len(objects_to_be_updated) > 0:
+            self.crowracle.update_object_batch(objects_to_be_updated)
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         #     self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
+        # self.get_logger().warn(f"input cb takes {time.time() - start:0.3f} seconds")
 
     def input_action_callback(self, action_array_msg):
         if not action_array_msg.avg_class_name:
@@ -286,7 +296,7 @@ def main():
     rclpy.init()
     time.sleep(1)
     adder = OntoAdder()
-    n_threads = 2 # 1 for timer and 1 for pose updates
+    n_threads = 3 # 1 for timer and 1 for pose updates
     try:
         # rclpy.spin(adder)
         mte = MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
