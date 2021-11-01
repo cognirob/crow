@@ -86,7 +86,6 @@ class MainForm(npyscreen.TitleForm):
             self.node.create_subscription(CameraInfo, cam + '/color/camera_info', callback=lambda ci_msg, cam=cam: self.update_camera_color(ci_msg, cam), qos_profile=qos)
             self.node.create_subscription(CameraInfo, cam + '/depth/camera_info', callback=lambda ci_msg, cam=cam: self.update_camera_depth(ci_msg, cam), qos_profile=qos)
 
-        self.node.create_timer(0.5, self.update)
 
         self.nextrelx = 40
         self.nextrely = 4
@@ -112,6 +111,7 @@ class MainForm(npyscreen.TitleForm):
 
         self.th = Thread(target=self.spin, daemon=True)
         self.th.start()
+        self.node.create_timer(0.01, self.update)
 
     def spin(self):
         rclpy.spin(self.node)
@@ -148,6 +148,8 @@ class MainForm(npyscreen.TitleForm):
     def update(self):
         now = self.node.get_clock().now()
         for cam in self.cameras.keys():
+            if len(self.cameras[cam]['color']) < 1 or len(self.cameras[cam]['depth']) < 1:
+                continue
             last_color = self.cameras[cam]['color'][-1]
             last_depth = self.cameras[cam]['depth'][-1]
             self.cam_color_list[cam].value = now - last_color < self.MAX_CAMERA_DELAY
@@ -169,12 +171,15 @@ class MainForm(npyscreen.TitleForm):
                 self.alive_chb[p].label_area.color = 'SAFE'
                 self.alive_stamps[p].append(is_alive)
             else:
-                self.alive_chb[p].label_area.color = 'DANGER'
+                diff = (now - self.alive_last[p]).nanoseconds * 1e-9
+                if diff < 0.5:
+                    self.alive_chb[p].label_area.color = 'STANDOUT'
+                else:
+                    self.alive_chb[p].label_area.color = 'DANGER'
                 if self.alive_last[p] is None:
                     when = 'never'
                 else:
-                    diff = int((now - self.alive_last[p]).nanoseconds * 1e-9)
-                    when = f'{diff} seconds ago'
+                    when = f'{int(diff)} seconds ago'
             self.alive_seen[p].value = f'[{when}]'
 
             amean, amin, amax, astd = self._count_delay_stats(self.alive_stamps[p])
