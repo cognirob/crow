@@ -90,6 +90,28 @@ class CrowtologyServer():
         if self.CLEAR_ON_START:
             self.clear_data()
 
+        if self.__dbconf.store == "fuseki":
+            self.compactify_fuseki()
+        self.log("Ontology DB is running.")
+
+    def compactify_fuseki(self):
+        # fuseki_tool_path = '~/packages/apache-jena-4.2.0/'
+        fuseki_tool_path = self.fuseki_path.replace("fuseki-", "") # try to extract fuseki tools from the fuseki_path
+        fuseki_tool_path = os.path.expanduser(fuseki_tool_path)
+        compactor_path = os.path.join(fuseki_tool_path, 'bin/tdb2.tdbcompact')
+        if not os.path.exists(compactor_path):
+            self.log(f"Could not find Fuseki compactor at '{compactor_path}'")
+            return
+        try:
+            ret = subprocess.run(' '.join([compactor_path, '--loc=' + self.fuseki_path + 'run/']), stdout=subprocess.PIPE, shell=True, check=True)
+            if ret.returncode > 0:
+                raise Exception(f"Tried to compactify the Fuseki database returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout}")
+            else:
+                self.log(f"{ret.stdout.decode('utf-8')}\nFuseki database compactified.")
+            #imitrob@aurora:~/packages/apache-jena-4.2.0/bin$ ./tdb2.tdbcompact --loc=../../apache-jena-fuseki-4.2.0/run/
+        except BaseException as e:
+            self.log(f"Tried to compactify the Fuseki database, but failed because: {e}")
+
     def clear_data(self):
         try:
             if len(self.onto) > 0:  # try to make a backup
@@ -120,7 +142,7 @@ class CrowtologyServer():
                 except Exception as e:
                     self.log(f"Tried cleaning up the ontology but failed because: {e}")
         except Exception as e:
-            self.log(f"Tried checking the size of ontology, but failed bacause: {e}")
+            self.log(f"Tried checking the size of ontology, but failed because: {e}")
         self.onto.mergeFileIntoDB(self.base_onto_path)
 
     def log(self, msg):
@@ -130,9 +152,8 @@ class CrowtologyServer():
             print(msg)
 
     def start_fuseki(self, fuseki_path):
-        # fuseki_path = '~/packages/apache-jena-fuseki-4.1.0/'
-        fuseki_path = os.path.expanduser(fuseki_path)
-        self.fuseki_run_cmd = os.path.join(fuseki_path, 'fuseki')
+        self.fuseki_path = os.path.expanduser(fuseki_path)
+        self.fuseki_run_cmd = os.path.join(self.fuseki_path, 'fuseki')
         fuseki_env = {
                 "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
                 # "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2"
@@ -142,7 +163,7 @@ class CrowtologyServer():
             self.log(f'Running fuseki as service from {self.fuseki_run_cmd}...')
         else:
             raise Exception(f'Fuseki executable not found in: {self.fuseki_run_cmd}!')
-        if False and self.get_fuseki_status():
+        if self.get_fuseki_status():
             self.log('Fuseki is already running! Trying to kill it first!')
             ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'stop']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
             if ret.returncode > 0:
