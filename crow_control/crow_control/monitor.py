@@ -38,25 +38,33 @@ class MainForm(npyscreen.TitleForm):
     CAMERA_MESSAGE_BUFFER_LEN = 10
     ALIVE_STAMP_BUFFER_LEN = 30
     FIX_MINIMUM_SIZE_WHEN_CREATED = False
+    MAX_DELAY_TOPIC = 1
+    MAX_DELAY_TOPIC_POP_Q = 3
+    MAX_DELAY_ALIVE = 0.5
 
     def create(self):
         self.min_l = 15
         self.node = self.parentApp.node
 
+        # TITLES
         self.nextrelx = 3
-        self.add(npyscreen.Textfield, name='CAMERAS', value='CAMERAS', editable=False)
-        self.nextrelx = 43
+        self.add(npyscreen.Textfield, name='CAMERAS', value='CAMERAS [FPS]', editable=False)
+        self.nextrelx = 40
         self.nextrely -= 1
         self.add(npyscreen.Textfield, name='NODES', value='NODES', editable=False)
-        self.nextrelx = 70
+        self.nextrelx = 65
         self.nextrely -= 1
         self.add(npyscreen.Textfield, name='[last seen]', value='[last seen]', editable=False)
-        self.nextrelx = 93
+        self.nextrelx = 90
         self.nextrely -= 1
         self.add(npyscreen.Textfield, name='[alive signal delay stats]', value='[alive signal delay stats]', editable=False)
+        self.nextrelx = 145
+        self.nextrely -= 1
+        self.add(npyscreen.Textfield, name='TOPICS [FPS]', value='TOPICS [FPS]', editable=False)
         self.nextrely += 1
         self.nextrelx = 1
 
+        # CAMERAS
         calib_client = self.node.create_client(GetParameters, '/calibrator/get_parameters')
         self.node.get_logger().info("Waiting for calibrator to setup cameras")
         calib_client.wait_for_service()
@@ -86,11 +94,11 @@ class MainForm(npyscreen.TitleForm):
             self.node.create_subscription(CameraInfo, cam + '/color/camera_info', callback=lambda ci_msg, cam=cam: self.update_camera_color(ci_msg, cam), qos_profile=qos)
             self.node.create_subscription(CameraInfo, cam + '/depth/camera_info', callback=lambda ci_msg, cam=cam: self.update_camera_depth(ci_msg, cam), qos_profile=qos)
 
-
-        self.nextrelx = 40
+        # ALIVE SIGNALS
+        self.nextrelx = 37
         self.nextrely = 4
         self.pclient = self.parentApp.pclient
-        self.alive_params = ["logic_alive", "detector_alive", "locator_alive", "filter_alive", "adder_alive", "nlp_alive"]
+        self.alive_params = ["logic_alive", "detector_alive", "locator_alive", "filter_alive", "adder_alive", "nlp_alive", "pose_alive"]
         self.alive_chb = {}
         self.alive_seen = {}
         self.alive_last = {}
@@ -109,9 +117,105 @@ class MainForm(npyscreen.TitleForm):
             self.alive_last[p] = None
             self.alive_stamps[p] = deque(maxlen=self.ALIVE_STAMP_BUFFER_LEN)
 
+        # TOPIC FPS
+        self.nextrelx = 140
+        self.nextrely = 4
+        self.topic_params = ["detected_objects", "detected_avatars", "located_objects", "located_avatars"]
+        self.topic_stamps = {}
+        self.topic_chb = {}
+        self.topic_last = {}
+        self.topic_stats = {}
+        for p in self.topic_params:
+            self.pclient.declare(p, [])
+            self.topic_chb[p] = self.add(npyscreen.CheckBox, name=p, editable=False)
+            self.nextrelx += 25
+            self.nextrely -= 1
+            self.topic_stats[p] = self.add(npyscreen.Textfield, name=p + '_stats', editable=False)
+            self.nextrelx -= 25
+            self.topic_last[p] = None
+            self.topic_stamps[p] = deque(maxlen=self.ALIVE_STAMP_BUFFER_LEN)
+
+        # thread to pull messages from ROS
         self.th = Thread(target=self.spin, daemon=True)
         self.th.start()
         self.node.create_timer(0.01, self.update)
+
+    def update(self):
+        now = self.node.get_clock().now()
+        now_time = time.time()
+        for cam in self.cameras.keys():
+            if len(self.cameras[cam]['color']) < 1 or len(self.cameras[cam]['depth']) < 1:
+                continue
+            last_color = self.cameras[cam]['color'][-1]
+            last_depth = self.cameras[cam]['depth'][-1]
+            self.cam_color_list[cam].value = now - last_color < self.MAX_CAMERA_DELAY
+            self.cam_color_list[cam].name = f'/color [{self._count_fps(self.cameras[cam]["color"]):3.01f}]'
+            self.cam_depth_list[cam].value = now - last_depth < self.MAX_CAMERA_DELAY
+            self.cam_depth_list[cam].name = f'/depth [{self._count_fps(self.cameras[cam]["depth"]):3.01f}]'
+            if self.cam_color_list[cam].value and self.cam_depth_list[cam].value:
+                self.cam_name_list[cam].color = 'SAFE'
+            else:
+                self.cam_name_list[cam].color = 'DANGER'
+                self._pop_queue(self.cameras[cam]['color'])
+                self._pop_queue(self.cameras[cam]['depth'])
+
+        for p in self.alive_params:
+            is_alive = getattr(self.pclient, p)
+            self.alive_chb[p].value = is_alive > -1
+            setattr(self.pclient, p, -1)  # reset the alive indicator
+            if is_alive > -1:
+                self.alive_last[p] = now
+                when = "now"
+                self.alive_chb[p].label_area.color = 'SAFE'
+                self.alive_stamps[p].append(is_alive)
+            else:
+                if self.alive_last[p] is None:
+                    self.alive_chb[p].label_area.color = 'WARNING'
+                    when = 'never'
+                else:
+                    diff = (now - self.alive_last[p]).nanoseconds * 1e-9
+                    if diff < self.MAX_DELAY_ALIVE:
+                        self.alive_chb[p].label_area.color = 'STANDOUT'
+                        self.alive_chb[p].value = True
+                        when = "now"
+                    else:
+                        self.alive_chb[p].label_area.color = 'DANGER'
+                        when = f'{int(diff)} seconds ago'
+                        # self._pop_queue(self.alive_stamps[p])
+            self.alive_seen[p].value = f'[{when}]'
+
+            amean, amin, amax, astd = self._count_delay_stats(self.alive_stamps[p])
+            if amean > 0:
+                self.alive_stats[p].value = f'[mean: {amean:0.02f}\xB1{astd:0.02f}; [{amin:0.02f} - {amax:0.02f}]]'
+                # print(self.alive_stamps[p])
+                # print(amean, amin, amax, astd)
+            else:
+                self.alive_stats[p].value = f'[ N/A ]'
+
+        for p in self.topic_params:
+            stamps = getattr(self.pclient, p)
+            setattr(self.pclient, p, [])  # reset topic stamps
+            if len(stamps) > 0:
+                self.topic_last[p] = stamps[-1]
+                self.topic_stamps[p].extend(stamps)
+
+            if self.topic_last[p] is None:
+                self.topic_chb[p].label_area.color = 'WARNING'
+            else:
+                diff = now_time - self.topic_last[p]
+                if diff < self.MAX_DELAY_TOPIC:
+                    self.topic_chb[p].label_area.color = 'SAFE'
+                    self.topic_chb[p].value = True
+                else:
+                    self.topic_chb[p].label_area.color = 'DANGER'
+                    self.topic_chb[p].value = False
+                    if diff > self.MAX_DELAY_TOPIC_POP_Q:
+                        self._pop_queue(self.topic_stamps[p])
+
+            fps = self._count_topic_fps(self.topic_stamps[p])
+            self.topic_stats[p].value = f'[{fps:0.01f}]'
+
+        self.display()
 
     def spin(self):
         rclpy.spin(self.node)
@@ -129,7 +233,26 @@ class MainForm(npyscreen.TitleForm):
                 if i == 0:
                     continue
                 total.append((q - dq[i - 1]).nanoseconds)
-            return 1 / ((sum(total) / len(total)) * 1e-9)
+            tsum = sum(total)
+            if tsum > 0:
+                return 1 / ((sum(total) / len(total)) * 1e-9)
+            else:
+                return 0
+        else:
+            return 0
+
+    def _count_topic_fps(self, dq):
+        if len(dq) > 1:
+            total = []
+            for i, q in enumerate(dq):
+                if i == 0:
+                    continue
+                total.append((q - dq[i - 1]))
+            tsum = sum(total)
+            if tsum > 0:
+                return 1 / ((tsum / len(total)))
+            else:
+                return 0
         else:
             return 0
 
@@ -145,52 +268,9 @@ class MainForm(npyscreen.TitleForm):
         else:
             return -1, -1, -1, -1
 
-    def update(self):
-        now = self.node.get_clock().now()
-        for cam in self.cameras.keys():
-            if len(self.cameras[cam]['color']) < 1 or len(self.cameras[cam]['depth']) < 1:
-                continue
-            last_color = self.cameras[cam]['color'][-1]
-            last_depth = self.cameras[cam]['depth'][-1]
-            self.cam_color_list[cam].value = now - last_color < self.MAX_CAMERA_DELAY
-            self.cam_color_list[cam].name = f'/color [{self._count_fps(self.cameras[cam]["color"]):3.01f} fps]'
-            self.cam_depth_list[cam].value = now - last_depth < self.MAX_CAMERA_DELAY
-            self.cam_depth_list[cam].name = f'/depth [{self._count_fps(self.cameras[cam]["depth"]):3.01f} fps]'
-            if self.cam_color_list[cam].value and self.cam_depth_list[cam].value:
-                self.cam_name_list[cam].color = 'SAFE'
-            else:
-                self.cam_name_list[cam].color = 'DANGER'
-
-        for p in self.alive_params:
-            is_alive = getattr(self.pclient, p)
-            self.alive_chb[p].value = is_alive > -1
-            setattr(self.pclient, p, -1)  # reset the alive indicator
-            if is_alive > -1:
-                self.alive_last[p] = now
-                when = "now"
-                self.alive_chb[p].label_area.color = 'SAFE'
-                self.alive_stamps[p].append(is_alive)
-            else:
-                diff = (now - self.alive_last[p]).nanoseconds * 1e-9
-                if diff < 0.5:
-                    self.alive_chb[p].label_area.color = 'STANDOUT'
-                else:
-                    self.alive_chb[p].label_area.color = 'DANGER'
-                if self.alive_last[p] is None:
-                    when = 'never'
-                else:
-                    when = f'{int(diff)} seconds ago'
-            self.alive_seen[p].value = f'[{when}]'
-
-            amean, amin, amax, astd = self._count_delay_stats(self.alive_stamps[p])
-            if amean > 0:
-                self.alive_stats[p].value = f'[mean: {amean:0.02f}\xB1{astd:0.02f}; [{amin:0.02f} - {amax:0.02f}]]'
-                # print(self.alive_stamps[p])
-                # print(amean, amin, amax, astd)
-            else:
-                self.alive_stats[p].value = f'[ N/A ]'
-
-        self.display()
+    def _pop_queue(self, dq):
+        if len(dq) > 0:
+            dq.popleft()
 
     def update_camera_color(self, ci_msg, camera):
         self.cameras[camera]['color'].append(rclpy.time.Time.from_msg(ci_msg.header.stamp))
