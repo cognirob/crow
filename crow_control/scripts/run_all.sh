@@ -104,7 +104,7 @@ if [ "$O_NO_VISION" != true ]; then
     sleep 15
     runcmd "echo -ne '\033]30;Detection\007'"
     runcmd "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/imitrob/TensorRT-7.2.1.6/lib"
-    runcmd "ros2 launch crow_vision_ros2 crow_object.launch.py"
+    runcmd "ros2 launch crow_vision_ros2 crow_object.launch.py use_pose:=true use_edge:=true"
 
     new_tab $WID
     runcmd "echo -ne '\033]30;Filter\007'"
@@ -181,5 +181,9 @@ if [ "$O_NO_NLP" != true ]; then
     runcmd "echo -ne '\033]30;NL Input\007'"
     runcmd "ros2 run crow_nlp nl_snow --lang cs --ends 0.5 --gain 0.7"
 fi
+
+# new_tab $WID
+# runcmd "echo -ne '\033]30;Pose Detector\007'"
+# runcmd "ros2 run crow_vision_ros2 detector_trt"
 
 wmctrl -i -a $WID
