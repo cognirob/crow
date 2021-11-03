@@ -18,8 +18,8 @@ CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
 
 
 class MainForm(npyscreen.TitleForm):
-    MAX_LINES = 15
-    COLUMN_WIDTH = 30
+    MAX_LINES = 14
+    COLUMN_WIDTH = 25
     FIX_MINIMUM_SIZE_WHEN_CREATED = False
 
     def create(self):
@@ -31,34 +31,28 @@ class MainForm(npyscreen.TitleForm):
         self.objects = {}
         self.elements = []
         self.empty_lines = []
+        self.offsets = [0, 22, 15, 24, 14, 25, 40]
+        self.fields = ["uri", "cls", "loc", "enabled", "area", "uuid", "tracked"]
+
+        for i, (f, o) in enumerate(zip(self.fields, self.offsets)):
+            if i > 0:
+                self.nextrelx += o
+                self.nextrely -= 1
+            self.add(npyscreen.Textfield, name=f"{f}", value=f, editable=False)
+        self.nextrelx -= sum(self.offsets)
+
         for n in range(self.MAX_LINES):
-            uri = self.add(npyscreen.Textfield, name="uri_" + str(n), editable=False)
-            self.nextrelx += self.COLUMN_WIDTH
-            self.nextrely -= 1
-            cls = self.add(npyscreen.Textfield, name="cls_" + str(n), editable=False)
-            self.nextrelx += self.COLUMN_WIDTH
-            self.nextrely -= 1
-            loc = self.add(npyscreen.Textfield, name="loc_" + str(n), editable=False)
-            self.nextrelx += self.COLUMN_WIDTH
-            self.nextrely -= 1
-            enabled = self.add(npyscreen.Textfield, name="enabled_" + str(n), editable=False)
-            self.nextrelx += self.COLUMN_WIDTH
-            self.nextrely -= 1
-            area = self.add(npyscreen.Textfield, name="area_" + str(n), editable=False)
-            self.nextrelx += self.COLUMN_WIDTH
-            self.nextrely -= 1
-            uuid = self.add(npyscreen.Textfield, name="uuid_" + str(n), editable=False)
-            self.nextrelx += self.COLUMN_WIDTH
-            self.elements.append({
-                    "uri": uri,
-                    "cls": cls,
-                    "loc": loc,
-                    "enabled": enabled,
-                    "area": area,
-                    "uuid": uuid,
-            })
+            element = {}
+            for i, (f, o) in enumerate(zip(self.fields, self.offsets)):
+                if i > 0:
+                    self.nextrelx += o
+                    self.nextrely -= 1
+                elm = self.add(npyscreen.Textfield, name=f"{f}_{n}", editable=False)
+                element[f] = elm
+
+            self.elements.append(element)
             self.empty_lines.append(True)
-            self.nextrelx -= self.COLUMN_WIDTH * 6
+            self.nextrelx -= sum(self.offsets)
 
         # start the updates
         self.th = Thread(target=self.spin, daemon=True)
@@ -83,7 +77,7 @@ class MainForm(npyscreen.TitleForm):
         Returns:
             str: Shortened version of the URI.
         """
-        input_uri = input_uri.replace(CROW, "crow:")
+        input_uri = input_uri.replace(CROW, "")
         return input_uri
 
     def update(self):
@@ -91,7 +85,7 @@ class MainForm(npyscreen.TitleForm):
         updated_objs = []
         current_objects = self.objects.keys()
         new = None
-        for obj, cls, uuid, id, did, x, y, z, area in objs:
+        for obj, cls, uuid, id, did, x, y, z, area, tracked in objs:
             obj = self._shorten_uri(obj)
             new = obj not in current_objects
             if new:  # new object
@@ -129,6 +123,7 @@ class MainForm(npyscreen.TitleForm):
                 entries["enabled"].color = 'SAFE'
             entries["area"].value = area or ""
             entries["uuid"].value = uuid
+            entries["tracked"].value = str(tracked) if tracked is not None else ""
 
         tobedeleted = []
         for obj, (entries, line, alive, new) in self.objects.items():
@@ -144,14 +139,10 @@ class MainForm(npyscreen.TitleForm):
                         entries["uri"].color = 'DANGER'
                 else:
                     self.empty_lines[line] = True
-                    entries["cls"].value = ""
                     entries["uri"].color = 'DEFAULT'
-                    entries["uri"].value = ""
-                    entries["loc"].value = ""
-                    entries["enabled"].value = ""
                     entries["enabled"].color = 'DEFAULT'
-                    entries["area"].value = ""
-                    entries["uuid"].value = ""
+                    for f in self.fields:
+                        entries[f].value = ""
                     tobedeleted.append(obj)
 
         for obj in tobedeleted:

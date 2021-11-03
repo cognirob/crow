@@ -82,6 +82,7 @@ class CrowtologyClient():
             ?individual crow:hasId ?adder_id .
             ?individual crow:hasUuid ?uuid .
             ?individual crow:hasTimestamp ?stamp .
+            ?individual crow:isTracked ?tracked .
         }
 
         WHERE {
@@ -101,7 +102,7 @@ class CrowtologyClient():
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
         }"""
-    _query_visualization_objects = """SELECT ?obj ?cls ?uuid ?id ?did ?x ?y ?z ?area_name
+    _query_visualization_objects = """SELECT DISTINCT ?obj ?cls ?uuid ?id ?did ?x ?y ?z ?area_name ?tracked
         WHERE {
             ?obj a ?cls .
             FILTER(STRSTARTS(STR(?cls), "http://imitrob.ciirc.cvut.cz/"))
@@ -113,6 +114,7 @@ class CrowtologyClient():
             ?loc crow:y ?y .
             ?loc crow:z ?z .
             OPTIONAL {?obj crow:insideOf ?area . ?area crow:hasName ?area_name .}
+            OPTIONAL {?obj crow:isTracked ?tracked}
         }"""
 
     _query_present = """SELECT DISTINCT ?obj
@@ -1781,7 +1783,7 @@ class CrowtologyClient():
         deletes = ""
         wheres = ""
         for i, obj in enumerate(objects):
-            object, location, size, timestamp = obj
+            object, location, size, timestamp, tracked = obj
             object = URIRef(object).n3()
             new_stamp = Literal(timestamp, datatype=XSD.dateTimeStamp).n3()
             new_x = Literal(location[0], datatype=XSD.float).n3()
@@ -1790,6 +1792,7 @@ class CrowtologyClient():
             new_pcl_x = Literal(size[0], datatype=XSD.float).n3()
             new_pcl_y = Literal(size[1], datatype=XSD.float).n3()
             new_pcl_z = Literal(size[2], datatype=XSD.float).n3()
+            tracked = Literal(tracked, datatype=XSD.boolean).n3()
 
             deletes += f"""
                 {object} crow:hasTimestamp ?old_stamp{str(i)} .
@@ -1799,6 +1802,7 @@ class CrowtologyClient():
                 ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
                 ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
                 ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+                {object} crow:isTracked {tracked} .
             """
             inserts += f"""
                 {object} crow:hasTimestamp {new_stamp} .
@@ -1808,7 +1812,7 @@ class CrowtologyClient():
                 ?pcl{str(i)} crow:x {new_pcl_x} .
                 ?pcl{str(i)} crow:y {new_pcl_y} .
                 ?pcl{str(i)} crow:z {new_pcl_z} .
-
+                {object} crow:isTracked {tracked} .
             """
             wheres += f"""
                 {object} crow:hasTimestamp ?old_stamp{str(i)} .
@@ -1870,7 +1874,7 @@ class CrowtologyClient():
 
             self.lock.release()
 
-    def add_detected_object_no_template(self, object_name, location, size, uuid, timestamp, adder_id):
+    def add_detected_object_no_template(self, object_name, location, size, uuid, timestamp, adder_id, tracked):
         """
         Add newly detected object and info about the object after a detection for this object comes
 
@@ -1899,43 +1903,44 @@ class CrowtologyClient():
             "det_name": Literal(object_name, datatype=XSD.string),
             "adder_id": Literal('od_'+str(adder_id), datatype=XSD.string),
             "uuid": Literal(uuid, datatype=XSD.string),
-            "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp)
+            "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp),
+            "tracked": Literal(tracked, datatype=XSD.boolean)
         }
         self.onto.update(self._query_add_object_no_template, initBindings=initBindings)
         self.node.get_logger().info(f"Added object {individual_name} with uuid {uuid} and id od_{adder_id}")
 
-    def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
-        """
-        Add newly detected object and info about the object after a detection for this object comes
+    # def add_detected_object(self, object_name, location, size, uuid, timestamp, template, adder_id):
+    #     """
+    #     Add newly detected object and info about the object after a detection for this object comes
 
-        Args:
-            object_name (str): name of the object to be added (detector name)
-            location (list of floats): xyz of object's location received from detection
-            size (list of floats): xyz dimensions of object's pointcloud received from detection
-            uuid (str): id of object given by filter node (id of corresponding model in the filter)
-            timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
-            template (URIRef): template object from ontology corresponding to the detected object
-            adder_id (str): id of object given by adder node, according to the amount and order of overall object detections
-        """
-        individual_name = object_name + '_od_'+str(adder_id)
-        PART = Namespace(f"{ONTO_IRI}/{individual_name}#")
+    #     Args:
+    #         object_name (str): name of the object to be added (detector name)
+    #         location (list of floats): xyz of object's location received from detection
+    #         size (list of floats): xyz dimensions of object's pointcloud received from detection
+    #         uuid (str): id of object given by filter node (id of corresponding model in the filter)
+    #         timestamp (str): timestamp of new detection of object, in XSD.dateTimeStamp format
+    #         template (URIRef): template object from ontology corresponding to the detected object
+    #         adder_id (str): id of object given by adder node, according to the amount and order of overall object detections
+    #     """
+    #     individual_name = object_name + '_od_'+str(adder_id)
+    #     PART = Namespace(f"{ONTO_IRI}/{individual_name}#")
 
-        initBindings = {
-            "individual": self.CROW[individual_name],
-            "loc_name": PART.xyzAbsoluteLocation,
-            "loc_x": Literal(location[0], datatype=XSD.float),
-            "loc_y": Literal(location[1], datatype=XSD.float),
-            "loc_z": Literal(location[2], datatype=XSD.float),
-            "pcl_name": PART.hasPclDimensions,
-            "pcl_x": Literal(size[0], datatype=XSD.float),
-            "pcl_y": Literal(size[1], datatype=XSD.float),
-            "pcl_z": Literal(size[2], datatype=XSD.float),
-            "template": template,
-            "adder_id": Literal('od_'+str(adder_id), datatype=XSD.string),
-            "uuid": Literal(uuid, datatype=XSD.string),
-            "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp)
-        }
-        self.onto.update(self._query_add_object, initBindings=initBindings)
+    #     initBindings = {
+    #         "individual": self.CROW[individual_name],
+    #         "loc_name": PART.xyzAbsoluteLocation,
+    #         "loc_x": Literal(location[0], datatype=XSD.float),
+    #         "loc_y": Literal(location[1], datatype=XSD.float),
+    #         "loc_z": Literal(location[2], datatype=XSD.float),
+    #         "pcl_name": PART.hasPclDimensions,
+    #         "pcl_x": Literal(size[0], datatype=XSD.float),
+    #         "pcl_y": Literal(size[1], datatype=XSD.float),
+    #         "pcl_z": Literal(size[2], datatype=XSD.float),
+    #         "template": template,
+    #         "adder_id": Literal('od_'+str(adder_id), datatype=XSD.string),
+    #         "uuid": Literal(uuid, datatype=XSD.string),
+    #         "stamp": Literal(timestamp, datatype=XSD.dateTimeStamp)
+    #     }
+    #     self.onto.update(self._query_add_object, initBindings=initBindings)
 
     def get_objects_by_uuid(self, uuids):
         """ Returns a list of object URIs for every UUID that exists in the database.

@@ -147,6 +147,7 @@ class OntoAdder(Node):
         self.get_logger().warn(f"Time difference is {(tmsg - rclpy.time.Time.from_msg(pose_array_msg.header.stamp)).nanoseconds * 1e-9:0.4f}")
         # now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
 
+        self.get_logger().error(str(pose_array_msg.tracked))
         timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
@@ -163,7 +164,7 @@ class OntoAdder(Node):
             up = update_dict[str_uuid]
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
             # self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
-            objects_to_be_updated.append((obj, up[1], up[2], timestamp))
+            objects_to_be_updated.append((obj, up[1], up[2], timestamp, up[3]))
             del update_dict[str_uuid]
 
         # get other objects for reference
@@ -184,12 +185,11 @@ class OntoAdder(Node):
                     obj = old_uris[close_index]
                     self.get_logger().info(f"Updating object {obj}")
                     # self.crowracle.update_object(obj, pose, size, timestamp)  # TODO: add tracking
-                    objects_to_be_updated.append((obj, pose, size, timestamp))
+                    objects_to_be_updated.append((obj, pose, size, timestamp, tracked))
                     continue
 
-            # corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=XSD.string)))
-            self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
-            self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id)
+            # self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
+            self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id, tracked)
             self.id += 1
 
         if len(objects_to_be_updated) > 0:
