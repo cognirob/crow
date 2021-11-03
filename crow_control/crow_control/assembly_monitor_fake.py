@@ -40,8 +40,8 @@ class AssemblyMonitor(Node):
         self.onto = self.crowracle.onto
 
         # get object / action dicts
-        self.objects = [o[2:].lower() for o in dir(AssemblyObjectProbability) if o.startswith("O_")]
-        self.actions = [a[2:].lower() for a in dir(AssemblyActionProbability) if a.startswith("A_")]
+        self.objects = [o[2:].lower() for o in sorted(dir(AssemblyObjectProbability)) if o.startswith("O_")]
+        self.actions = [a[2:].lower() for a in sorted(dir(AssemblyActionProbability)) if a.startswith("A_")]
 
         # publishers
         self.action_pub = self.create_publisher(AssemblyActionProbability, self.ASSEMBLY_ACTION_TOPIC, 10)
@@ -105,7 +105,7 @@ class AssemblyMonitor(Node):
     def send_actions(self, actions):
         aap = AssemblyActionProbability(probabilities=actions)
         self.action_pub.publish(aap)
-        self.get_logger().info(f"Published: {app}")
+        self.get_logger().info(f"Published: {aap}")
 
     def send_objects(self, objects):
         aop = AssemblyObjectProbability(probabilities=objects)
