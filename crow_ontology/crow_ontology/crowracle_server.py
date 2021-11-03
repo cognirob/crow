@@ -103,7 +103,7 @@ class CrowtologyServer():
             self.log(f"Could not find Fuseki compactor at '{compactor_path}'")
             return
         try:
-            ret = subprocess.run(' '.join([compactor_path, '--loc=' + self.fuseki_path + 'run/']), stdout=subprocess.PIPE, shell=True, check=True)
+            ret = subprocess.run(' '.join([compactor_path, '--loc=' + os.path.join(self.fuseki_path + 'run/')]), stdout=subprocess.PIPE, shell=True, check=True)
             if ret.returncode > 0:
                 raise Exception(f"Tried to compactify the Fuseki database returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout}")
             else:
