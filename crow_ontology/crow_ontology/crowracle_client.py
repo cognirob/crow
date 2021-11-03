@@ -101,8 +101,10 @@ class CrowtologyClient():
         WHERE {
             ?cls rdfs:subClassOf+ crow:TangibleObject .
         }"""
-    _query_visualization_objects = """SELECT ?obj ?uuid ?id ?did ?x ?y ?z ?area_name
+    _query_visualization_objects = """SELECT ?obj ?cls ?uuid ?id ?did ?x ?y ?z ?area_name
         WHERE {
+            ?obj a ?cls .
+            FILTER(STRSTARTS(STR(?cls), "http://imitrob.ciirc.cvut.cz/"))
             ?obj crow:hasUuid ?uuid .
             OPTIONAL {?obj crow:hasId ?id }
             OPTIONAL {?obj crow:disabledId ?did}
@@ -1433,7 +1435,10 @@ class CrowtologyClient():
         for area_uri in areas_uris:
             if area_uri['name'] == 'workspace':
                 area_poly = self.get_polyhedron(area_uri['uri'])
-                return test_in_hull(xyz_list, area_poly)
+                # self.__node.get_logger().debug(f'Test if point {xyz_list} in polyhedron {area_poly} called workspace.')
+                res = test_in_hull(xyz_list, area_poly)
+                # self.__node.get_logger().debug(f'Result: {res}.')
+                return res
 
         self.__node.get_logger().info("<crowracle_client.py> 'workspace' scene doesn't exist!")
         return False

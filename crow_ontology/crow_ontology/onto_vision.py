@@ -19,7 +19,8 @@ CROW = Namespace("http://imitrob.ciirc.cvut.cz/ontologies/crow#")
 
 class MainForm(npyscreen.TitleForm):
     MAX_LINES = 15
-    COLUMN_WIDTH = 20
+    COLUMN_WIDTH = 30
+    FIX_MINIMUM_SIZE_WHEN_CREATED = False
 
     def create(self):
         self.min_l = 15
@@ -31,21 +32,33 @@ class MainForm(npyscreen.TitleForm):
         self.elements = []
         self.empty_lines = []
         for n in range(self.MAX_LINES):
-            uri = self.add(npyscreen.Textfield, editable=False)
+            uri = self.add(npyscreen.Textfield, name="uri_" + str(n), editable=False)
             self.nextrelx += self.COLUMN_WIDTH
             self.nextrely -= 1
-            loc = self.add(npyscreen.Textfield, editable=False)
+            cls = self.add(npyscreen.Textfield, name="cls_" + str(n), editable=False)
             self.nextrelx += self.COLUMN_WIDTH
             self.nextrely -= 1
-            area = self.add(npyscreen.Textfield, editable=False)
+            loc = self.add(npyscreen.Textfield, name="loc_" + str(n), editable=False)
             self.nextrelx += self.COLUMN_WIDTH
             self.nextrely -= 1
-            uuid = self.add(npyscreen.Textfield, editable=False)
+            enabled = self.add(npyscreen.Textfield, name="enabled_" + str(n), editable=False)
             self.nextrelx += self.COLUMN_WIDTH
             self.nextrely -= 1
-            self.elements.append((uri, loc, area, uuid))
+            area = self.add(npyscreen.Textfield, name="area_" + str(n), editable=False)
+            self.nextrelx += self.COLUMN_WIDTH
+            self.nextrely -= 1
+            uuid = self.add(npyscreen.Textfield, name="uuid_" + str(n), editable=False)
+            self.nextrelx += self.COLUMN_WIDTH
+            self.elements.append({
+                    "uri": uri,
+                    "cls": cls,
+                    "loc": loc,
+                    "enabled": enabled,
+                    "area": area,
+                    "uuid": uuid,
+            })
             self.empty_lines.append(True)
-            self.nextrelx -= self.COLUMN_WIDTH * 4
+            self.nextrelx -= self.COLUMN_WIDTH * 6
 
         # start the updates
         self.th = Thread(target=self.spin, daemon=True)
@@ -61,14 +74,26 @@ class MainForm(npyscreen.TitleForm):
     def afterEditing(self):
         self.parentApp.switchFormPrevious()
 
+    def _shorten_uri(self, input_uri: str) -> str:
+        """Replaces the namespace part of the URI with a short namespace name.
+
+        Args:
+            input_uri (str): The URI to shorten.
+
+        Returns:
+            str: Shortened version of the URI.
+        """
+        input_uri = input_uri.replace(CROW, "crow:")
+        return input_uri
+
     def update(self):
         objs = self.crowracle.get_object_visualization()
         updated_objs = []
         current_objects = self.objects.keys()
         new = None
-        for obj, uuid, id, did, x, y, z, area in objs:
+        for obj, cls, uuid, id, did, x, y, z, area in objs:
+            obj = self._shorten_uri(obj)
             new = obj not in current_objects
-            updated_objs.append(obj)
             if new:  # new object
                 empty_line = np.where(self.empty_lines)[0]
                 if len(empty_line) > 0:
@@ -77,22 +102,35 @@ class MainForm(npyscreen.TitleForm):
                     continue  # TODO: something safer
 
                 self.empty_lines[empty_line] = False
-                line = self.elements[empty_line]
-                entries = {
-                    "uri": line[0],
-                    "loc": line[1],
-                    "area": line[2],
-                    "uuid": line[3],
-                }
-                entries["uri"] = obj
-                self.objects[obj] = entries, empty_line, True, True
+                entries = self.elements[empty_line]
+                entries["uri"].value = str(obj)
+                self.objects[obj] = [entries, empty_line, True, True]
             else:  # already detected object
                 entries, line, alive, new = self.objects[obj]
+                if obj in updated_objs:  # object was already processed but some part of the query returned multiple values
+                    if area is None:
+                        # print(obj, cls, uuid, id, did, x, y, z, area)
+                        continue
+                    if entries["area"].value != area:
+                        entries["area"].value += f", {area}"
+                    continue
 
-            entries["loc"] = f"[{x:0.3f}, {y:0.3f}, {z:0.3f}]"
-            entries["area"] = area
-            entries["uuid"] = uuid
+            updated_objs.append(obj)
+            entries["cls"].value = self._shorten_uri(cls)
+            entries["loc"].value = f"[{x.toPython():0.3f}, {y.toPython():0.3f}, {z.toPython():0.3f}]"
+            if id is None:
+                if did is None:
+                    entries["enabled"].value = ""
+                else:
+                    entries["enabled"].value = "disabled"
+                    entries["enabled"].color = 'WARNING'
+            else:
+                entries["enabled"].value = "enabled"
+                entries["enabled"].color = 'SAFE'
+            entries["area"].value = area or ""
+            entries["uuid"].value = uuid
 
+        tobedeleted = []
         for obj, (entries, line, alive, new) in self.objects.items():
             if new:
                 self.objects[obj][3] = False
@@ -106,12 +144,20 @@ class MainForm(npyscreen.TitleForm):
                         entries["uri"].color = 'DANGER'
                 else:
                     self.empty_lines[line] = True
+                    entries["cls"].value = ""
                     entries["uri"].color = 'DEFAULT'
-                    entries["uri"] = ""
-                    entries["loc"] = ""
-                    entries["area"] = ""
-                    entries["uuid"] = ""
+                    entries["uri"].value = ""
+                    entries["loc"].value = ""
+                    entries["enabled"].value = ""
+                    entries["enabled"].color = 'DEFAULT'
+                    entries["area"].value = ""
+                    entries["uuid"].value = ""
+                    tobedeleted.append(obj)
 
+        for obj in tobedeleted:
+            del self.objects[obj]
+
+        self.display()
 
 class OViz(npyscreen.NPSAppManaged):
 
