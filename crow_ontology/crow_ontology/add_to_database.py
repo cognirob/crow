@@ -66,7 +66,7 @@ class OntoAdder(Node):
         self.create_timer(TIMER_FREQ, self.timer_callback, callback_group=MutuallyExclusiveCallbackGroup())
 
         # create listeners
-        qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        qos = QoSProfile(depth=3, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=FilteredPose,
                                  topic=self.FILTERED_POSES_TOPIC,
                                  callback=self.input_filter_callback,
