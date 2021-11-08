@@ -29,7 +29,8 @@ CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 10  # seconds
 DISABLING_TIME_LIMIT = 3  # seconds
 TIMER_FREQ = 0.4  # seconds
-CLOSE_THRESHOLD = 2e-2  # 1cm
+CLOSE_THRESHOLD = 2e-2  # 2cm
+MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
 
 
 def distance(entry):
@@ -156,12 +157,16 @@ class OntoAdder(Node):
         # update location of existing objects
         objects_to_be_updated = []
 
-        for obj, uuid in existing_objects:
+        for obj, uuid, tracked, x, y, z in existing_objects:
             str_uuid = uuid.toPython()
+            xyz = np.r_[x.toPython(), y.toPython(), z.toPython()]
             if str_uuid not in update_dict:
                 self.get_logger().info(f"Skipping updating of object {obj} with uuid: {uuid}. For some reason, it is missing from the update_dict: {update_dict}")
                 continue
             up = update_dict[str_uuid]
+            if tracked == up[3] and np.linalg.norm(xyz - up[1]) < MIN_DIST_TO_UPDATE:
+                self.get_logger().info(f"Skipping object update {obj} with uuid: {uuid}. Object unchanged.")
+                continue
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
             # self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
             objects_to_be_updated.append((obj, up[1], up[2], timestamp, up[3]))
@@ -175,6 +180,7 @@ class OntoAdder(Node):
             old_xyz = np.array(old_xyz).astype(float).T
 
         # add new objects (not found by uuid)
+        objects_to_be_added = []
         for uuid, (class_name, pose, size, tracked) in update_dict.items():
             pose = np.r_[pose]
             if foundOld:
@@ -189,13 +195,13 @@ class OntoAdder(Node):
                     continue
 
             # self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
-            self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id, tracked)
+            # self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id, tracked)
+            objects_to_be_added.append((class_name, pose, size, uuid, timestamp, self.id, tracked))
             self.id += 1
 
-        if len(objects_to_be_updated) > 0:
-            self.crowracle.update_object_batch(objects_to_be_updated)
-        # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
-        #     self.process_detected_object(class_name, [pose.position.x, pose.position.y, pose.position.z], size.dimensions, uuid, tracked, timestamp)
+        self.crowracle.update_batch_all(objects_to_be_added, objects_to_be_updated)
+        # if len(objects_to_be_updated) > 0:
+        #     self.crowracle.update_object_batch(objects_to_be_updated)
         # self.get_logger().warn(f"input cb takes {time.time() - start:0.3f} seconds")
 
     def input_action_callback(self, action_array_msg):
@@ -231,65 +237,6 @@ class OntoAdder(Node):
             return max(all_detected)
         else:
             return -1
-
-    def process_detected_object(self, object_name, location, size, uuid, tracked, timestamp):
-        if object_name in ['kuka', 'kuka_gripper']:  # we don't want the robot in the DB
-            return
-        #self.get_logger().info("Processing detected object {} at location {}.".format(object_name, location))
-        # prop_range = list(self.onto.objects(subject=CROW.hasDetectorName, predicate=RDFS.range))[0]
-        # corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=prop_range)))
-        corresponding_objects = list(self.onto.subjects(CROW.hasDetectorName, Literal(object_name, datatype=XSD.string)))
-        already_detected = []
-        already_located = []
-        for x in corresponding_objects:
-            if len(list(self.onto.objects(subject=x, predicate=CROW.hasTimestamp))) > 0:
-                already_detected.append(x)
-        for x in already_detected:
-            x_uuid = list(self.onto.objects(x, CROW.hasUuid))[0]
-            if uuid == x_uuid.toPython():  # update timestamp and loc of matched already detected object
-                self.crowracle.update_detected_object(x, location, size, uuid, timestamp)
-                return
-            else:
-                old_loc_obj = list(self.onto.objects(x, CROW.hasAbsoluteLocation))[0]
-                old_loc = [float(list(self.onto.objects(old_loc_obj, x))[0])
-                           for x in [CROW.x, CROW.y, CROW.z]]
-                dist = (np.linalg.norm(np.asarray(old_loc) - np.asarray(location)))
-                already_located.append([x, dist])
-        if len(already_located) > 0:
-            already_located.sort(key=distance)
-            closest = already_located[0]
-            # update timestamp and loc of matched already detected object
-            if closest[-1] <= self.loc_threshold:
-                self.crowracle.update_detected_object(closest[0], location, size, uuid, timestamp)
-            else:  # add new detected object
-                self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
-                self.id += 1
-        elif len(corresponding_objects) > 0:  # add new detected object
-            self.crowracle.add_detected_object(object_name, location, size, uuid, timestamp, corresponding_objects[0], self.id)
-            self.id += 1
-        else:
-            self.get_logger().info("Object {} not added - there is no corresponding template in the ontology.".format(object_name))
-
-    # @TODO: assembly functions, update, move to client
-    # def add_assembled_object(self, object_name, location):
-    #     self.get_logger().info("Setting properties of assembled object {} at location {}.".format(object_name, location))
-    #     PART = Namespace(f"{ONTO_IRI}/{object_name}#") #ns for each object (/cube_holes_1#)
-    #     prop_name = PART.xyzAbsoluteLocation
-    #     self.onto.set((prop_name, CROW.x, Literal(location[0], datatype=XSD.float)))
-    #     self.onto.set((prop_name, CROW.y, Literal(location[1], datatype=XSD.float)))
-    #     self.onto.set((prop_name, CROW.z, Literal(location[2], datatype=XSD.float)))
-    #     #if enables/disables in connection:
-    #     self.change_enabled(object_name, 'thread2', False) #acc to connection
-
-    # def change_enabled(self, object_name, part_name, value):
-    #     PART = Namespace(f"{ONTO_IRI}/{object_name}/{part_name}#") #ns for each object (/cube_holes_1#)
-    #     OBJ = Namespace(f"{ONTO_IRI}/{object_name}#") #ns for each object (/cube_holes_1#)
-    #     part_name = OBJ[part_name]
-    #     prop_name = PART.enabled
-    #     prop_range = list(self.onto.objects(CROW.isEnabled, RDFS.range))[0]
-    #     self.onto.add((prop_name, RDF.type, prop_range))
-    #     self.onto.add((prop_name, CROW.isBool, Literal(value, datatype=XSD.boolean)))
-    #     self.onto.set((part_name, CROW.isEnabled, prop_name))
 
 
 def main():
