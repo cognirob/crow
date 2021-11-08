@@ -118,6 +118,8 @@ batch_add = [tester.get_no_template() for i in range(10)]
 inserts = ""
 deletes = ""
 wheres = ""
+union_started = False
+
 for i, obj in enumerate(batch_update):
     object, location, size, timestamp, tracked = obj
     object = URIRef(object).n3()
@@ -150,10 +152,11 @@ for i, obj in enumerate(batch_update):
         ?pcl{str(i)} crow:z {new_pcl_z} .
         {object} crow:isTracked {tracked} .
     """
-    if i == 0:
-        wheres += "{"
-    else:
+    if union_started:
         wheres += "UNION {"
+    else:
+        wheres += "{"
+        union_started = True
     wheres += f"""
             {object} crow:hasTimestamp ?old_stamp{str(i)} .
             {object} crow:hasAbsoluteLocation ?loc{str(i)} .
@@ -195,8 +198,12 @@ for i, obj in enumerate(batch_add):
     """
     if object_name not in already_template:
         already_template.append(object_name)
+        if union_started:
+            wheres += "UNION {"
+        else:
+            wheres += "{"
+            union_started = True        
         wheres += f"""
-        UNION {{
                 ?template_{object_name} ?prop_{object_name} ?value_{object_name} ;
                         crow:hasDetectorName {Literal(object_name, datatype=XSD.string).n3()} .
                 FILTER NOT EXISTS {{ ?template_{object_name} crow:hasUuid ?uuid_any_{object_name} }}
