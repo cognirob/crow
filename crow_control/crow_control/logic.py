@@ -100,6 +100,7 @@ class ControlLogic(Node):
         self.LANG = 'cs'
         self.ui = UserInputManager(language = self.LANG)
         self.guidance_file = self.ui.load_file('guidance_dialogue.json')
+        self.templates_file = self.ui.load_file('templates_detection.json')
 
         self.pclient = ParamClient()
         self.pclient.define("robot_done", True) # If true, the robot has received a goal and completed it.
@@ -180,7 +181,6 @@ class ControlLogic(Node):
         # print(target_type)
         # print(target_ph_cls)
         # print(target_ph_loc)
-        StatTimer.enter("onto data retrieval uri", severity=Runtime.S_MINOR)
         if target_type == "xyz":
             return (np.array(target), [1e-9, 1e-9, 1e-9], ObjectType.POINT)
         elif target_type == "onto_id":
@@ -217,10 +217,8 @@ class ControlLogic(Node):
             typ = self._extract_obj_type(typ)
         except:
             self.get_logger().error(f"Action target was set to '{target_type}' but object '{target}' is not in the database! Trying another {target_ph_cls}")
-            StatTimer.exit("onto data retrieval uri")
             return None
         else:
-            StatTimer.exit("onto data retrieval uri")
             if ('None' not in xyz) and (None not in xyz):
                 return (np.array(xyz, dtype=np.float), np.array(size, dtype=np.float), int(typ))
             else:
@@ -277,23 +275,17 @@ class ControlLogic(Node):
             if self.DEBUG:
                 self.get_logger().fatal(f"Logic started in DEBUG MODE. Message not sent to the robot!")
             else:
-                StatTimer.enter("pushing action into queue")
                 self.push_actions(**d)
-                StatTimer.exit("pushing action into queue")
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, command_buffer='main', action_type=None, action=None, **kwargs):
-        StatTimer.enter("pushing action into buffer", severity=Runtime.S_SINGLE_LINE)
         if command_buffer == 'meanwhile':
             self.command_meanwhile_buffer.append((action_type, action, kwargs))
         else:
             command_name = str(self.main_buffer_count)#num2words(self.main_buffer_count, lang='cz')
             self.command_main_buffer.append((action_type, action, command_name, kwargs))
             self.main_buffer_count += 1
-        StatTimer.exit("pushing action into buffer")
-        StatTimer.enter("setting param", severity=Runtime.S_SINGLE_LINE)
         self.pclient.ready_for_next_sentence = True
-        StatTimer.exit("setting param")
 
     def prepare_command(self, target=None, target_type=None, **kwargs):
         target_info = None
@@ -329,6 +321,10 @@ class ControlLogic(Node):
             # print("ready")
             try:
                 disp_name, action, command_name, kwargs = self.command_main_buffer.pop()
+                #TODO the action_type should be send to logic node in the proper language directly! and then this can be removed
+                if self.LANG == 'en':
+                    disp_name_en = [k for k, v in self.templates_file['cs'].items() if v == disp_name]
+                    disp_name = disp_name_en[0]
                 kwargs['disp_name'] = disp_name
             except IndexError as ie:  # no new commands to process
                 self._set_status(self.STATUS_IDLE)
@@ -365,6 +361,10 @@ class ControlLogic(Node):
     def update_meanwhile_cb(self):
         try:
             disp_name, action, kwargs = self.command_meanwhile_buffer.pop()
+            #TODO the action_type should be send to logic node in the proper language directly! and then this can be removed
+            if self.LANG == 'en':
+                    disp_name_en = [k for k, v in self.templates_file['cs'].items() if v == disp_name]
+                    disp_name = disp_name_en[0]
             kwargs['disp_name'] = disp_name
         except IndexError as ie:  # no new commands to process
             pass  # noqa
@@ -486,6 +486,8 @@ class ControlLogic(Node):
                          something is already picked, move to user, open gripper a bit
         """
         # print(kwargs)
+        print(disp_name)
+        print('grrr')
         StatTimer.enter("Sending command")
         self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Fetch action")
@@ -698,7 +700,7 @@ class ControlLogic(Node):
             return
 
         StatTimer.exit("speech2robot", severity=Runtime.S_MAIN)
-        StatTimer.enter("robot action")
+        StatTimer.enter("robot2action")
         self.ROBOT_ACTION_PHASE = 0
         StatTimer.enter("phase 0")
         self.get_logger().info('Goal accepted :)')
@@ -709,7 +711,7 @@ class ControlLogic(Node):
         self._get_result_future.add_done_callback(self.robot_done_cb)
 
     def robot_done_cb(self, future):
-        StatTimer.try_exit("robot action")
+        StatTimer.try_exit("robot2action")
         StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
         StatTimer.enter(f"phase {str(self.ROBOT_ACTION_PHASE)}")
         result = future.result().result
@@ -741,7 +743,7 @@ class ControlLogic(Node):
             StatTimer.enter(f"phase {str(phase)}")
             self.ROBOT_ACTION_PHASE = phase
         if phase == CoreActionPhase.ROBOTIC_ACTION:
-            StatTimer.try_exit("robot action")
+            StatTimer.try_exit("robot2action")
             StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
 
     def robot_canceling_done(self, future):
