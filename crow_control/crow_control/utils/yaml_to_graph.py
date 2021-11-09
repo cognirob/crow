@@ -24,6 +24,7 @@ class AssemblyGraphMaker():
         self.build_name = build_name + '.yaml'
         self.graph_name = build_name + '.txt'
         self.fig_name = build_name + '.png'
+        self.fig_name_order = build_name + '_order.png'
         with open(self.build_name, "r") as f:
             self.recipe = yaml.safe_load(f)
 
@@ -37,14 +38,14 @@ class AssemblyGraphMaker():
         # if os.path.exists('mydirectory/myfile.png')
         with open(self.build_name, "r") as f:
             recipe = yaml.safe_load(f)
-
+        
         G = nx.DiGraph()
         # Add recipe name
         assembly_name = recipe["assembly_name"]
 
         Gin = nx.DiGraph()
         #Add nodes - initial node with 100% probability
-        G.add_node(0, parts_names=[None], parts_type=[None], prob=1,
+        G.add_node(0, parts_names=['None'], parts_type=['None'], prob=1,
                    weight=1, graph=Gin)
         #Add "Other" node for false positive detections
         G.add_node(1, parts_names=['Other'], parts_type=['Other'], prob=0,
@@ -54,6 +55,7 @@ class AssemblyGraphMaker():
         #Add edge to stay in the current state
         G.add_edge(1, 1, weight=1, prob=0.55, action='None',
                    object="OtherO")
+
         # Add nodes - first for each object one node
         if "objects" in recipe:
             for i, (entity, props) in enumerate(recipe["objects"].items()):
@@ -133,6 +135,7 @@ class AssemblyGraphMaker():
             # nx.draw_networkx(G3, node_color='r', edge_color='b')
             # plt.draw()
             # plt.savefig('plot2')
+            print('Graph successfully built')
         return G, recipe_name, assembly_name, base_filename
 
 
@@ -161,7 +164,7 @@ class AssemblyGraphMaker():
                         # - so far checking only number and type of the parts
                         remove_list.append(entity2)
                         similarity_list.append(entity)
-            print(entity)
+            #print(entity)
         x = np.array(remove_list)
         # list of unique appearance of nodes which we want to remove (in remove_list),
         # in the same way cleaning similarity list
@@ -223,6 +226,7 @@ class AssemblyGraphMaker():
             for edge in rem_edges:
                 Gp.remove_edge(edge[0], edge[1])
             Gp.remove_node(rem_item)
+        print('Graph successfully pruned')
         # nx.draw_networkx(Gp, node_color='r', edge_color='b')
 
         # recompute probabilities of the edges - for each node of the graph sum probabilities of the outgoing edges to 1
@@ -254,8 +258,41 @@ class AssemblyGraphMaker():
         plt.savefig(self.fig_name)
         # graph_name_pickle = str.split(self.build_name,'.')[0]+'.txt'
         pickle.dump(Gp, open(self.graph_name, 'wb'))
+        print('Pruned graph with recomputed probabilities saved')
         return Gp
 
+
+    def add_required_order(self, G):
+        # Check if there is required order - if yes, build graph using this order
+        with open(self.build_name, "r") as f:
+            recipe = yaml.safe_load(f)
+        if "order_hints" in recipe:
+            for props in recipe["order_hints"]:
+                if props['type'] == 'RequiredOrderObjects':
+                    if props['first'] == 'None':
+                        print('None node required order')
+                        nodesNone = [x for x,y in G.nodes(data=True) if y['parts_names'][0]==props['first']]
+                        nodesTo = [x for x,y in G.nodes(data=True) if y['parts_names'][0]==props['then'] and len(y['parts_names'])==1]
+                        out_edges = G.out_edges(nodesNone)
+                        for e in out_edges:
+                            nx.set_edge_attributes(G, {e: {"prob": 0}})
+                        nx.set_edge_attributes(G, {(nodesNone[0], nodesTo[0]): {"prob": 1}})
+
+        print('Required order applied - only for the None edge so far')
+
+        pos = graphviz_layout(G, prog="dot")
+        labels = nx.get_node_attributes(G, 'parts_type')
+        nx.draw_networkx(G, pos=pos, labels=labels, font_size=6)
+        label_options = {"ec": "k", "fc": "white", "alpha": 0.7}
+        nx.draw_networkx_labels(G, pos=pos, labels=labels, font_size=6, bbox=label_options)
+        labels_e = nx.get_edge_attributes(G, 'prob')
+        nx.draw_networkx_edge_labels(G, pos=pos, edge_labels=labels_e, font_size=6, bbox=label_options)
+        plt.draw()
+        plt.savefig(self.fig_name_order)
+        # graph_name_pickle = str.split(self.build_name,'.')[0]+'.txt'
+        pickle.dump(G, open(self.graph_name, 'wb'))
+
+        return G            
 
     def update_graph(self, G, Po={}, Pa={}):
         # updates the probabilities of the nodes of the incoming graph G based on the observed probability of the observed
@@ -332,6 +369,7 @@ class AssemblyGraphMaker():
         for i, (inE, outE) in enumerate(out_edges):
             edge_prob.append(edge_probs[(inE, outE)])
             outEs.append(outE)
+        print(edge_prob)
         next_node = outEs[edge_prob.index(max(edge_prob))]
         objects_add = nx.get_edge_attributes(G, 'object')
         object_add = objects_add[(max_node, next_node)]
