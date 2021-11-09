@@ -1,0 +1,79 @@
+assembly_name: Car
+# Object definitions
+objects:
+  wheel_bottom:
+    type: Wheel
+
+  cube_bottom:
+    type: Cube
+
+  cube_middle:
+    type: Cube
+
+  wafer_middle:
+    type: Wafer
+
+  sphere_head:
+    type: Sphere
+
+# Connection definitions
+operations:
+  bottom:
+    type: InsertFixedConnection
+    provider: wheel_bottom
+    consumer: cube_bottom
+
+  middle:
+    type: InsertFixedConnection
+    provider: cube_bottom
+    consumer: cube_middle
+
+  middle:
+    type: InsertFixedConnection
+    provider: cube_middle
+    consumer: wafer_middle
+
+  top:
+    type: InsertFixedConnection
+    provider: wafer_middle
+    consumer: sphere_head
+
+# Relation definitions
+relations:
+  - type: OppositeRelation
+    operations: [bottom, middle]
+    reference: bottom_rel
+
+relations:
+  - type: OppositeRelation
+    operations: [middle, top]
+    reference: middle_rel
+
+# Order definitions
+order_hints:
+  - type: RequiredOrderObjects
+    first: None
+    then: wheel_bottom
+
+  - type: RequiredOrderObjects
+    first: wheel_bottom
+    then: cube_bottom
+
+  - type: RequiredOrderObjects
+    first: cube_bottom
+    then: wafer_middle
+
+  - type: RequiredOrderObjects
+    first: wafer_middle
+    then: sphere_head
+
+  - type: RequiredOrder
+    first: bottom
+    then: middle
+
+  - type: RequiredOrder
+    first: middle
+    then: top
+    
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]
