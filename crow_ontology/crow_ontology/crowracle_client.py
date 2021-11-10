@@ -1,5 +1,6 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 from numpy.core.numeric import NaN
+from scipy.spatial import Delaunay
 from rdflib.namespace import FOAF, RDFS, RDF, OWL, XMLNS, XSD, Namespace
 from rdflib.extras.infixowl import Class
 from rdflib import BNode, URIRef, Literal
@@ -262,6 +263,32 @@ class CrowtologyClient():
             ?pt crow:y ?y .
             ?pt crow:z ?z .
             FILTER EXISTS { ?area crow:areaType 'main' }
+        }"""
+    _query_area_objs = """
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        SELECT DISTINCT ?obj ?obj_x ?obj_y ?obj_z ?area ?area_x ?area_y ?area_z
+        FROM <http://imitrob.ciirc.cvut.cz/ontologies/crow>
+        WHERE {
+            {
+                        ?obj crow:hasId ?obj_id .
+                        ?obj crow:hasAbsoluteLocation ?obj_loc .
+                        ?obj_loc crow:x ?obj_x .
+                        ?obj_loc crow:y ?obj_y .
+                        ?obj_loc crow:z ?obj_z .
+            } UNION {
+                        ?area a crow:StorageSpace .
+                        ?area crow:hasPolyhedron ?poly .
+                        ?poly crow:hasPoint3D ?pt .
+                        ?pt crow:x ?area_x .
+                        ?pt crow:y ?area_y .
+                        ?pt crow:z ?area_z .
+                        FILTER EXISTS { ?area crow:areaType 'main' }
+
+            }
         }"""
     _query_all_tangible_nlp = """
         SELECT ?name
@@ -1333,7 +1360,451 @@ class CrowtologyClient():
         else:
             return None
 
-    def pair_objects_to_areas_wq(self, verbose=False):
+    def generate_en_dis_del_pair_query(self, batch_enable:List[URIRef], batch_disable:List[URIRef], batch_delete:List[URIRef]) -> Union[str, None]:
+        """Generates a query string to enable, disable, delete objects and pair them to areas.
+        Each list should contain the URIs of the objects.
+        """
+        query = ""
+        first = True  # to add semicolon query separator to "not first" queries
+
+        # PAIRING SECTION
+        r = list(self.onto.query(self._query_area_objs))
+        a = np.r_[r]
+        idx_objs = a[:, 0].astype(bool)  # objects lines don't have "None" in the first column
+        objs = a[idx_objs, :4]
+        areas = a[np.logical_not(idx_objs)][:, 4:]
+
+        if len(objs) > 0 and len(areas) > 0:  # only do this if there are any objects and areas
+            first = False
+            dict_areas = {}
+            area_values = ""
+            for ap in areas:  # collect area points
+                aname, *points = ap
+                aname = aname.n3()
+                if aname not in dict_areas:
+                    area_values += f"\t\t\t({aname})\n"
+                    dict_areas[aname] = []
+                dict_areas[aname].append([p.toPython() for p in points])
+
+            allpoints = []
+            object_uris = []
+            for obj in objs:  # construct matrix of all objects and their associated URIs
+                o, *opoints = obj
+                o = o.n3()
+                object_uris.append(o)
+                allpoints.append([p.toPython() for p in opoints])
+            allpoints = np.array(allpoints)
+            object_uris = np.array(object_uris)
+
+            inserts = ""
+            for aname, points in dict_areas.items():
+                hull = Delaunay(points)
+                w = hull.find_simplex(allpoints)
+                for o in object_uris[w >= 0]:
+                    inserts += f"\t\t\t{o} crow:insideOf {aname} .\n"
+                    inserts += f"\t\t\t{aname} crow:contains {o} .\n"
+
+            query += f"""
+            DELETE {{
+                ?obj crow:insideOf ?a .
+                ?a crow:contains ?obj .
+            }}
+            WHERE {{
+                ?obj crow:insideOf ?a .
+                ?a crow:contains ?obj .
+            VALUES (?a)
+            {{
+                {area_values}
+            }}
+            }};
+            INSERT DATA {{
+                {inserts}
+            }}
+            """
+
+        if len(batch_enable) + len(batch_disable) + len(batch_delete) > 0:  # if there is anything
+            # ENABLE SECTION
+            if len(batch_enable) > 0:
+                if first:
+                    first = False
+                else:
+                    query += ";\n"
+                pass
+                tobe_enabled = ""
+                for obj in batch_enable:
+                    tobe_enabled += f"({obj.n3()})\n"
+                query += f"""DELETE {{
+                    ?individual crow:disabledId ?id .
+                }}
+                INSERT {{
+                    ?individual crow:hasId ?id .
+                }}
+                WHERE {{
+                    ?individual crow:disabledId ?id .
+                    VALUES (?individual)
+                    {{
+                        {tobe_enabled}
+                    }}
+                }}"""
+            # DISABLE SECTION
+            if len(batch_disable) > 0:
+                if first:
+                    first = False
+                else:
+                    query += ";\n"
+                tobe_disabled = ""
+                for obj in batch_disable:
+                    tobe_disabled += f"({obj.n3()})\n"
+                query += f"""DELETE {{
+                    ?individual crow:hasId ?id .
+                }}
+                INSERT {{
+                    ?individual crow:disabledId ?id .
+                }}
+                WHERE {{
+                    ?individual crow:hasId ?id .
+                    VALUES (?individual)
+                    {{
+                        {tobe_disabled}
+                    }}
+                }}"""
+            # DELETE SECTION
+            if len(batch_delete) > 0:
+                if first:
+                    first = False
+                else:
+                    query += ";\n"
+                tobe_deleted = ""
+                for obj in batch_delete:
+                    tobe_deleted += f"({obj.n3()})\n"
+                query += f"""DELETE {{
+                    ?individual ?p1 ?o1 .
+                    ?s2 ?p2 ?individual .
+                }}
+                WHERE {{
+                    {{?individual ?p1 ?o1}} UNION {{?s2 ?p2 ?individual}}
+                    VALUES (?individual) {{
+                        {tobe_deleted}
+                    }}
+                }}"""
+
+        # COMBINE AND SEND
+        if len(query) > 0:
+            query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>\n""" + query
+            return query
+        else:
+            return None
+
+    def generate_full_update(self, batch_add=[], batch_update=[]) -> Union[str, None]:
+        """This function does everything...
+        It returns a query string for adding and updating objects.
+        See "update_batch_all" function for the parameters.
+
+        Args:
+            batch_add ([type]): list of tuples of objects to be added.
+            batch_update ([type]): list of tuples of objects to be updated.
+        """
+        query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>"""
+
+        if len(batch_add) > 0 or len(batch_update) > 0:  # only do this if there are some objects to be added or updated
+            inserts = ""
+            deletes = ""
+            wheres = ""
+            union_started = False  # to properly include "{" or "UNION {" at the start of each "WHERE"
+
+            # UPDATE SECTION
+            for i, obj in enumerate(batch_update):
+                object, location, size, timestamp, tracked = obj
+                object = URIRef(object).n3()
+                new_stamp = Literal(timestamp, datatype=XSD.dateTimeStamp).n3()
+                new_x = Literal(location[0], datatype=XSD.float).n3()
+                new_y = Literal(location[1], datatype=XSD.float).n3()
+                new_z = Literal(location[2], datatype=XSD.float).n3()
+                new_pcl_x = Literal(size[0], datatype=XSD.float).n3()
+                new_pcl_y = Literal(size[1], datatype=XSD.float).n3()
+                new_pcl_z = Literal(size[2], datatype=XSD.float).n3()
+                tracked = Literal(tracked, datatype=XSD.boolean).n3()
+
+                deletes += f"""
+                    {object} crow:hasTimestamp ?old_stamp{str(i)} .
+                    ?loc{str(i)} crow:x ?old_x{str(i)} .
+                    ?loc{str(i)} crow:y ?old_y{str(i)} .
+                    ?loc{str(i)} crow:z ?old_z{str(i)} .
+                    ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
+                    ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
+                    ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+                    {object} crow:isTracked ?old_tracked{str(i)} .
+                """
+                inserts += f"""
+                    {object} crow:hasTimestamp {new_stamp} .
+                    ?loc{str(i)} crow:x {new_x} .
+                    ?loc{str(i)} crow:y {new_y} .
+                    ?loc{str(i)} crow:z {new_z} .
+                    ?pcl{str(i)} crow:x {new_pcl_x} .
+                    ?pcl{str(i)} crow:y {new_pcl_y} .
+                    ?pcl{str(i)} crow:z {new_pcl_z} .
+                    {object} crow:isTracked {tracked} .
+                """
+                if union_started:
+                    wheres += "UNION {"
+                else:
+                    wheres += "{"
+                    union_started = True
+                wheres += f"""
+                        {object} crow:hasTimestamp ?old_stamp{str(i)} .
+                        {object} crow:hasAbsoluteLocation ?loc{str(i)} .
+                        {object} crow:hasPclDimensions ?pcl{str(i)} .
+                        ?loc{str(i)} crow:x ?old_x{str(i)} .
+                        ?loc{str(i)} crow:y ?old_y{str(i)} .
+                        ?loc{str(i)} crow:z ?old_z{str(i)} .
+                        ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
+                        ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
+                        ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+                        {object} crow:isTracked ?old_tracked{str(i)} .
+                    }}
+                """
+
+            # ADDING SELECT
+            already_template = []
+            for i, obj in enumerate(batch_add):
+                object_name, location, size, uuid, timestamp, adder_id, tracked = obj
+                individual_name = object_name + '_od_'+str(adder_id)
+                individual = self.CROW[individual_name].n3()
+                PART = Namespace(f"{ONTO_IRI}/{individual_name}#")
+                loc = PART.xyzAbsoluteLocation.n3()
+                pcl = PART.hasPclDimensions.n3()
+                inserts += f"""
+                    {individual} ?prop_{object_name} ?value_{object_name} .
+                    {individual} crow:hasAbsoluteLocation {loc} .
+                    {individual} crow:hasPclDimensions {pcl} .
+                    {loc} a crow:xyzAbsoluteLocation .
+                    {loc} crow:x {Literal(location[0], datatype=XSD.float).n3()} .
+                    {loc} crow:y {Literal(location[1], datatype=XSD.float).n3()} .
+                    {loc} crow:z {Literal(location[2], datatype=XSD.float).n3()} .
+                    {pcl} a crow:xyzPclDimensions .
+                    {pcl} crow:x {Literal(size[0], datatype=XSD.float).n3()} .
+                    {pcl} crow:y {Literal(size[1], datatype=XSD.float).n3()} .
+                    {pcl} crow:z {Literal(size[2], datatype=XSD.float).n3()} .
+                    {individual} crow:hasId {Literal('od_'+str(adder_id), datatype=XSD.string).n3()} .
+                    {individual} crow:hasUuid {Literal(uuid, datatype=XSD.string).n3()} .
+                    {individual} crow:hasTimestamp {Literal(timestamp, datatype=XSD.dateTimeStamp).n3()} .
+                    {individual} crow:isTracked {Literal(tracked, datatype=XSD.boolean).n3()} .
+                """
+                if object_name not in already_template:
+                    already_template.append(object_name)
+                    if union_started:
+                        wheres += "UNION {"
+                    else:
+                        wheres += "{"
+                        union_started = True
+                    wheres += f"""
+                            ?template_{object_name} ?prop_{object_name} ?value_{object_name} ;
+                                    crow:hasDetectorName {Literal(object_name, datatype=XSD.string).n3()} .
+                            FILTER NOT EXISTS {{ ?template_{object_name} crow:hasUuid ?uuid_any_{object_name} }}
+                            MINUS {{ ?template_{object_name} crow:hasAbsoluteLocation|crow:hasPclDimensions ?value_{object_name} }}
+                        }}
+                    """
+
+            query += f"""
+                DELETE {{
+                    {deletes}
+                }}\n"""
+            query += f"""INSERT {{
+                    {inserts}
+                }}\n"""
+            query += f"""WHERE {{
+                {wheres}
+            }}"""
+            return query
+        else:
+            return None
+
+    def generate_full_update_and_pairing(self, batch_add=[], batch_update=[]):
+        """This function does everything...
+        It returns a query string for adding, updating, and pairing objects to areas.
+        See "update_batch_all" function for the parameters.
+
+        Args:
+            batch_add ([type]): list of tuples of objects to be added.
+            batch_update ([type]): list of tuples of objects to be updated.
+        """
+        query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>"""
+
+        if len(batch_add) > 0 or len(batch_update) > 0:  # only do this if there are some objects to be added or updated
+            inserts = ""
+            deletes = ""
+            wheres = ""
+            union_started = False  # to properly include "{" or "UNION {" at the start of each "WHERE"
+
+            # UPDATE SECTION
+            for i, obj in enumerate(batch_update):
+                object, location, size, timestamp, tracked = obj
+                object = URIRef(object).n3()
+                new_stamp = Literal(timestamp, datatype=XSD.dateTimeStamp).n3()
+                new_x = Literal(location[0], datatype=XSD.float).n3()
+                new_y = Literal(location[1], datatype=XSD.float).n3()
+                new_z = Literal(location[2], datatype=XSD.float).n3()
+                new_pcl_x = Literal(size[0], datatype=XSD.float).n3()
+                new_pcl_y = Literal(size[1], datatype=XSD.float).n3()
+                new_pcl_z = Literal(size[2], datatype=XSD.float).n3()
+                tracked = Literal(tracked, datatype=XSD.boolean).n3()
+
+                deletes += f"""
+                    {object} crow:hasTimestamp ?old_stamp{str(i)} .
+                    ?loc{str(i)} crow:x ?old_x{str(i)} .
+                    ?loc{str(i)} crow:y ?old_y{str(i)} .
+                    ?loc{str(i)} crow:z ?old_z{str(i)} .
+                    ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
+                    ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
+                    ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+                    {object} crow:isTracked ?old_tracked{str(i)} .
+                """
+                inserts += f"""
+                    {object} crow:hasTimestamp {new_stamp} .
+                    ?loc{str(i)} crow:x {new_x} .
+                    ?loc{str(i)} crow:y {new_y} .
+                    ?loc{str(i)} crow:z {new_z} .
+                    ?pcl{str(i)} crow:x {new_pcl_x} .
+                    ?pcl{str(i)} crow:y {new_pcl_y} .
+                    ?pcl{str(i)} crow:z {new_pcl_z} .
+                    {object} crow:isTracked {tracked} .
+                """
+                if union_started:
+                    wheres += "UNION {"
+                else:
+                    wheres += "{"
+                    union_started = True
+                wheres += f"""
+                        {object} crow:hasTimestamp ?old_stamp{str(i)} .
+                        {object} crow:hasAbsoluteLocation ?loc{str(i)} .
+                        {object} crow:hasPclDimensions ?pcl{str(i)} .
+                        ?loc{str(i)} crow:x ?old_x{str(i)} .
+                        ?loc{str(i)} crow:y ?old_y{str(i)} .
+                        ?loc{str(i)} crow:z ?old_z{str(i)} .
+                        ?pcl{str(i)} crow:x ?old_pcl_x{str(i)} .
+                        ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
+                        ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
+                        {object} crow:isTracked ?old_tracked{str(i)} .
+                    }}
+                """
+
+            # ADDING SELECT
+            already_template = []
+            for i, obj in enumerate(batch_add):
+                object_name, location, size, uuid, timestamp, adder_id, tracked = obj
+                individual_name = object_name + '_od_'+str(adder_id)
+                individual = self.CROW[individual_name].n3()
+                PART = Namespace(f"{ONTO_IRI}/{individual_name}#")
+                loc = PART.xyzAbsoluteLocation.n3()
+                pcl = PART.hasPclDimensions.n3()
+                inserts += f"""
+                    {individual} ?prop_{object_name} ?value_{object_name} .
+                    {individual} crow:hasAbsoluteLocation {loc} .
+                    {individual} crow:hasPclDimensions {pcl} .
+                    {loc} a crow:xyzAbsoluteLocation .
+                    {loc} crow:x {Literal(location[0], datatype=XSD.float).n3()} .
+                    {loc} crow:y {Literal(location[1], datatype=XSD.float).n3()} .
+                    {loc} crow:z {Literal(location[2], datatype=XSD.float).n3()} .
+                    {pcl} a crow:xyzPclDimensions .
+                    {pcl} crow:x {Literal(size[0], datatype=XSD.float).n3()} .
+                    {pcl} crow:y {Literal(size[1], datatype=XSD.float).n3()} .
+                    {pcl} crow:z {Literal(size[2], datatype=XSD.float).n3()} .
+                    {individual} crow:hasId {Literal('od_'+str(adder_id), datatype=XSD.string).n3()} .
+                    {individual} crow:hasUuid {Literal(uuid, datatype=XSD.string).n3()} .
+                    {individual} crow:hasTimestamp {Literal(timestamp, datatype=XSD.dateTimeStamp).n3()} .
+                    {individual} crow:isTracked {Literal(tracked, datatype=XSD.boolean).n3()} .
+                """
+                if object_name not in already_template:
+                    already_template.append(object_name)
+                    if union_started:
+                        wheres += "UNION {"
+                    else:
+                        wheres += "{"
+                        union_started = True
+                    wheres += f"""
+                            ?template_{object_name} ?prop_{object_name} ?value_{object_name} ;
+                                    crow:hasDetectorName {Literal(object_name, datatype=XSD.string).n3()} .
+                            FILTER NOT EXISTS {{ ?template_{object_name} crow:hasUuid ?uuid_any_{object_name} }}
+                            MINUS {{ ?template_{object_name} crow:hasAbsoluteLocation|crow:hasPclDimensions ?value_{object_name} }}
+                        }}
+                    """
+
+            query += f"""
+                DELETE {{
+                    {deletes}
+                }}\n"""
+            query += f"""INSERT {{
+                    {inserts}
+                }}\n"""
+            query += f"""WHERE {{
+                {wheres}
+            }};"""
+
+        # PAIRING SECTION
+        r = list(self.onto.query(self._query_area_objs))
+        a = np.r_[r]
+        idx_objs = a[:, 0].astype(bool)  # objects lines don't have "None" in the first column
+        objs = a[idx_objs, :4]
+        areas = a[np.logical_not(idx_objs)][:, 4:]
+
+        if len(objs) > 0 and len(areas) > 0:  # only do this if there are any objects and areas
+            dict_areas = {}
+            area_values = ""
+            for ap in areas:  # collect area points
+                aname, *points = ap
+                aname = aname.n3()
+                if aname not in dict_areas:
+                    area_values += f"\t\t\t({aname})\n"
+                    dict_areas[aname] = []
+                dict_areas[aname].append([p.toPython() for p in points])
+
+            allpoints = []
+            object_uris = []
+            for obj in objs:  # construct matrix of all objects and their associated URIs
+                o, *opoints = obj
+                o = o.n3()
+                object_uris.append(o)
+                allpoints.append([p.toPython() for p in opoints])
+            allpoints = np.array(allpoints)
+            object_uris = np.array(object_uris)
+
+            inserts = ""
+            for aname, points in dict_areas.items():
+                hull = Delaunay(points)
+                w = hull.find_simplex(allpoints)
+                for o in object_uris[w >= 0]:
+                    inserts += f"\t\t\t{o} crow:insideOf {aname} .\n"
+                    inserts += f"\t\t\t{aname} crow:contains {o} .\n"
+
+            query += f"""
+            DELETE {{
+                ?obj crow:insideOf ?a .
+                ?a crow:contains ?obj .
+            }}
+            WHERE {{
+                ?obj crow:insideOf ?a .
+                ?a crow:contains ?obj .
+            VALUES (?a)
+            {{
+                {area_values}
+            }}
+            }};
+            INSERT DATA {{
+                {inserts}
+            }}
+            """
+        return query
+
+    def pair_objects_to_areas(self):
         """ Test if objects are located inside any area, if so - append that object
         to that area
 
@@ -1344,55 +1815,62 @@ class CrowtologyClient():
         Returns:
             -
         """
-        areas = self.onto.query(self._query_main_areas)
-        # print(list(areas))
-        objs = self.onto.query(self._query_present_tangible_location)
-        # print(list(objs))
+        r = list(self.onto.query(self._query_area_objs))
+        a = np.r_[r]
+        idx_objs = a[:, 0].astype(bool)  # objects lines don't have "None" in the first column
+        objs = a[idx_objs, :4]
+        areas = a[np.logical_not(idx_objs)][:, 4:]
 
-        # build areas
         dict_areas = {}
-        for ap in areas:
-            a, *points = ap
-            a = a.n3()
-            if a not in dict_areas:
-                dict_areas[a] = []
-            dict_areas[a].append([p.toPython() for p in points])
+        area_values = ""
+        for ap in areas:  # collect area points
+            aname, *points = ap
+            aname = aname.n3()
+            if aname not in dict_areas:
+                area_values += f"({aname})\n"
+                dict_areas[aname] = []
+            dict_areas[aname].append([p.toPython() for p in points])
 
-        inserts = ""
-        deletes = ""
-        wheres = ""
-        for obj in objs:
+        allpoints = []
+        object_uris = []
+        for obj in objs:  # construct matrix of all objects and their associated URIs
             o, *opoints = obj
             o = o.n3()
-            s = f"{o} crow:insideOf ?a .\n"
-            deletes += s
-            wheres += s
-            opoints = [p.toPython() for p in opoints]
-            for aname, apoints in dict_areas.items():
-                if test_in_hull(opoints, apoints):
-                    inserts += f"{o} crow:insideOf {aname} .\n"
-                    inserts += f"{aname} crow:contains {o} .\n"
-        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-            prefix owl: <http://www.w3.org/2002/07/owl#>
-            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
-            DELETE {{
-                {deletes}
-            }}\n"""
-        query += f"""WHERE {{
-            {wheres}
-        }}"""
-        self.onto.update(query)
-        if len(inserts) > 0:
-            query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                prefix owl: <http://www.w3.org/2002/07/owl#>
-                prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+            object_uris.append(o)
+            allpoints.append([p.toPython() for p in opoints])
+        allpoints = np.array(allpoints)
+        object_uris = np.array(object_uris)
 
-                INSERT DATA {{
-                    {inserts}
-                }}\n"""
-            self.onto.update(query)
+        inserts = ""
+        for aname, points in dict_areas.items():
+            hull = Delaunay(points)
+            w = hull.find_simplex(allpoints)
+            for o in object_uris[w >= 0]:
+                inserts += f"{o} crow:insideOf {aname} .\n"
+                inserts += f"{aname} crow:contains {o} .\n"
+
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        DELETE {{
+        ?obj crow:insideOf ?a .
+            ?a crow:contains ?obj .
+        }}
+        WHERE {{
+            ?obj crow:insideOf ?a .
+            ?a crow:contains ?obj .
+        VALUES (?a)
+        {{
+            {area_values}
+        }}
+        }};
+        INSERT DATA {{
+            {inserts}
+        }}
+        """
+        self.onto.update(query)
 
     def get_objects_from_area(self, area_name):
         if type(area_name) is URIRef:
@@ -1447,8 +1925,6 @@ class CrowtologyClient():
         # data sample for query
         # data = [(rdflib.term.URIRef('http://imitrob.ciirc.cvut.cz/ontologies/crow#hammer_od_713'), rdflib.term.Literal('0.76065123', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.74001455', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.014921662', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float'))), (rdflib.term.URIRef('http://imitrob.ciirc.cvut.cz/ontologies/crow#cube_holes_od_732'), rdflib.term.Literal('0.6685969', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.49664876', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')), rdflib.term.Literal('0.046712816', datatype=rdflib.term.URIRef('http://www.w3.org/2001/XMLSchema#float')))]
 
-
-
     def check_position_in_workspace_area(self, xyz_list):
         """
         Check position xyz_list=[x,y,z] in area with name 'workspace'
@@ -1464,57 +1940,6 @@ class CrowtologyClient():
 
         self.__node.get_logger().info("<crowracle_client.py> 'workspace' scene doesn't exist!")
         return False
-
-    def pair_objects_to_areas(self, areas_uris, verbose=False):
-        """Test if objects are located inside any area, if so - append that object
-        to that area
-
-        Args:
-            area_uris (URIRef): list of URI's of all the areas in workspace
-            verbose (bool): If verbose is set to True, write out all triples who have
-                predicate self.CROW.insideOf
-        Returns:
-            -
-        """
-        # Get all scene objects
-        scene_objs_uris = self.getTangibleObjects()
-        for scene_obj_uri in scene_objs_uris:
-            # Remove all previous occurences and if objects is within some area -
-            # append it to it
-            self.onto.remove((scene_obj_uri, self.CROW.insideOf, None))
-
-            for area_uri in areas_uris:
-                obj_scene_test_ret = self.test_obj_in_area(obj_uri=scene_obj_uri, area_uri=area_uri)
-
-                if obj_scene_test_ret:
-                    self.onto.add((scene_obj_uri, self.CROW.insideOf, area_uri))
-
-        if verbose:
-            print("* All objects in all spaces:")
-            all = self.onto.triples((None, self.CROW.insideOf, None))
-            i = 1
-            for bit in all:
-                print(f"#{i} triple: {bit}")
-                i += 1
-
-        return
-
-    def get_objs_in_area(self, area_uri):
-        """Return objects located inside the given area (defined as storage space)
-
-        Args:
-            area_uri (URIRef): URI of the storage space
-
-        Returns:
-            objs_in (list of URIRefs): URIs of objects in the area
-        """
-        objs_all = self.getTangibleObjects()
-        objs_in = []
-        for obj_uri in objs_all:
-            res = self.test_obj_in_area(obj_uri, area_uri)
-            if res:
-                objs_in.append(obj_uri)
-        return objs_in
 
     def get_free_space_area(self, area_uri, spacing=0.05):
         """Return location of free (the least filled) space inside the given area (defined as storage space)
@@ -2143,7 +2568,7 @@ class CrowtologyClient():
         #         self.__node.get_logger().info("DISABLING object {}.".format(obj.split('#')[-1]))
         #         self.onto.remove((obj, self.CROW.hasId, None))
         #         self.onto.add((obj, self.CROW.disabledId, id[0]))
-        self.__node.get_logger().info("DISABLING object {}.".format(obj.split('#')[-1]))
+        # self.__node.get_logger().info("DISABLING object {}.".format(obj.split('#')[-1]))
         self.onto.update(self._query_disable_object, initBindings={"individual": obj})
 
     def enable_object(self, obj):
@@ -2159,7 +2584,7 @@ class CrowtologyClient():
         #         self.__node.get_logger().info("ENABLING object {}.".format(obj.split('#')[-1]))
         #         self.onto.remove((obj, self.CROW.disabledId, None))
         #         self.onto.add((obj, self.CROW.hasId, id[0]))
-        self.__node.get_logger().info("ENABLING object {}.".format(obj.split('#')[-1]))
+        # self.__node.get_logger().info("ENABLING object {}.".format(obj.split('#')[-1]))
         self.onto.update(self._query_enable_object, initBindings={"individual": obj})
 
     @property

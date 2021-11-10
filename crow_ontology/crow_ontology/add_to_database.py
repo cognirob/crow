@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.time import Time, Duration
 from ros2param.api import call_get_parameters
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.qos import QoSProfile
@@ -22,6 +23,7 @@ from rdflib.term import Identifier
 from rcl_interfaces.srv import GetParameters
 from crow_control.utils import ParamClient
 from threading import Thread, RLock
+from queue import Queue, Full, Empty
 
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
@@ -31,10 +33,7 @@ DISABLING_TIME_LIMIT = 3  # seconds
 TIMER_FREQ = 0.4  # seconds
 CLOSE_THRESHOLD = 2e-2  # 2cm
 MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
-
-
-def distance(entry):
-    return entry[-1]
+MAX_DELAY_OF_UPDATE = 1 # filter updates older than this will be dropped
 
 
 class OntoAdder(Node):
@@ -67,7 +66,7 @@ class OntoAdder(Node):
         self.create_timer(TIMER_FREQ, self.timer_callback, callback_group=MutuallyExclusiveCallbackGroup())
 
         # create listeners
-        qos = QoSProfile(depth=3, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
+        qos = QoSProfile(depth=5, reliability=QoSReliabilityPolicy.RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT)
         self.create_subscription(msg_type=FilteredPose,
                                  topic=self.FILTERED_POSES_TOPIC,
                                  callback=self.input_filter_callback,
@@ -105,11 +104,20 @@ class OntoAdder(Node):
             [0.65, 0.6],
         ], isMainArea=True)
 
+        self.max_delay_of_update = Duration(seconds=MAX_DELAY_OF_UPDATE)
+
+        self.db_queries_queue = Queue(10)
+        self.db_updater_thread = Thread(target=self.run_update, daemon=True)
+        self.db_updater_thread.start()
+
     def timer_callback(self):
         self.pclient.adder_alive = time.time()
         # start = time.time()
         tmsg = self.get_clock().now().to_msg()
         now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
+        tobe_enabled = []
+        tobe_disabled = []
+        tobe_deleted = []
         for obj, last_obj_time, enabled in self.crowracle.getTangibleObjects_timestamp():
             if last_obj_time is None:
                 self.get_logger().warn(f'Trying to check timestamp of object {obj} failed. It has not timestamp!')
@@ -117,27 +125,33 @@ class OntoAdder(Node):
             last_obj_time = datetime.strptime(last_obj_time.toPython(), '%Y-%m-%dT%H:%M:%SZ')
             time_diff = (now_time - last_obj_time).total_seconds()
             if time_diff >= DELETION_TIME_LIMIT:
-                self.crowracle.delete_object(obj)
+                tobe_deleted.append(obj)
             elif time_diff >= DISABLING_TIME_LIMIT:
-                self.get_logger().warn(f'Disabling limit reached for object {obj}. Status: {enabled}')
+                # self.get_logger().warn(f'Disabling limit reached for object {obj}. Status: {enabled}')
                 if enabled:
-                    self.crowracle.disable_object(obj)
+                    tobe_disabled.append(obj)
             elif not enabled:
-                self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
-                self.crowracle.enable_object(obj)
+                # self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
+                tobe_enabled.append(obj)
 
-        self.crowracle.pair_objects_to_areas_wq()
-        # pairing_thread = Thread(target=self.pair_objects_2_areas, daemon=True)
-        # pairing_thread.start()
+        query = self.crowracle.generate_en_dis_del_pair_query(tobe_enabled, tobe_disabled, tobe_deleted)
+        if query is not None:
+            try:
+                self.db_queries_queue.put(query, timeout=0.5)
+            except Full:  # don't add if queue is full - querying is lagging to much, probably
+                self.get_logger().error("Tried to add en/dis/del/pair query but the queue is full!")  # should pop the oldest item instead...
 
-    def pair_objects_2_areas(self):
-        try:
-            self._rlock.acquire()
-            self.crowracle.pair_objects_to_areas_wq()
-        except BaseException as e:
-            pass
-        finally:
-            self._rlock.release()
+    def run_update(self):
+        """This is a function for the query update thread."""
+        while rclpy.ok():
+            try:
+                query = self.db_queries_queue.get(block=True, timeout=1)
+            except Empty:  # let it spin if queue is empty
+                continue
+            try:
+                self.crowracle.onto.update(query, timeout=0.5)
+            except BaseException as e:
+                self.get_logger.error(f"Error executing a query!\nE:\n{e}\nQ:\n{query}")
 
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
@@ -145,11 +159,12 @@ class OntoAdder(Node):
             return
         # start = time.time()
         tmsg = self.get_clock().now()
-        self.get_logger().warn(f"Time difference is {(tmsg - rclpy.time.Time.from_msg(pose_array_msg.header.stamp)).nanoseconds * 1e-9:0.4f}")
-        # now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
+        time_delay = tmsg - Time.from_msg(pose_array_msg.header.stamp)
+        if time_delay > self.max_delay_of_update:  # drop old updates
+            self.get_logger().warn(f"Time difference is {time_delay.nanoseconds * 1e-9:0.4f}, which is too long! Dropping update!")
+            return
 
-        self.get_logger().error(str(pose_array_msg.tracked))
-        timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec+pose_array_msg.header.stamp.nanosec*(10**-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec + pose_array_msg.header.stamp.nanosec * 1e-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
         update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
@@ -168,7 +183,6 @@ class OntoAdder(Node):
                 self.get_logger().info(f"Skipping object update {obj} with uuid: {uuid}. Object unchanged.")
                 continue
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
-            # self.crowracle.update_object(obj, up[1], up[2], timestamp)  # TODO: add tracking
             objects_to_be_updated.append((obj, up[1], up[2], timestamp, up[3]))
             del update_dict[str_uuid]
 
@@ -185,23 +199,25 @@ class OntoAdder(Node):
             pose = np.r_[pose]
             if foundOld:
                 close = np.where(np.linalg.norm(old_xyz - pose, axis=1) < CLOSE_THRESHOLD)[0]
-                # TODO: add class name check
+                # TODO: add class name check?
                 if len(close) > 0:
                     close_index = close[0]
                     obj = old_uris[close_index]
                     self.get_logger().info(f"Updating object {obj}")
-                    # self.crowracle.update_object(obj, pose, size, timestamp)  # TODO: add tracking
                     objects_to_be_updated.append((obj, pose, size, timestamp, tracked))
                     continue
 
             # self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
-            # self.crowracle.add_detected_object_no_template(class_name, pose, size, uuid, timestamp, self.id, tracked)
             objects_to_be_added.append((class_name, pose, size, uuid, timestamp, self.id, tracked))
             self.id += 1
 
-        self.crowracle.update_batch_all(objects_to_be_added, objects_to_be_updated)
-        # if len(objects_to_be_updated) > 0:
-        #     self.crowracle.update_object_batch(objects_to_be_updated)
+        query = self.crowracle.generate_full_update(objects_to_be_added, objects_to_be_updated)
+        if query is not None:
+            try:
+                self.db_queries_queue.put(query)
+            except Full:  # don't add if queue is full - querying is lagging to much, probably
+                self.get_logger().error("Tried to add update query but the queue is full!")  # should pop the oldest item instead...
+
         # self.get_logger().warn(f"input cb takes {time.time() - start:0.3f} seconds")
 
     def input_action_callback(self, action_array_msg):

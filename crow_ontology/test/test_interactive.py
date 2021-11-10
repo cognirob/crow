@@ -5,12 +5,14 @@ import rdflib
 from rdflib import BNode, URIRef, Literal
 from crow_ontology.crowracle_client import CrowtologyClient
 from rdflib.plugins.sparql.processor import prepareQuery
-from time import time
+from time import time, sleep
 import timeit
 import numpy as np
 import warnings
 import datetime as dt
 from uuid import uuid4
+from scipy.spatial import Delaunay
+from datetime import datetime
 
 
 CROW = Namespace(f'http://imitrob.ciirc.cvut.cz/ontologies/crow#')
@@ -99,7 +101,17 @@ class SpeedTester():
         update_tracked = bool(np.random.randint(0, 2))
         return obj, update_location, update_size, update_timestamp, update_tracked
 
-
+def test_in_hull(p, points):
+    """Test if point p is in hull defined by points, using Delaunay triangulation
+    Args:
+        p (list): tested point, 3d
+        points (list of lists): polyhedron points, 3d
+    Returns:
+        result (bool): Whether or not the point is inside polyhedron
+    """
+    if not isinstance(points,Delaunay):
+        hull = Delaunay(points)
+    return hull.find_simplex(p)>=0
 # %% CROWTOLOGY
 
 def main(args=[]):
@@ -108,6 +120,297 @@ def main(args=[]):
 tester = SpeedTester()
 onto = tester.onto
 crw = tester.crowracle
+
+# %% AREA SORTING
+crw.reset_database()
+areas = [
+    [
+        [0, 0],
+        [0.4, 0],
+        [0.4, 0.2],
+        [0, 0.2],
+    ],
+    [
+        [1, 1],
+        [1.5, 1],
+        [1.5, 2],
+        [1, 2],
+    ],
+    [
+        [-1, -2],
+        [-0.3, -2.5],
+        [-0.5, -1.5],
+        [-1, -1],
+    ],
+]
+for i, area in enumerate(areas):
+    polygon = [(np.array(li) + np.random.randn(2) * 0.03).tolist() for li in area]
+    polygon_shifted = [(np.array(li) + np.random.randn(2) * 0.03 - 5).tolist() for li in area]
+    crw.add_storage_space_flat(f"area_{i}", polygon, isMainArea=True)
+    crw.add_storage_space_flat(f"area_{i}_shifted", polygon_shifted, isMainArea=True)
+print("Added these areas:")
+print(crw.getStoragesProps())
+print("Adding not main areas...")
+for i, area in enumerate(areas):
+    polygon = [(np.array(li) + np.random.randn(2) * 0.05 + 5).tolist() for li in area]
+    crw.add_storage_space_flat(f"fake_area_{i}", polygon)
+
+print("Adding objects to areas...")
+list_of_objs_per_area = {}
+for adict in crw.getStoragesProps():
+    area_uri = adict["uri"]
+    area_name = adict["name"]
+    if "shifted" in area_name:  # do not add objects to shifted areas
+        continue
+    list_of_objs_per_area[area_name] = []
+    centroid = crw.get_area_centroid(area_uri)
+    # generate objects around center
+    sigma = 0.05
+    for i in range(10):
+        object_name, location, size, uuid, timestamp, template, adder_id, tracked = tester.get_me_an_object_around(*centroid, sigma=sigma)
+        crw.add_detected_object_no_template(object_name, location, size, uuid, timestamp, adder_id, tracked)
+        print(f"Added object at {location}")
+        obj = crw.CROW[object_name + '_od_'+str(adder_id)]
+        list_of_objs_per_area[area_name].append(obj)
+
+    onto_objs_by_name = crw.get_objects_from_area(area_name)
+    onto_objs_by_uri = crw.get_objects_from_area(area_uri)
+    print(sorted(list_of_objs_per_area[area_name]))
+    print(sorted(onto_objs_by_name))
+    print(sorted(onto_objs_by_uri))
+
+print("Testing if sorting objects into areas is working...")
+current_objects = crw.getTangibleObjects()
+crw.pair_objects_to_areas_wq()
+
+# %% shift objects
+shift = 5
+batch_update = []
+tmsg = crw.node.get_clock().now().to_msg()
+timestamp = datetime.fromtimestamp(tmsg.sec+tmsg.nanosec*(1e-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
+for obj, x, y, z in onto.query(_query_present_tangible_location):
+    batch_update.append((obj, np.r_[x.toPython() + shift, y.toPython() + shift, z.toPython() + 0.03], [0.1, 0.1, 0.1], timestamp, True))
+
+crw.update_batch_all([], batch_update)
+
+
+# %%
+_query_area_objs = """
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+SELECT DISTINCT ?obj ?obj_x ?obj_y ?obj_z ?area ?area_x ?area_y ?area_z
+FROM <http://imitrob.ciirc.cvut.cz/ontologies/crow>
+WHERE {
+  {
+    		?obj crow:hasId ?obj_id .
+            ?obj crow:hasAbsoluteLocation ?obj_loc .
+            ?obj_loc crow:x ?obj_x .
+            ?obj_loc crow:y ?obj_y .
+            ?obj_loc crow:z ?obj_z .
+  } UNION {
+            ?area a crow:StorageSpace .
+            ?area crow:hasPolyhedron ?poly .
+            ?poly crow:hasPoint3D ?pt .
+            ?pt crow:x ?area_x .
+            ?pt crow:y ?area_y .
+            ?pt crow:z ?area_z .
+            FILTER EXISTS { ?area crow:areaType 'main' }
+
+  }
+}"""
+
+_query_main_areas = """
+SELECT DISTINCT ?area ?x ?y ?z
+
+WHERE {
+    ?area a crow:StorageSpace .
+    ?area crow:hasPolyhedron ?poly .
+    ?poly crow:hasPoint3D ?pt .
+    ?pt crow:x ?x .
+    ?pt crow:y ?y .
+    ?pt crow:z ?z .
+    FILTER EXISTS { ?area crow:areaType 'main' }
+}"""
+
+_query_present_tangible_location = """SELECT DISTINCT ?obj ?x ?y ?z
+WHERE {
+		?obj crow:hasId ?id .
+    ?obj crow:hasAbsoluteLocation ?loc .
+    ?loc crow:x ?x .
+    ?loc crow:y ?y .
+    ?loc crow:z ?z .
+}"""
+
+# %% PAIR TO AREAS
+r = list(onto.query("""
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+SELECT DISTINCT ?obj ?obj_x ?obj_y ?obj_z ?area ?area_x ?area_y ?area_z
+FROM <http://imitrob.ciirc.cvut.cz/ontologies/crow>
+WHERE {
+  {
+    		?obj crow:hasId ?obj_id .
+            ?obj crow:hasAbsoluteLocation ?obj_loc .
+            ?obj_loc crow:x ?obj_x .
+            ?obj_loc crow:y ?obj_y .
+            ?obj_loc crow:z ?obj_z .
+  } UNION {
+            ?area a crow:StorageSpace .
+            ?area crow:hasPolyhedron ?poly .
+            ?poly crow:hasPoint3D ?pt .
+            ?pt crow:x ?area_x .
+            ?pt crow:y ?area_y .
+            ?pt crow:z ?area_z .
+            FILTER EXISTS { ?area crow:areaType 'main' }
+
+  }
+}"""))
+a = np.r_[r]
+idx_objs = a[:, 0].astype(bool)
+objs = a[idx_objs, :4]
+areas = a[np.logical_not(idx_objs)][:, 4:]
+
+# build areas
+dict_areas = {}
+area_values = ""
+for ap in areas:
+    aname, *points = ap
+    aname = aname.n3()
+    if aname not in dict_areas:
+        area_values += f"({aname})\n"
+        dict_areas[aname] = []
+    dict_areas[aname].append([p.toPython() for p in points])
+
+inserts = ""
+deletes = """?obj crow:insideOf ?a .
+      ?a crow:contains ?obj ."""
+wheres = f"""?obj crow:insideOf ?a .
+      ?a crow:contains ?obj .
+  VALUES (?a)
+  {{
+    {area_values}
+  }}"""
+for obj in objs:
+    o, *opoints = obj
+    o = o.n3()
+    s = f"{o} crow:insideOf ?a .\n"
+    wheres += s
+    opoints = [p.toPython() for p in opoints]
+    for aname, apoints in dict_areas.items():
+        if test_in_hull(opoints, apoints):
+            inserts += f"{o} crow:insideOf {aname} .\n"
+            inserts += f"{aname} crow:contains {o} .\n"
+query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    prefix owl: <http://www.w3.org/2002/07/owl#>
+    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+    DELETE {{
+        {deletes}
+    }}\n"""
+query += f"""WHERE {{
+    {wheres}
+}}"""
+onto.update(query)
+if len(inserts) > 0:
+    query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        INSERT DATA {{
+            {inserts}
+        }}\n"""
+        onto.update(query)
+
+
+# %% PAIR TOGETHER
+r = list(onto.query("""
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+SELECT DISTINCT ?obj ?obj_x ?obj_y ?obj_z ?area ?area_x ?area_y ?area_z
+FROM <http://imitrob.ciirc.cvut.cz/ontologies/crow>
+WHERE {
+  {
+    		?obj crow:hasId ?obj_id .
+            ?obj crow:hasAbsoluteLocation ?obj_loc .
+            ?obj_loc crow:x ?obj_x .
+            ?obj_loc crow:y ?obj_y .
+            ?obj_loc crow:z ?obj_z .
+  } UNION {
+            ?area a crow:StorageSpace .
+            ?area crow:hasPolyhedron ?poly .
+            ?poly crow:hasPoint3D ?pt .
+            ?pt crow:x ?area_x .
+            ?pt crow:y ?area_y .
+            ?pt crow:z ?area_z .
+            FILTER EXISTS { ?area crow:areaType 'main' }
+
+  }
+}"""))
+a = np.r_[r]
+idx_objs = a[:, 0].astype(bool)
+objs = a[idx_objs, :4]
+areas = a[np.logical_not(idx_objs)][:, 4:]
+
+dict_areas = {}
+area_values = ""
+for ap in areas:
+    aname, *points = ap
+    aname = aname.n3()
+    if aname not in dict_areas:
+        area_values += f"({aname})\n"
+        dict_areas[aname] = []
+    dict_areas[aname].append([p.toPython() for p in points])
+
+allpoints = []
+object_uris = []
+for obj in objs:
+    o, *opoints = obj
+    o = o.n3()
+    object_uris.append(o)
+    allpoints.append([p.toPython() for p in opoints])
+allpoints = np.array(allpoints)
+object_uris = np.array(object_uris)
+
+inserts = ""
+for aname, points in dict_areas.items():
+    hull = Delaunay(points)
+    w = hull.find_simplex(allpoints)
+    for o in object_uris[w >= 0]:
+        inserts += f"{o} crow:insideOf {aname} .\n"
+        inserts += f"{aname} crow:contains {o} .\n"
+
+query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+DELETE {{
+   ?obj crow:insideOf ?a .
+  	?a crow:contains ?obj .
+}}
+WHERE {{
+    ?obj crow:insideOf ?a .
+	 ?a crow:contains ?obj .
+  VALUES (?a)
+  {{
+    {area_values}
+  }}
+}};
+INSERT DATA {{
+    {inserts}
+}}
+"""
+onto.update(query)
 
 # %%  SUPER LARGE UPDATE
 crw.reset_database()
@@ -226,6 +529,126 @@ query += f"""WHERE {{
 }}"""
 print(query)
 # %%
-
 onto.update(query)
 
+# %% MOLOCH TEST
+crw.reset_database()
+
+batch_update = [tester.add_and_gen_update() for i in range(10)]
+batch_add = [tester.get_no_template() for i in range(10)]
+
+# %% EN DIS DEL PAIR
+nobjs = 5
+
+def gen_objs():
+    crw.reset_database()
+    enabled_objs = [tester.add_object() for i in range(nobjs)]
+    disabled_objs = [tester.add_object() for i in range(nobjs)]
+    tbdel_objs = [tester.add_object() for i in range(nobjs)]
+    for obj in disabled_objs:
+        crw.disable_object(obj)
+    return enabled_objs, disabled_objs, tbdel_objs
+
+enabled_objs, disabled_objs, tbdel_objs = gen_objs()
+
+# %%
+start = time()
+query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+"""
+
+if len(enabled_objs) > 0:
+    tobe_disabled = ""
+    for obj in enabled_objs:
+    # for obj in enabled_objs[:int(nobjs/2)]:
+        tobe_disabled += f"({obj.n3()})\n"
+    query += f"""
+    DELETE {{
+      ?individual crow:hasId ?id .
+    }}
+    INSERT {{
+      ?individual crow:disabledId ?id .
+    }}
+    WHERE {{
+        ?individual crow:hasId ?id .
+        VALUES (?individual)
+        {{
+          {tobe_disabled}
+        }}
+    }}"""
+     
+if len(enabled_objs) > 0:
+    tobe_enabled = ""
+    for obj in disabled_objs:
+    # for obj in disabled_objs[:int(nobjs/2)]:
+        tobe_enabled += f"({obj.n3()})\n"
+    query += f""";
+    DELETE {{
+      ?individual crow:disabledId ?id .
+    }}
+    INSERT {{
+      ?individual crow:hasId ?id .
+    }}
+    WHERE {{
+        ?individual crow:disabledId ?id .
+        VALUES (?individual)
+        {{
+          {tobe_enabled}
+        }}
+    }}"""
+
+if len(tbdel_objs) > 0:
+    tobe_deleted = ""
+    for obj in tbdel_objs:
+    # for obj in disabled_objs[:int(nobjs/2)]:
+        tobe_deleted += f"({obj.n3()})\n"
+    query += f""";
+    DELETE {{
+        ?individual ?p1 ?o1 .
+        ?s2 ?p2 ?individual .
+    }}
+    WHERE {{
+      {{?individual ?p1 ?o1}} UNION {{?s2 ?p2 ?individual}}
+      VALUES (?individual) {{
+         {tobe_deleted}
+      }}
+    }}"""
+        
+# print(query)
+onto.update(query)
+print(f"Full query runtine = {time() - start}")
+
+enabled_objs, disabled_objs = disabled_objs, enabled_objs
+     
+     
+# %% DELETE
+nobjs = 50
+# tbdel_objs = [tester.add_object() for i in range(nobjs)]
+start = time()
+
+tobe_deleted = ""
+for obj in tbdel_objs:
+# for obj in disabled_objs[:int(nobjs/2)]:
+    tobe_deleted += f"({obj.n3()})\n"
+query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix owl: <http://www.w3.org/2002/07/owl#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+DELETE {{
+    ?individual ?p1 ?o1 .
+    ?s2 ?p2 ?individual .
+}}
+WHERE {{
+  {{?individual ?p1 ?o1}} UNION {{?s2 ?p2 ?individual}}
+  VALUES (?individual) {{
+     {tobe_deleted}
+  }}
+}}"""
+print(query)
+# %%
+
+onto.update(query)
+print(f"Full query runtine = {time() - start}")
