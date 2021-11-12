@@ -1,0 +1,4 @@
+string build_name
+---
+bool success
+BuildFailReason reason

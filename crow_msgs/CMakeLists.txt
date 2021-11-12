@@ -53,8 +53,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Runtime.msg"
   "msg/AssemblyObjectProbability.msg"
   "msg/AssemblyActionProbability.msg"
-
-  #"srv/GetRobotStatus.srv"
+  "msg/BuildFailReason.msg"
+  "srv/StartBuild.srv"
+  "srv/CancelBuild.srv"
 
   #"action/PickNPlace.action"
   DEPENDENCIES builtin_interfaces std_msgs sensor_msgs geometry_msgs
