@@ -6,6 +6,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallb
 from rclpy.executors import MultiThreadedExecutor
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
+from crow_msgs.srv import StartBuild, CancelBuild
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import RobotAction
@@ -80,6 +81,8 @@ class ControlLogic(Node):
     ROBOT_ACTION_FETCH = 'pick_n_pass'
     ROBOT_ACTION_PASS = 'pass'
     ROBOT_SERVICE_STATUS = 'get_robot_status'
+    START_BUILD_SERVICE = 'assembly_start'
+    CANCEL_BUILD_SERVICE = 'assembly_cancel'
     DEBUG = False
     UPDATE_INTERVAL = 0.1
     MAX_QUEUE_LENGTH = 10
@@ -136,7 +139,10 @@ class ControlLogic(Node):
         # self.get_logger().info(f"Connected to gripper open action: {self.gripper_open_client.wait_for_server()}")
 
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=reentrant_group)
-        # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}")
+        self.start_build_client = self.create_client(StartBuild, self.START_BUILD_SERVICE)
+        self.cancel_build_client = self.create_client(CancelBuild, self.CANCEL_BUILD_SERVICE)
+        
+        # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}").call()
 
         self.status = self.STATUS_IDLE
         self.create_timer(self.UPDATE_INTERVAL, self.update_main_cb, callback_group=ReentrantCallbackGroup())
@@ -158,7 +164,10 @@ class ControlLogic(Node):
                              CommandType.FETCH: self.sendFetchAction,
                              CommandType.FETCH_TO: self.sendFetchToAction,
                              CommandType.RELEASE: self.sendReleaseAction,
-                             CommandType.TIDY: self.sendTidyAction}
+                             CommandType.TIDY: self.sendTidyAction,
+                             CommandType.BUILD_ASSEMBLY: self.sendBuildAction,
+                             CommandType.BUILD_ASSEMBLY_CANCEL: self.sendCancelBuildAction
+                             }
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -279,12 +288,14 @@ class ControlLogic(Node):
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, command_buffer='main', action_type=None, action=None, **kwargs):
+        print(locals())
         if command_buffer == 'meanwhile':
             self.command_meanwhile_buffer.append((action_type, action, kwargs))
         else:
             command_name = str(self.main_buffer_count)#num2words(self.main_buffer_count, lang='cz')
             self.command_main_buffer.append((action_type, action, command_name, kwargs))
             self.main_buffer_count += 1
+        print(self.command_meanwhile_buffer)
         self.pclient.ready_for_next_sentence = True
 
     def prepare_command(self, target=None, target_type=None, **kwargs):
@@ -350,7 +361,7 @@ class ControlLogic(Node):
                         self._cleanup_after_action()
                 else:
                     # TODO: pop the command back into queue and try again later
-                    self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. The error was:\n{e}")
+                    self.get_logger().error(f"Error executing action {disp_name} with args {kwargs}. Missing target or location.")
                     self.make_robot_fail_to_start()
             finally:
                 # self._set_status(self.STATUS_IDLE)
@@ -414,6 +425,23 @@ class ControlLogic(Node):
         marker_msg.group_name = marker_group_name
         marker_msg.define_name = define_name
         self.marker_storage_publisher.publish(marker_msg)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
+    
+    def sendBuildAction(self, disp_name='', define_name=None, **kwargs):
+        """Marker Detector detects chosen markers, if successful, adds named storage to database
+        """
+        self.get_logger().info(f"Performing build assembly action called {define_name}")
+        request = StartBuild.Request(build_name=define_name)
+        self.start_build_client.call_async(request)
+        self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
+        self.wait_then_talk()
+
+    def sendCancelBuildAction(self, disp_name='', define_name=None, **kwargs):
+        """Marker Detector detects chosen markers, if successful, adds named storage to database
+        """
+        print('canceling action works....')
+        self.cancel_build_client.call_async()
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
 
