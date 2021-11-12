@@ -16,3 +16,4 @@ crow_ontology/*.html
 crow_ontology/css
 crow_ontology/images
 crow_ontology/js
+.oterm_*.txt
