@@ -226,6 +226,17 @@ class CrowtologyClient():
             ?obj a crow:NamedColor .
             ?obj ?language ?name .
         }"""
+    _query_workpieces_detector_names = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        SELECT DISTINCT ?detector_name
+        WHERE {
+            ?obj crow:hasDetectorName ?detector_name .
+            ?obj a ?cls .
+            ?cls rdfs:subClassOf* crow:Workpiece .
+        }"""
     _query_filter_properties = """SELECT DISTINCT ?name ?col ?sigma
         WHERE {
             ?obj crow:hasDetectorName ?name .
@@ -607,6 +618,13 @@ class CrowtologyClient():
         """
         res = self.onto.query(self._query_colors)
         return [g["obj"] for g in res]
+
+    def getWorkpieceDetNames(self):
+        """Returns a list of detector names for classes
+        of tangible objects that are workpieces (cube, sphere, etc.)
+        """
+        res = self.onto.query(self._query_workpieces_detector_names)
+        return list(res)
 
     def get_obj_of_properties(self, obj_cls, uri_dict, all=False):
         """Get URI object of properties specified by URIs
