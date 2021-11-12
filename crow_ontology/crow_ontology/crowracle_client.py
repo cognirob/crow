@@ -623,8 +623,8 @@ class CrowtologyClient():
         """Returns a list of detector names for classes
         of tangible objects that are workpieces (cube, sphere, etc.)
         """
-        res = self.onto.query(self._query_workpieces_detector_names)
-        return list(res)
+        res = [cname[0].toPython() for cname in list(self.onto.query(self._query_workpieces_detector_names))]
+        return res
 
     def get_obj_of_properties(self, obj_cls, uri_dict, all=False):
         """Get URI object of properties specified by URIs
