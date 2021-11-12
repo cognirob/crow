@@ -7,7 +7,7 @@ from rclpy.executors import MultiThreadedExecutor
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
 from crow_msgs.srv import StartBuild, CancelBuild
-from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus, RobotActionType
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import RobotAction
 from geometry_msgs.msg import Pose
@@ -474,7 +474,8 @@ class ControlLogic(Node):
                 # target_size=target_info[1],
                 target_size=size,
                 target_type=target_info[2],
-                location_xyz=location
+                location_xyz=location,
+                action_type=RobotActionType.POINT
             )
         # print('>>>>')
         # self._set_status(self.STATUS_EXECUTING)
@@ -501,6 +502,7 @@ class ControlLogic(Node):
                 target_xyz=target_info[0],
                 target_size=target_info[1],
                 target_type=target_info[2],
+                action_type=RobotActionType.PICK_N_HOME
                 # location_xyz=location  # temporary "robot default" position - in PickTask.py template
             )
         self._send_goal_future = self.robot_pick_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
@@ -521,7 +523,7 @@ class ControlLogic(Node):
         self.get_logger().info("Performing Fetch action")
         self.pclient.robot_done = False
         pass_only = target_info is None
-        if pass_only:
+        if pass_only:  # robot is already holding something, pass it to the user
             if self.hands_empty():
                 self.ui.buffered_say(self.guidance_file[self.LANG]["hands_empty"] + disp_name, say=2)
                 self.wait_then_talk()
@@ -529,10 +531,11 @@ class ControlLogic(Node):
                 return
             goal_msg = self.composeRobotActionMessage(
                 location_xyz=location,  # temporary storage location - in Fetch.py template
-                robot_id=0
+                robot_id=0,
+                action_type=RobotActionType.PASS
             )
             client = self.robot_pass_client
-        else:
+        else:  # pick and pass -> fetch
             if self.hands_full():
                 self.ui.buffered_say(self.guidance_file[self.LANG]["hands_full"] + disp_name, say=2)
                 self.wait_then_talk()
@@ -542,7 +545,8 @@ class ControlLogic(Node):
                     target_xyz=target_info[0],
                     target_size=target_info[1],
                     target_type=target_info[2],
-                    location_xyz=location  # temporary storage location - in Fetch.py template
+                    location_xyz=location,  # temporary storage location - in Fetch.py template
+                    action_type=RobotActionType.PICK_N_PASS
                 )
             client = self.robot_fetch_client
 
@@ -572,7 +576,8 @@ class ControlLogic(Node):
             client = self.robot_place_client
             goal_msg = self.composeRobotActionMessage(
                     location_xyz=location,
-                    robot_id=0
+                    robot_id=0,
+                    action_type=RobotActionType.PLACE_N_HOME
                 )
         else:
             if self.hands_full():
@@ -585,7 +590,8 @@ class ControlLogic(Node):
                     target_xyz=target_info[0],
                     target_size=target_info[1],
                     target_type=target_info[2],
-                    location_xyz=location
+                    location_xyz=location,
+                    action_type=RobotActionType.PICK_N_PLACE
                 )
         # self._set_status(self.STATUS_EXECUTING)
         self._send_goal_future = client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
@@ -609,7 +615,7 @@ class ControlLogic(Node):
             self.wait_then_talk()
             self.make_robot_fail_to_start()
             return
-        goal_msg = self.composeRobotActionMessage(robot_id=0)
+        goal_msg = self.composeRobotActionMessage(robot_id=0, action_type=RobotActionType.RELEASE)
         self._send_goal_future = self.gripper_open_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
@@ -655,11 +661,12 @@ class ControlLogic(Node):
         else:
             self.get_logger().info("No more objects to tidy up.")
 
-    def composeRobotActionMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None, robot_id=-1):
+    def composeRobotActionMessage(self, target_xyz=None, target_size=None, target_type=None, location_xyz=None, action_type=-1, robot_id=-1):
         goal_msg = RobotAction.Goal()
         goal_msg.frame_id = "global"
         goal_msg.robot_id = robot_id
         goal_msg.request_units = Units(unit_type=Units.METERS)
+        goal_msg.robot_action_type.type = action_type
 
         goal_msg.poses = []
         if target_xyz is not None:

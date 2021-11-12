@@ -6,7 +6,7 @@ from ros2param.api import call_get_parameters
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from trio3_ros2_interfaces.msg import RobotStatus, CoreActionPhase, ActionResultFlag, GripperStatus
+from trio3_ros2_interfaces.msg import RobotStatus, CoreActionPhase, ActionResultFlag, GripperStatus, RobotActionType, ObjectType
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import RobotAction
 from rclpy.executors import MultiThreadedExecutor
@@ -61,6 +61,8 @@ class DummyActionRobot(Node):
             )
         # define robot status service
         self.srv = self.create_service(GetRobotStatus, self.ROBOT_SERVICE_STATUS, self.get_robot_status)#, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
+        self.translate_action_type = {v: k for k, v in RobotActionType.__dict__.items() if not k.startswith("_") and type(v) is int}
+        self.translate_object_type = {v: k for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
 
     def get_robot_status(self, request, response):
         grip_full = self.GRIP_ALWAYS_FULL or self.GRIP_RANDOMLY_FULL and np.random.rand() > 0.5
@@ -75,7 +77,9 @@ class DummyActionRobot(Node):
     def goal_callback(self, goal_request, interface="/"):
         """Accept or reject a client request to begin an action."""
         time.sleep(self.DELAY_BEFORE_ACCEPTING_GOAL)
+        self.get_logger().info('********************************')
         self.get_logger().info(f'Received goal request for {interface} action on robot {goal_request.robot_id}.')
+        self.get_logger().info(f'Action type: {goal_request.robot_action_type.type} [{self.translate_action_type[goal_request.robot_action_type.type]}], object: {goal_request.object_type.type} [{self.translate_object_type[goal_request.object_type.type]}]')
         if self.is_executing:
             self.get_logger().info(f'Received goal request but the robot is currently executing another action, rejecting request.')
             return GoalResponse.REJECT
