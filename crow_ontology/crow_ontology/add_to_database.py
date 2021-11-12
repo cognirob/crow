@@ -127,11 +127,11 @@ class OntoAdder(Node):
             if time_diff >= DELETION_TIME_LIMIT:
                 tobe_deleted.append(obj)
             elif time_diff >= DISABLING_TIME_LIMIT:
-                # self.get_logger().warn(f'Disabling limit reached for object {obj}. Status: {enabled}')
+                self.get_logger().warn(f'Disabling limit reached for object {obj}. Status: {enabled}')
                 if enabled:
                     tobe_disabled.append(obj)
             elif not enabled:
-                # self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
+                self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
                 tobe_enabled.append(obj)
 
         query = self.crowracle.generate_en_dis_del_pair_query(tobe_enabled, tobe_disabled, tobe_deleted)
@@ -149,7 +149,9 @@ class OntoAdder(Node):
             except Empty:  # let it spin if queue is empty
                 continue
             try:
-                self.crowracle.onto.update(query, timeout=0.5)
+                # self.get_logger().info("Executing query...")
+                self.crowracle.onto.update(query)
+                # self.get_logger().info("Done.")
             except BaseException as e:
                 self.get_logger.error(f"Error executing a query!\nE:\n{e}\nQ:\n{query}")
 
@@ -157,14 +159,14 @@ class OntoAdder(Node):
         if not pose_array_msg.poses:
             self.get_logger().info("No poses received. Quitting early.")
             return
-        # start = time.time()
+        start = time.time()
         tmsg = self.get_clock().now()
         time_delay = tmsg - Time.from_msg(pose_array_msg.header.stamp)
         if time_delay > self.max_delay_of_update:  # drop old updates
             self.get_logger().warn(f"Time difference is {time_delay.nanoseconds * 1e-9:0.4f}, which is too long! Dropping update!")
             return
 
-        timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec + pose_array_msg.header.stamp.nanosec * 1e-9)).strftime('%Y-%m-%dT%H:%M:%SZ')
+        timestamp = datetime.fromtimestamp(pose_array_msg.header.stamp.sec + pose_array_msg.header.stamp.nanosec * 1e-9).strftime('%Y-%m-%dT%H:%M:%SZ')
         update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
@@ -176,11 +178,12 @@ class OntoAdder(Node):
             str_uuid = uuid.toPython()
             xyz = np.r_[x.toPython(), y.toPython(), z.toPython()]
             if str_uuid not in update_dict:
-                self.get_logger().info(f"Skipping updating of object {obj} with uuid: {uuid}. For some reason, it is missing from the update_dict: {update_dict}")
+                self.get_logger().warn(f"Skipping updating of object {obj} with uuid: {uuid}. For some reason, it is missing from the update_dict: {update_dict}")
+                # self.get_logger().info(f"Maybe it was in the input twice?\n{existing_objects}")
                 continue
             up = update_dict[str_uuid]
             if tracked == up[3] and np.linalg.norm(xyz - up[1]) < MIN_DIST_TO_UPDATE:
-                self.get_logger().info(f"Skipping object update {obj} with uuid: {uuid}. Object unchanged.")
+                self.get_logger().warn(f"Skipping object update {obj} with uuid: {uuid}. Object unchanged.")
                 continue
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
             objects_to_be_updated.append((obj, up[1], up[2], timestamp, up[3]))
@@ -207,18 +210,18 @@ class OntoAdder(Node):
                     objects_to_be_updated.append((obj, pose, size, timestamp, tracked))
                     continue
 
-            # self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
+            self.get_logger().info(f"Adding object with class {class_name} and uuid: {uuid}")
             objects_to_be_added.append((class_name, pose, size, uuid, timestamp, self.id, tracked))
             self.id += 1
 
         query = self.crowracle.generate_full_update(objects_to_be_added, objects_to_be_updated)
         if query is not None:
             try:
-                self.db_queries_queue.put(query)
+                self.db_queries_queue.put(query, timeout=0.5)
             except Full:  # don't add if queue is full - querying is lagging to much, probably
                 self.get_logger().error("Tried to add update query but the queue is full!")  # should pop the oldest item instead...
 
-        # self.get_logger().warn(f"input cb takes {time.time() - start:0.3f} seconds")
+        self.get_logger().warn(f"input cb takes {time.time() - start:0.3f} seconds")
 
     def input_action_callback(self, action_array_msg):
         if not action_array_msg.avg_class_name:
