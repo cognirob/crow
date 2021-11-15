@@ -30,10 +30,10 @@ ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 10  # seconds
 DISABLING_TIME_LIMIT = 3  # seconds
-TIMER_FREQ = 0.4  # seconds
+TIMER_FREQ = 0.5  # seconds
 CLOSE_THRESHOLD = 3e-2  # 2cm
 MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
-MAX_DELAY_OF_UPDATE = 1 # filter updates older than this will be dropped
+MAX_DELAY_OF_UPDATE = 0.5 # filter updates older than this will be dropped
 
 
 class OntoAdder(Node):
@@ -118,7 +118,7 @@ class OntoAdder(Node):
         tobe_enabled = []
         tobe_disabled = []
         tobe_deleted = []
-        has_lock = self._onto_process_lock.acquire(timeout=0.05)  # don't actually need lock, it only reduces errors -> continue even if not lock not owned
+        # has_lock = self._onto_process_lock.acquire(timeout=0.05)  # don't actually need lock, it only reduces errors -> continue even if not lock not owned
         for obj, last_obj_time, enabled in self.crowracle.getTangibleObjects_timestamp():
             if last_obj_time is None:
                 self.get_logger().warn(f'Trying to check timestamp of object {obj} failed. It has not timestamp!')
@@ -134,8 +134,8 @@ class OntoAdder(Node):
             elif not enabled:
                 self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
                 tobe_enabled.append(obj)
-        if has_lock:
-            self._onto_process_lock.release()
+        # if has_lock:
+        #     self._onto_process_lock.release()
         query = self.crowracle.generate_en_dis_del_pair_query(tobe_enabled, tobe_disabled, tobe_deleted)
         if query is not None:
             try:
@@ -174,7 +174,7 @@ class OntoAdder(Node):
         update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
-        has_lock = self._onto_process_lock.acquire(timeout=0.05)  # don't actually need lock, it only reduces errors -> continue even if not lock not owned
+        # has_lock = self._onto_process_lock.acquire(timeout=0.05)  # don't actually need lock, it only reduces errors -> continue even if not lock not owned
         existing_objects = self.crowracle.get_objects_by_uuid(pose_array_msg.uuid)
         # update location of existing objects
         objects_to_be_updated = []
@@ -219,8 +219,8 @@ class OntoAdder(Node):
             objects_to_be_added.append((class_name, pose, size, uuid, timestamp, self.id, tracked))
             self.id += 1
 
-        if has_lock:
-            self._onto_process_lock.release()
+        # if has_lock:
+        #     self._onto_process_lock.release()
         query = self.crowracle.generate_full_update(objects_to_be_added, objects_to_be_updated)
         if query is not None:
             try:
