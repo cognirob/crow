@@ -30,6 +30,7 @@ ONTO_SERVER_NAME = "ontology_server"
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 OWL_READY = "http://www.lesfleursdunormal.fr/static/_downloads/owlready_ontology.owl"
 
+
 class CrowtologyClient():
 
     CROW = Namespace(f"{ONTO_IRI}#")
@@ -345,6 +346,14 @@ class CrowtologyClient():
         prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
 
         DELETE {
+            ?loc a crow:xyzAbsoluteLocation .
+            ?loc crow:x ?lx .
+            ?loc crow:y ?ly .
+            ?loc crow:z ?lz .
+            ?pcl a crow:xyzPclDimensions .
+            ?pcl crow:x ?px .
+            ?pcl crow:y ?py .
+            ?pcl crow:z ?pz .
             ?s ?p ?o .
         }
         WHERE {
@@ -439,10 +448,9 @@ class CrowtologyClient():
             self.__config.setCredentials(username=cfg["username"], password=cfg["password"])
             self.__onto = OntologyAPI(self.__config)
 
-
             self.__node.context.on_shutdown(self._on_shutdown)
             if not self.__uses_external_node:
-                self.__node_thread = Thread(target=lambda : rclpy.spin(self.__node), name="node_runner")
+                self.__node_thread = Thread(target=lambda: rclpy.spin(self.__node), name="node_runner")
                 self.__node_thread.daemon = True
                 self.__node_thread.start()
 
@@ -506,7 +514,6 @@ class CrowtologyClient():
         else:
             print("Cannot reset the database, server does not provide service for it.")
 
-
     def get_filter_object_properties(self):
         """Return dict of numbered dicts with info about objects relevant to filter
 
@@ -515,7 +522,7 @@ class CrowtologyClient():
         """
         qres = list(self.onto.query(self._query_filter_properties))
         res_list = {}
-        qres.sort(key = lambda i: i["name"])
+        qres.sort(key=lambda i: i["name"])
         idx = 0
         for idx, g in enumerate(qres):
             res_dict = {}
@@ -585,9 +592,11 @@ class CrowtologyClient():
             res_dict["nlp_name_CZ"] = g["czname"].toPython()
             res_dict["nlp_name_EN"] = g["enname"].toPython()
             try:
-                res_dict["absolute_location"] = [float(q) for q in [g["x"], g["y"], g["z"]]]
+                res_dict["absolute_location"] = [
+                    float(q) for q in [g["x"], g["y"], g["z"]]]
             except:
-                res_dict["absolute_location"] = [str(q) for q in [g["x"], g["y"], g["z"]]]
+                res_dict["absolute_location"] = [
+                    str(q) for q in [g["x"], g["y"], g["z"]]]
             res_list.append(res_dict)
 
         return res_list
@@ -654,7 +663,7 @@ class CrowtologyClient():
             q_string += '?sub ?prop{} ?obj{} . '.format(i, i)
         q_string += '}'
 
-        q = self.prepareQuery(q_string, initNs={"rdf": RDF, "crow":self.CROW})
+        q = self.prepareQuery(q_string, initNs={"rdf": RDF, "crow": self.CROW})
         subjects = self.onto.query(q, initBindings=initBindings)
         return [x['sub'] for x in subjects]
 
@@ -694,7 +703,7 @@ class CrowtologyClient():
         """
         #prop_range = list(self.onto.objects(subject=CROW.hasId, predicate=RDFS.range))[0]
         ids = list(self.onto.objects(uri, self.CROW.hasId))
-        if len(ids) > 0: # assume obj has exactly one id
+        if len(ids) > 0:  # assume obj has exactly one id
             return ids[0].toPython()
         else:
             return None
@@ -709,7 +718,7 @@ class CrowtologyClient():
             uuid (str): uuid of object
         """
         ids = list(self.onto.objects(uri, self.CROW.hasUuid))
-        if len(ids) > 0: # assume obj has exactly one uuid
+        if len(ids) > 0:  # assume obj has exactly one uuid
             return ids[0].toPython()
         else:
             return None
@@ -727,10 +736,10 @@ class CrowtologyClient():
         result = self.onto.query(self._query_get_location, initBindings={
             "obj": uri
         })
-        if len(result) > 0: # assume obj has max one location
-            try: # expect floats
+        if len(result) > 0:  # assume obj has max one location
+            try:  # expect floats
                 loc = [float(c) for c in list(result)[0]]
-            except: # but may be None (if not localized yet)
+            except:  # but may be None (if not localized yet)
                 loc = [str(c) for c in list(result)[0]]
             return loc
         else:
@@ -748,10 +757,10 @@ class CrowtologyClient():
         result = self.onto.query(self._query_get_dimensions, initBindings={
             "obj": uri
         })
-        if len(result) > 0: # assume obj has max one location
-            try: # expect floats
+        if len(result) > 0:  # assume obj has max one location
+            try:  # expect floats
                 loc = [float(c) for c in list(result)[0]]
-            except: # but may be None (if not localized yet)
+            except:  # but may be None (if not localized yet)
                 loc = [str(c) for c in list(result)[0]]
             return loc
         else:
@@ -769,7 +778,7 @@ class CrowtologyClient():
         result = self.onto.query(self._query_get_timestamp, initBindings={
             "obj": uri
         })
-        if len(result) > 0: # assume obj has max one location
+        if len(result) > 0:  # assume obj has max one location
             stamp = str(list(result)[0][0])
             return stamp
         else:
@@ -785,7 +794,7 @@ class CrowtologyClient():
             tracked in XSD.boolean format
         """
         result = list(self.onto.objects(uri, self.CROW.isTracked))
-        if len(result) > 0: # assume obj has max one location
+        if len(result) > 0:  # assume obj has max one location
             tracked = result[0].toPython()
             return tracked
         else:
@@ -802,9 +811,9 @@ class CrowtologyClient():
         """
         dim_obj = list(self.onto.objects(uri, self.CROW.hasBoxDimensions))
         if len(dim_obj) > 0: # assume obj has max one dimensions
-            try: # expect floats
+            try:  # expect floats
                 dim = [float(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
-            except: # but may be None (if not localized yet)
+            except:  # but may be None (if not localized yet)
                 dim = [str(list(self.onto.objects(dim_obj[0], x))[0]) for x in [self.CROW.x, self.CROW.y, self.CROW.z]]
             return dim
         else:
@@ -835,8 +844,8 @@ class CrowtologyClient():
         """
         color = list(self.onto.objects(uri, self.CROW.hasColor))
         if len(color) > 0:
-            return color # assume obj has only one color
-        else: # this obj does not have color
+            return color  # assume obj has only one color
+        else:  # this obj does not have color
             return None
 
     # 4
@@ -858,7 +867,7 @@ class CrowtologyClient():
         # classes of objects (not objects) have nlp name -> find all objects of these classes
         for ent in entities:
             obj_of_ent_class = list(self.onto.subjects(RDF.type, ent))
-            if len(obj_of_ent_class) > 0: # ent is a class
+            if len(obj_of_ent_class) > 0:  # ent is a class
                 for obj in obj_of_ent_class:
                     result_entities.append(obj) # append URIobject of this class
             elif ent not in result_entities:
@@ -877,7 +886,7 @@ class CrowtologyClient():
             list of strings: nlp names of the given uri, 0...N
         """
         nlp_name_property = self.CROW.hasNlpNameEN if language == 'EN' else self.CROW.hasNlpNameCZ
-        if type(uri)== list:
+        if type(uri) == list:
             uri = uri[0]
         query = f"""
         PREFIX crow:    <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
@@ -894,7 +903,7 @@ class CrowtologyClient():
             ?target {nlp_name_property.n3()} ?name .
         }}"""
         nlp_name_uri = list(self.onto.query(query))
-        if len(nlp_name_uri) < 1: # no nlp name -> create new from the uri string
+        if len(nlp_name_uri) < 1:  # no nlp name -> create new from the uri string
             nlp_name = [uri.split('#')[-1]]
             self.onto.add((uri, nlp_name_property, Literal(nlp_name[0], datatype=XSD.string)))
         else:
@@ -1022,12 +1031,15 @@ class CrowtologyClient():
         """
         uris = self.get_uri_from_nlp(name) # multiple objects may have same nlp name
         result_entities = []
-        for uri in uris: # find colors of each object
-            colors = self.get_color_of_obj(uri) # assume one obj may have more than one color
+        for uri in uris:  # find colors of each object
+            # assume one obj may have more than one color
+            colors = self.get_color_of_obj(uri)
             for color in colors:
-                color_names = self.get_nlp_from_uri(color, language=language) # color may have multiple nlp names
+                # color may have multiple nlp names
+                color_names = self.get_nlp_from_uri(color, language=language)
                 result_entities.append(color_names)
-        result_entities = list(set(sum(result_entities, []))) # concat all possible colors
+        # concat all possible colors
+        result_entities = list(set(sum(result_entities, [])))
         return result_entities
 
     # D "which objects (in the scene) are red?"
@@ -1378,7 +1390,7 @@ class CrowtologyClient():
         else:
             return None
 
-    def generate_en_dis_del_pair_query(self, batch_enable:List[URIRef], batch_disable:List[URIRef], batch_delete:List[URIRef]) -> Union[str, None]:
+    def generate_en_dis_del_pair_query(self, batch_enable: List[URIRef], batch_disable: List[URIRef], batch_delete: List[URIRef]) -> Union[str, None]:
         """Generates a query string to enable, disable, delete objects and pair them to areas.
         Each list should contain the URIs of the objects.
         """
@@ -1496,10 +1508,26 @@ class CrowtologyClient():
                 for obj in batch_delete:
                     tobe_deleted += f"({obj.n3()})\n"
                 query += f"""DELETE {{
+                    ?loc a crow:xyzAbsoluteLocation .
+                    ?loc crow:x ?lx .
+                    ?loc crow:y ?ly .
+                    ?loc crow:z ?lz .
+                    ?pcl a crow:xyzPclDimensions .
+                    ?pcl crow:x ?px .
+                    ?pcl crow:y ?py .
+                    ?pcl crow:z ?pz .
                     ?individual ?p1 ?o1 .
                     ?s2 ?p2 ?individual .
                 }}
                 WHERE {{
+                    ?individual crow:hasAbsoluteLocation ?loc .
+                    ?individual crow:hasPclDimensions ?pcl .
+                    ?loc crow:x ?lx .
+                    ?loc crow:y ?ly .
+                    ?loc crow:z ?lz .
+                    ?pcl crow:x ?px .
+                    ?pcl crow:y ?py .
+                    ?pcl crow:z ?pz .
                     {{?individual ?p1 ?o1}} UNION {{?s2 ?p2 ?individual}}
                     VALUES (?individual) {{
                         {tobe_deleted}
@@ -1903,7 +1931,6 @@ class CrowtologyClient():
         result = self.onto.query(query)
         return [u[0] for u in list(result)]
 
-
     def get_objects_with_poses_from_area(self, area_name):
         if type(area_name) is URIRef:
             area_name = area_name.n3()
@@ -1935,7 +1962,6 @@ class CrowtologyClient():
             dy = float(u[0][5])
             dz = float(u[0][6])
             # obj_type = u[0][7]
-
 
             return obj, x, y, z, dx, dy, dz, 1
         return None, NaN, NaN, NaN, NaN, NaN, NaN, 0
@@ -1976,9 +2002,9 @@ class CrowtologyClient():
             if res:
                 objs_location.append(res)
         polygon = np.asarray(self.get_polygon(area_uri))
-        z_mean = np.mean(polygon[:,2])
-        x_lim = [min(polygon[:,0]), max(polygon[:,0])]
-        y_lim = [min(polygon[:,1]), max(polygon[:,1])]
+        z_mean = np.mean(polygon[:, 2])
+        x_lim = [min(polygon[:, 0]), max(polygon[:, 0])]
+        y_lim = [min(polygon[:, 1]), max(polygon[:, 1])]
         x_loc = np.arange(x_lim[0] + spacing, x_lim[-1] - spacing, spacing)
         y_loc = np.arange(y_lim[0] + spacing, y_lim[-1] - spacing, spacing)
         area_location = []
@@ -2124,7 +2150,7 @@ class CrowtologyClient():
                 "loc_z": Literal(centroid[2], datatype=XSD.float).n3(),
                 "onto_polygon": onto_polygon,
                 "onto_polyhedron": onto_polyhedron,
-            })
+        })
 
         if isMainArea:
             query += f"{onto_name.n3()} crow:areaType 'main' .\n"
@@ -2145,7 +2171,7 @@ class CrowtologyClient():
             query += f"{point_name} crow:z {Literal(point[2], datatype=XSD.float).n3()} .\n"
             query += f"{onto_polyhedron} crow:hasPoint3D {point_name} .\n"
 
-        query += "\n}" # add the ending bracket
+        query += "\n}"  # add the ending bracket
         # print(query)
 
         self.onto.update(query)
@@ -2163,7 +2189,7 @@ class CrowtologyClient():
         norm_name = name.replace(" ", "_")
         norm_name = normalize('NFKD', norm_name).encode('ascii', 'ignore').decode("utf-8")
         onto_name = self.CROW[norm_name]
-        PART = Namespace(f"{ONTO_IRI}/{norm_name}#") #ns for each position
+        PART = Namespace(f"{ONTO_IRI}/{norm_name}#")  # ns for each position
         onto_location = PART['xyzAbsoluteLocation']
         query = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             prefix owl: <http://www.w3.org/2002/07/owl#>
@@ -2191,7 +2217,7 @@ class CrowtologyClient():
                 "loc_x": Literal(centroid[0], datatype=XSD.float).n3(),
                 "loc_y": Literal(centroid[1], datatype=XSD.float).n3(),
                 "loc_z": Literal(centroid[2], datatype=XSD.float).n3(),
-            })
+        })
         self.onto.update(query)
         # self.onto.update(self.prepareQuery(query))
 
@@ -2307,7 +2333,7 @@ class CrowtologyClient():
         # print(query)
         self.onto.update(query)
 
-    def update_batch_all(self, batch_add:List[Tuple], batch_update:List[Tuple]):
+    def update_batch_all(self, batch_add: List[Tuple], batch_update: List[Tuple]):
         """This function adds new objects and updates existing objects
         all at once. The add and update lists should containe tuples
         with the same information as "update_object" and "add_detected_object_no_template"
