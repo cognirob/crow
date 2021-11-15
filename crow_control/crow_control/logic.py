@@ -5,7 +5,7 @@ from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 import asyncio
-from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg
+from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg, BuildFailReason
 from crow_msgs.srv import StartBuild, CancelBuild
 from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus, RobotActionType
 from trio3_ros2_interfaces.srv import GetRobotStatus
@@ -433,17 +433,45 @@ class ControlLogic(Node):
         """
         self.get_logger().info(f"Performing build assembly action called {define_name}")
         request = StartBuild.Request(build_name=define_name)
-        self.start_build_client.call_async(request)
+        future = self.start_build_client.call_async(request)
+        future.add_done_callback(lambda handle, target="start", build_name=define_name: self.receivedBuildResponse(handle, target, build_name))
+
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
 
     def sendCancelBuildAction(self, disp_name='', define_name=None, **kwargs):
         """Marker Detector detects chosen markers, if successful, adds named storage to database
         """
-        print('canceling action works....')
-        self.cancel_build_client.call_async()
+        future = self.cancel_build_client.call_async(CancelBuild.Request())
+        future.add_done_callback(lambda handle, target="cancel": self.receivedBuildResponse(handle, target))
+
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
+
+    def receivedBuildResponse(self, handle, target, build_name=None):
+        # print(handle.__dict__)
+        print(handle.result())
+        if target == "cancel":
+            if handle.result().success:
+                self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_canceled"], say=2)
+            else:
+                self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_not_canceled"], say=2)
+            self.wait_then_talk()
+        elif target == "start":
+            result = handle.result()
+            if result.success:
+                 # TODO: translate
+                self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_started"] + build_name, say=2)
+            else:
+                response = self.guidance_file[self.LANG]["assembly_not_started"] + build_name + ". "
+                if result.response.code == BuildFailReason.C_NOT_FOUND:
+                    response += self.guidance_file[self.LANG]["assembly_not_found"]
+                elif result.response.code == BuildFailReason.C_ANOTHER_IN_PROGRESS:
+                    response += self.guidance_file[self.LANG]["assembly_in_progress"]
+                self.ui.buffered_say(response, say=2)
+            self.wait_then_talk()
+        else:
+            self.get_logger().error(f"Received an odd response from assembly service:\n{handle.__dict__}")
 
     def definePosition(self, disp_name='', define_name=None, marker_group_name=None, **kwargs):
         """Marker Detector detects chosen markers, if successful, adds named position to database
@@ -806,17 +834,29 @@ class ControlLogic(Node):
             return False
 
     def wait_then_talk(self):
-        return
+        # return
         th = threading.Thread(target=self._async_talk, daemon=True)
         th.start()
 
     def _async_talk(self):
+        can_say = False
         if self.pclient.silent_mode > 1:
-            while self.pclient.can_start_talking == False:
+            wait_limit = 10
+            while not self.pclient.can_start_talking:
+                if wait_limit < 0:
+                    can_say = False
+                    break
+                wait_limit -= 1
                 time.sleep(0.2)
+                can_say = True
+        if can_say:
             self.pclient.can_start_talking = False
-        self.ui.buffered_say(flush=True, level=self.pclient.silent_mode)
-        self.pclient.can_start_talking = True
+            level = self.pclient.silent_mode
+        else:
+            level = 1  # silent
+        self.ui.buffered_say(flush=True, level=level)
+        if can_say:
+            self.pclient.can_start_talking = True  # not sure about this. Could it override
 
     def make_robot_done(self):
         """Call this when robot successfully completed the last task
@@ -863,7 +903,6 @@ def main():
         rclpy.spin(cl, executor=mte)
         cl.destroy_node()
     except KeyboardInterrupt:
-        cl.destroy_node()
         print("User requested shutdown.")
     except BaseException as e:
         print(f"Some error had occured: {e}")
