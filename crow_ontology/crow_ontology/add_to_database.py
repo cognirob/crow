@@ -31,7 +31,7 @@ CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 10  # seconds
 DISABLING_TIME_LIMIT = 3  # seconds
 TIMER_FREQ = 0.4  # seconds
-CLOSE_THRESHOLD = 2e-2  # 2cm
+CLOSE_THRESHOLD = 3e-2  # 2cm
 MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
 MAX_DELAY_OF_UPDATE = 1 # filter updates older than this will be dropped
 
@@ -49,7 +49,7 @@ class OntoAdder(Node):
         self.id = self.get_last_id() + 1
         self.ad = self.get_last_action_id() + 1
 
-        self._rlock = RLock()
+        self._onto_process_lock = RLock()
         # self.get_logger().set_level(40)
 
         # client = self.create_client(GetParameters, f'/calibrator/get_parameters')
@@ -112,12 +112,13 @@ class OntoAdder(Node):
 
     def timer_callback(self):
         self.pclient.adder_alive = time.time()
-        # start = time.time()
+        start = time.time()
         tmsg = self.get_clock().now().to_msg()
         now_time = datetime.fromtimestamp(tmsg.sec + tmsg.nanosec * 1e-9)
         tobe_enabled = []
         tobe_disabled = []
         tobe_deleted = []
+        has_lock = self._onto_process_lock.acquire(timeout=0.05)  # don't actually need lock, it only reduces errors -> continue even if not lock not owned
         for obj, last_obj_time, enabled in self.crowracle.getTangibleObjects_timestamp():
             if last_obj_time is None:
                 self.get_logger().warn(f'Trying to check timestamp of object {obj} failed. It has not timestamp!')
@@ -133,13 +134,16 @@ class OntoAdder(Node):
             elif not enabled:
                 self.get_logger().warn(f'Trying to enable {obj}. Status: {enabled}')
                 tobe_enabled.append(obj)
-
+        if has_lock:
+            self._onto_process_lock.release()
         query = self.crowracle.generate_en_dis_del_pair_query(tobe_enabled, tobe_disabled, tobe_deleted)
         if query is not None:
             try:
                 self.db_queries_queue.put(query, timeout=0.5)
             except Full:  # don't add if queue is full - querying is lagging to much, probably
                 self.get_logger().error("Tried to add en/dis/del/pair query but the queue is full!")  # should pop the oldest item instead...
+        
+        self.get_logger().warn(f"Timer update takes {time.time() - start:0.3f} seconds")
 
     def run_update(self):
         """This is a function for the query update thread."""
@@ -170,6 +174,7 @@ class OntoAdder(Node):
         update_dict = {uuid: (class_name, [pose.position.x, pose.position.y, pose.position.z if pose.position.z > 0 else 0], size.dimensions, tracked) for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked)}
         # for class_name, pose, size, uuid, tracked in zip(pose_array_msg.label, pose_array_msg.poses, pose_array_msg.size, pose_array_msg.uuid, pose_array_msg.tracked):
         # find already existing objects by uuid
+        has_lock = self._onto_process_lock.acquire(timeout=0.05)  # don't actually need lock, it only reduces errors -> continue even if not lock not owned
         existing_objects = self.crowracle.get_objects_by_uuid(pose_array_msg.uuid)
         # update location of existing objects
         objects_to_be_updated = []
@@ -214,6 +219,8 @@ class OntoAdder(Node):
             objects_to_be_added.append((class_name, pose, size, uuid, timestamp, self.id, tracked))
             self.id += 1
 
+        if has_lock:
+            self._onto_process_lock.release()
         query = self.crowracle.generate_full_update(objects_to_be_added, objects_to_be_updated)
         if query is not None:
             try:
