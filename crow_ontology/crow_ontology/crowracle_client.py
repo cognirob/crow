@@ -154,6 +154,40 @@ class CrowtologyClient():
             ?loc crow:y ?y .
             ?loc crow:z ?z .
         }"""
+    _query_get_objects_from_front = """SELECT DISTINCT ?obj
+        WHERE {
+            ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#front_stage> .
+            FILTER NOT EXISTS {?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#workspace>}
+        }"""
+    _query_get_objects_with_poses_from_front = """SELECT DISTINCT ?obj
+        WHERE {
+            ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#front_stage> .
+            FILTER NOT EXISTS {?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#workspace>}
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+            ?obj crow:hasPclDimensions ?pcl_name .
+            ?pcl_name crow:x ?pcl_x .
+            ?pcl_name crow:y ?pcl_y .
+            ?pcl_name crow:z ?pcl_z .
+        }"""
+    _query_get_objects_from_back = """SELECT DISTINCT ?obj
+        WHERE {
+            ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#back_stage> .
+        }"""
+    _query_get_objects_with_poses_from_back = """SELECT DISTINCT ?obj
+        WHERE {
+            ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#back_stage> .
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+            ?obj crow:hasPclDimensions ?pcl_name .
+            ?pcl_name crow:x ?pcl_x .
+            ?pcl_name crow:y ?pcl_y .
+            ?pcl_name crow:z ?pcl_z .
+        }"""
     _query_get_location = """SELECT ?x ?y ?z
         WHERE {
             ?obj crow:hasAbsoluteLocation ?loc .
@@ -1306,9 +1340,9 @@ class CrowtologyClient():
                 if inp in name:
                     name = out
                     break
-            res = self.onto.query(self._query_marker_group_propsCZ, initBindings={'name': name})
+            res = self.onto.query(self._query_marker_group_propsCZ, initBindings={'name': Literal(name)})
         elif language == 'EN':
-            res = self.onto.query(self._query_marker_group_propsEN, initBindings={'name': name})
+            res = self.onto.query(self._query_marker_group_propsEN, initBindings={'name': Literal(name)})
         else:
             "Invalid language choice (EN or CZ), taking default EN option"
             res = self.onto.query(self._query_marker_group_propsEN, initBindings={'name': name})
@@ -1586,6 +1620,7 @@ class CrowtologyClient():
                     ?pcl{str(i)} crow:y ?old_pcl_y{str(i)} .
                     ?pcl{str(i)} crow:z ?old_pcl_z{str(i)} .
                     {object} crow:isTracked ?old_tracked{str(i)} .
+                    {object} crow:disabledId ?id{str(i)} .
                 """
                 inserts += f"""
                     {object} crow:hasTimestamp {new_stamp} .
@@ -1596,6 +1631,7 @@ class CrowtologyClient():
                     ?pcl{str(i)} crow:y {new_pcl_y} .
                     ?pcl{str(i)} crow:z {new_pcl_z} .
                     {object} crow:isTracked {tracked} .
+                    {object} crow:hasId ?id{str(i)} .
                 """
                 if union_started:
                     wheres += "UNION {"
@@ -1606,6 +1642,7 @@ class CrowtologyClient():
                         {object} crow:hasTimestamp ?old_stamp{str(i)} .
                         {object} crow:hasAbsoluteLocation ?loc{str(i)} .
                         {object} crow:hasPclDimensions ?pcl{str(i)} .
+                        OPTIONAL {{{object} crow:disabledId ?id{str(i)}}}
                         ?loc{str(i)} crow:x ?old_x{str(i)} .
                         ?loc{str(i)} crow:y ?old_y{str(i)} .
                         ?loc{str(i)} crow:z ?old_z{str(i)} .
@@ -1931,6 +1968,22 @@ class CrowtologyClient():
         result = self.onto.query(query)
         return [u[0] for u in list(result)]
 
+    def get_objects_from_front(self):
+        result = self.onto.query(self._query_get_objects_from_front)
+        return [u[0] for u in list(result)]
+
+    def get_objects_with_poses_from_front(self):
+        result = self.onto.query(self._query_get_objects_with_poses_from_front)
+        return [u[0] for u in list(result)]
+
+    def get_objects_from_back(self):
+        result = self.onto.query(self._query_get_objects_from_back)
+        return [u[0] for u in list(result)]
+
+    def get_objects_with_poses_from_back(self):
+        result = self.onto.query(self._query_get_objects_with_poses_from_back)
+        return [u[0] for u in list(result)]
+
     def get_objects_with_poses_from_area(self, area_name):
         if type(area_name) is URIRef:
             area_name = area_name.n3()
@@ -1940,6 +1993,14 @@ class CrowtologyClient():
         query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z
         WHERE {{
             ?obj crow:insideOf {area_name} .
+            ?obj crow:hasAbsoluteLocation ?loc .
+            ?loc crow:x ?x .
+            ?loc crow:y ?y .
+            ?loc crow:z ?z .
+            ?obj crow:hasPclDimensions ?pcl_name .
+            ?pcl_name crow:x ?pcl_x .
+            ?pcl_name crow:y ?pcl_y .
+            ?pcl_name crow:z ?pcl_z .
             ?obj crow:hasAbsoluteLocation ?loc .
             ?loc crow:x ?x .
             ?loc crow:y ?y .

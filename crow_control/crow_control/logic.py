@@ -655,7 +655,7 @@ class ControlLogic(Node):
         """
         self.get_logger().info("Performing Tidy action")
         try:
-            objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
+            objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()
             self.get_logger().info(f"objects: {objs} @ {x}, {y}, {z} with dims {dx}, {dy}, {dz} of type {obj_type}")
             while objs is not None:
                 # print(f'looping in tidy objects: STATUS {self.status} {self.STATUS_IDLE}')
@@ -665,7 +665,7 @@ class ControlLogic(Node):
 
                     # self._set_status(self.STATUS_EXECUTING)
                     # self.pclient.robot_done = False
-                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_area("front_stage")
+                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()
                     print(f'Tidying object {objs} @ {x}, {y}, {z}')
 
 
