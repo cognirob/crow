@@ -1,0 +1,97 @@
+assembly_name: Dog
+# Object definitions
+objects:
+  cube_front:
+    type: Cube
+
+  cube_back:
+    type: Cube
+
+  sphere_head:
+    type: Sphere
+
+  wafer_front1:
+    type: Wafer
+
+  wafer_back1:
+    type: Wafer
+
+  wafer_front2:
+    type: Wafer
+
+  wafer_back2:
+    type: Wafer
+
+# Connection definitions
+operations:
+  body:
+    type: InsertFixedConnection
+    provider: cube_front
+    consumer: cube_back
+
+  head:
+    type: InsertLooseConnection
+    provider: sphere_head
+    consumer: cube_front
+    uses: Thread
+    length: 50
+
+  front1:
+    type: InsertLooseConnection
+    provider: cube_front
+    consumer: wafer_front1
+
+  front2:
+    type: InsertLooseConnection
+    provider: cube_front
+    consumer: wafer_front2
+
+  back1:
+    type: InsertLooseConnection
+    provider: cube_back
+    consumer: wafer_back1
+    
+  back2:
+    type: InsertLooseConnection
+    provider: cube_back
+    consumer: wafer_back2
+
+# Relation definitions
+relations:
+  - type: PerpendicularRelation
+    operations: [head, body]
+    reference: sphere_head
+
+
+# Order definitions
+order_hints:
+  - type: RequiredOrderObjects
+    first: None
+    then: cube_back
+
+  - type: RequiredOrderObjects
+    first: cube_back
+    then: cube_front
+
+  - type: RequiredOrderObjects
+    first: cube_front
+    then: sphere_head
+
+  - type: RequiredOrderObjects
+    first: sphere_head
+    then: wafer_front1
+
+  - type: RequiredOrderObjects
+    first: wafer_front1
+    then: wafer_front2
+
+  - type: RequiredOrderObjects
+    first: wafer_front2
+    then: wafer_front3
+
+  - type: RequiredOrderObjects
+    first: wafer_front3
+    then: wafer_front4
+
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]
