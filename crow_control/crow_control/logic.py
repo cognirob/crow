@@ -203,7 +203,8 @@ class ControlLogic(Node):
                 except StopIteration:
                     return None
         elif target_type == "onto_uri":
-            uri = URIRef(target + "a")
+            # uri = URIRef(target + "a")
+            uri = URIRef(target)
         elif target_type == "properties":
             color = self.crowracle.get_uri_from_nlp(target_ph_color)
             uri = (self.crowracle.get_obj_of_properties(target_ph_cls, {'color': color}, all=False))[0]
@@ -219,11 +220,17 @@ class ControlLogic(Node):
 
         try:
             # xyz = np.array([-0.00334, 0.00232, 0.6905])
-            res = self.crowracle.get_target_from_uri(uri)
-            if res is None:
-                res = self.crowracle.get_target_from_type(URIRef(target_ph_cls))
-            xyz, size, typ = res
-            typ = self._extract_obj_type(typ)
+            if "position" in kwargs or "storage" in kwargs:
+                res = self.crowracle.get_position_target_from_uri(uri)
+                uri, xyz = res
+                size = [0.0, 0.0, 0.0]
+                typ = ObjectType.POINT
+            else:
+                res = self.crowracle.get_target_from_uri(uri)
+                if res is None:
+                    res = self.crowracle.get_target_from_type(URIRef(target_ph_cls))
+                xyz, size, typ = res
+                typ = self._extract_obj_type(typ)
         except:
             self.get_logger().error(f"Action target was set to '{target_type}' but object '{target}' is not in the database! Trying another {target_ph_cls}")
             return None
