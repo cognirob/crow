@@ -1,0 +1,62 @@
+assembly_name: Snake
+# Object definitions
+objects:
+  cube_front:
+    type: Cube
+
+  cube_back:
+    type: Cube
+
+  cube_middle:
+    type: Cube
+
+  sphere_head:
+    type: Sphere
+
+# Connection definitions
+operations:
+  neck1:
+    type: InsertFixedConnection
+    consumer: sphere_head
+    provider: cube_front
+
+  body1:
+    type: InsertFixedConnection
+    consumer: cube_front
+    provider: cube_middle
+
+  body2:
+    type: InsertFixedConnection
+    consumer: cube_middle
+    provider: cube_back
+
+# Relation definitions
+relations:
+  - type: OppositeRelation
+    operations: [neck1, body1]
+    reference: cube_front
+
+  - type: OppositeRelation
+    operations: [body1, body2]
+    reference: cube_middle
+
+# Order definitions
+order_hints:
+  - type: RequiredOrderObjects
+    first: None
+    then: sphere_head
+
+  - type: RequiredOrderObjects
+    first: sphere_head
+    then: cube_front
+
+  - type: RequiredOrderObjects
+    first: cube_front
+    then: cube_middle
+
+  - type: RequiredOrderObjects
+    first: cube_middle
+    then: cube_back
+
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]

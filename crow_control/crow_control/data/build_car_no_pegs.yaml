@@ -1,0 +1,96 @@
+assembly_name: Car
+# Object definitions
+objects:
+  cube_front:
+    type: Cube
+
+  cube_middle:
+    type: Cube
+
+  cube_back:
+    type: Cube
+
+  wheel_front1:
+    type: Wheel
+
+  wheel_back1:
+    type: Wheel
+
+
+  wheel_front2:
+    type: Wheel
+
+  wheel_back2:
+    type: Wheel
+
+# Connection definitions
+operations:
+
+  front:
+    type: InsertFixedConnection
+    provider: cube_front
+    consumer: cube_middle
+
+  back:
+    type: InsertFixedConnection
+    provider: cube_middle
+    consumer: cube_back
+
+  wheel1:
+    type: InsertLooseConnection
+    provider: cube_front
+    consumer: wheel_front1
+
+  wheel2:
+    type: InsertLooseConnection
+    provider: cube_front
+    consumer: wheel_front2
+
+  wheel3:
+    type: InsertLooseConnection
+    provider: cube_back
+    consumer: wheel_back1
+
+  wheel4:
+    type: InsertLooseConnection
+    provider: cube_back
+    consumer: wheel_back2
+
+# Relation definitions
+relations:
+  - type: OppositeRelation
+    operations: [front, back]
+    reference: cube_middle
+
+# Order definitions
+order_hints:
+  - type: RequiredOrderObjects
+    first: None
+    then: cube_front
+
+  - type: RequiredOrderObjects
+    first: cube_front
+    then: cube_middle
+
+  - type: RequiredOrderObjects
+    first: cube_middle
+    then: cube_back
+
+  - type: RequiredOrderObjects
+    first: cube_back
+    then: wheel_front1
+
+  - type: RequiredOrderObjects
+    first: wheel_front1
+    then: wheel_front2
+
+  - type: RequiredOrderObjects
+    first: wheel_front2
+    then: wheel_back1
+
+  - type: RequiredOrderObjects
+    first: wheel_back1
+    then: wheel_back2
+
+  # - type: ExclusiveSelection
+  #   operations: [thread_front, thread_back]
