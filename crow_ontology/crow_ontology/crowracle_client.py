@@ -1266,6 +1266,30 @@ class CrowtologyClient():
         *xyz, sx, sy, sz = [x.toPython() for x in r[:-1]]
         return xyz, [sx, sy, sz], str(r[-1])
 
+    def get_position_target_from_uri(self, uri):
+        name = uri.n3()
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+            SELECT DISTINCT ?obj ?x ?y ?z
+            WHERE {{
+                ?obj a crow:Position .
+                ?obj crow:hasName {name} .                
+                ?obj crow:hasAbsoluteLocation ?loc .
+                ?loc crow:x ?x .
+                ?loc crow:y ?y .
+                ?loc crow:z ?z .
+            }}"""
+        result = self.onto.query(query)
+        if len(result) == 0:
+            return
+        r = list(result)[0]
+        obj = r[0]
+        xyz = [x.toPython() for x in r[1:]]
+        return obj, xyz
+
     def getCurrentAction(self):
         """Get current action's name and last update time
 
