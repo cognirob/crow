@@ -132,9 +132,15 @@ class AssemblyGraphMaker():
                                     # Add edge to stay in the current state
                                     G.add_edge(G.number_of_nodes()-1, G.number_of_nodes()-1, weight=1, prob=0.55, action='None',
                                                object="OtherO")
-            # nx.draw_networkx(G3, node_color='r', edge_color='b')
+            # pos = graphviz_layout(G, prog="dot")
+            # labels = nx.get_node_attributes(G, 'parts_type')
+            # print(pos)
+            # print(labels)
+            # nx.draw_networkx(G, pos=pos, labels=labels, font_size=6)
+            # label_options = {"ec": "k", "fc": "white", "alpha": 0.7}
             # plt.draw()
-            # plt.savefig('plot2')
+            # plt.savefig('car_plot_not_pruned.png')
+            print(G.out_edges(0))
             print('Graph successfully built')
         return G, recipe_name, assembly_name, base_filename
 
@@ -272,10 +278,12 @@ class AssemblyGraphMaker():
                     if props['first'] == 'None':
                         print('None node required order')
                         nodesNone = [x for x,y in G.nodes(data=True) if y['parts_names'][0]==props['first']]
-                        nodesTo = [x for x,y in G.nodes(data=True) if y['parts_names'][0]==props['then'] and len(y['parts_names'])==1]
+                        nodesTo = [x for x,y in G.nodes(data=True) if y['parts_type'][0]==recipe['objects'][props['then']]['type'] and len(y['parts_names'])==1]
                         out_edges = G.out_edges(nodesNone)
                         for e in out_edges:
                             nx.set_edge_attributes(G, {e: {"prob": 0}})
+                        print('nodesNone', nodesNone)
+                        print('nodes to', nodesTo)
                         nx.set_edge_attributes(G, {(nodesNone[0], nodesTo[0]): {"prob": 1}})
 
         print('Required order applied - only for the None edge so far')
@@ -389,8 +397,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("build_path")
     parser.add_argument("build_name")
-    parser.add_argument("--onto_file", "-o", default="../../../ontology/onto_draft_02.owl")
-    args = parser.parse_args(["../data/","build_snake", "-o", "../../../ontology/onto_draft_02.owl"])
+    parser.add_argument("--onto_file", "-o", default="src/crow/ontology/onto_draft_02.owl")
+    args = parser.parse_args(["src/crow/crow_control/crow_control/data/","build_snake_no_pegs", "-o", "src/crow/ontology/onto_draft_02.owl"])
 
     # %%Initialization
     build_file = args.build_path + args.build_name
@@ -412,14 +420,16 @@ def main():
         print('building a new graph for the given assembly')
         g, g_name, assembly_name, base_filename = am.build_graph(onto)
         gp = am.prune_graph(g)
-    po = {"peg": 0.1, "cube": 0.3, "sphere": 0.2, "screw": 0.1, "other": 0.3}
-    po2 = {"peg": 0.3, "cube": 0.1, "sphere": 0.1, "screw": 0.1, "other": 0.3}
-    po3 = {"peg": 0.5, "cube": 0.1, "sphere": 0.1, "screw": 0.1, "other": 0.3}
-    pa1 = {"hammering": 0.1, "handling": 0.3, "screwing": 0.1, "other": 0.5}
-    pa2 = {"hammering": 0.4, "handling": 0.3, "screwing": 0.1, "other": 0.2}
-    gp = am.update_graph(gp, po, pa1)
-    gp = am.update_graph(gp, po2, pa1)
-    gp = am.update_graph(gp, po3, pa1)
+    gp = am.add_required_order(gp)
+
+    # po = {"peg": 0.1, "cube": 0.3, "sphere": 0.2, "screw": 0.1, "other": 0.3}
+    # po2 = {"peg": 0.3, "cube": 0.1, "sphere": 0.1, "screw": 0.1, "other": 0.3}
+    # po3 = {"peg": 0.5, "cube": 0.1, "sphere": 0.1, "screw": 0.1, "other": 0.3}
+    # pa1 = {"hammering": 0.1, "handling": 0.3, "screwing": 0.1, "other": 0.5}
+    # pa2 = {"hammering": 0.4, "handling": 0.3, "screwing": 0.1, "other": 0.2}
+    # gp = am.update_graph(gp, po, pa1)
+    # gp = am.update_graph(gp, po2, pa1)
+    # gp = am.update_graph(gp, po3, pa1)
     max_node = am.detect_most_probable_state(gp)
     next_node = am.detect_next_state(gp, max_node)
     print()
