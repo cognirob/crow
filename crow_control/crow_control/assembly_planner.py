@@ -36,6 +36,7 @@ class AssemblyPlanner(Node):
         self.crowracle = CrowtologyClient(node=self)
         self.onto = self.crowracle.onto
         self.LANG='cs'
+        self.ui = UserInputManager(language = self.LANG)
         # TODO save after building the tree the tree and just load the saved object
         # build_file = 'data/build_snake'
 
@@ -55,6 +56,7 @@ class AssemblyPlanner(Node):
         self.ui = UserInputManager(language = self.LANG)
         self.templ_det = self.ui.load_file('templates_detection.json')
         self.obj_det = self.ui.load_file('objects_detection.json')
+        self.guidance_file = self.ui.load_file('guidance_dialogue.json')
         self.pclient = ParamClient()
         self.pclient.define("processor_busy_flag", False) # State of the sentence processor
         self.pclient.define("halt_nlp", False) # If true, NLP input should be halted
@@ -117,6 +119,8 @@ class AssemblyPlanner(Node):
             response.success = False
             response.reason.code = BuildFailReason.C_ANOTHER_IN_PROGRESS
             self.get_logger().error(f"Cannot start build, another build is already in progress!")
+            self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_in_progress"] + self.guidance_file[self.LANG]["cancel_assembly"], say = 2)
+            self.ui.buffered_say(flush = True, level=self.pclient.silent_mode)
         else:
             build_name = request.build_name
             if build_name not in self.builds:
