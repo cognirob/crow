@@ -28,10 +28,10 @@ from queue import Queue, Full, Empty
 
 ONTO_IRI = "http://imitrob.ciirc.cvut.cz/ontologies/crow"
 CROW = Namespace(f"{ONTO_IRI}#")
-DELETION_TIME_LIMIT = 10  # seconds
-DISABLING_TIME_LIMIT = 3  # seconds
+DELETION_TIME_LIMIT = 12  # seconds
+DISABLING_TIME_LIMIT = 4  # seconds
 TIMER_FREQ = 0.5  # seconds
-CLOSE_THRESHOLD = 3e-2  # 2cm
+CLOSE_THRESHOLD = 3e-2  # 3cm
 MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
 MAX_DELAY_OF_UPDATE = 0.5 # filter updates older than this will be dropped
 
