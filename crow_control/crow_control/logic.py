@@ -222,7 +222,7 @@ class ControlLogic(Node):
             # xyz = np.array([-0.00334, 0.00232, 0.6905])
             if "position" in kwargs or "storage" in kwargs:
                 res = self.crowracle.get_position_target_from_uri(uri)
-                uri, xyz = res
+                wname, xyz = res
                 size = [0.0, 0.0, 0.0]
                 typ = ObjectType.POINT
             else:
@@ -250,15 +250,23 @@ class ControlLogic(Node):
         Returns:
             list: xyz position.
         """
-        if location_type == "xyz":
-            return np.array(location)
-        elif location_type == "storage":
-            return self.crowracle.get_free_space_area(location)
-        elif location_type == "position":
-            return self.crowracle.get_location_of_obj(location)
-        else:
-            self.get_logger().error(f"Unknown action location type '{location_type}'!")
-            return None
+        # locs = []
+        for loc in location:
+            if location_type == "xyz":
+                location_xyz = np.array(location)
+                return location_xyz
+            elif location_type == "storage" or location_type == "position":
+                wname, location_xyz = self.crowracle.get_position_target_from_uri(URIRef(loc))
+                return location_xyz
+            # elif location_type == "storage":
+            #     location_xyz = self.crowracle.get_free_space_area(location)
+            # elif location_type == "position":
+            #     location_xyz = self.crowracle.get_location_of_obj(location)
+            else:
+                self.get_logger().error(f"Unknown action location type '{location_type}'!")
+                return None
+            # locs.append(location_xyz)
+        # return locs
 
     def command_cb(self, msg):
         StatTimer.enter("command callback")

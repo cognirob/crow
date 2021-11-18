@@ -1267,17 +1267,19 @@ class CrowtologyClient():
         return xyz, [sx, sy, sz], str(r[-1])
 
     def get_position_target_from_uri(self, uri):
+        """ Returns the name of a position/storae
+        """
         name = uri.n3()
         query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
             prefix owl: <http://www.w3.org/2002/07/owl#>
             prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
             prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
 
-            SELECT DISTINCT ?obj ?x ?y ?z
+            SELECT DISTINCT ?wname ?x ?y ?z
             WHERE {{
-                ?obj a crow:Position .
-                ?obj crow:hasName {name} .                
-                ?obj crow:hasAbsoluteLocation ?loc .
+                {{{name} a crow:Position}} UNION {{{name} a crow:StorageSpace}}
+                {name} crow:hasName ?wname .                
+                {name} crow:hasAbsoluteLocation ?loc .
                 ?loc crow:x ?x .
                 ?loc crow:y ?y .
                 ?loc crow:z ?z .
