@@ -15,6 +15,7 @@ import re
 from itertools import chain
 import os
 from crow_ontology.utils import QueryParser
+from crow_msgs.msg import DetectionMask
 from npyscreen.wgmultiline import MultiLine
 import rclpy
 from typing import Union
@@ -80,19 +81,24 @@ class MainForm(npyscreen.TitleForm):
         self.cam_name_list = {}
         self.cam_color_list = {}
         self.cam_depth_list = {}
+        self.cam_detect_list = {}
         for cam in cameras:
             self.cam_name_list[cam] = self.add(npyscreen.Textfield, name=cam, value=cam, editable=False)
             tmp_nextrelx = self.nextrelx
             self.nextrelx = 10
+            self.nextrely -= 1
             self.cam_color_list[cam] = self.add(npyscreen.CheckBox, name="/color", editable=False)
             self.cam_depth_list[cam] = self.add(npyscreen.CheckBox, name="/depth", editable=False)
+            self.cam_detect_list[cam] = self.add(npyscreen.CheckBox, name="/detect", editable=False)
             self.cameras[cam] = {
                 'color': deque(maxlen=self.CAMERA_MESSAGE_BUFFER_LEN),
                 'depth': deque(maxlen=self.CAMERA_MESSAGE_BUFFER_LEN),
+                'detect': deque(maxlen=self.CAMERA_MESSAGE_BUFFER_LEN),
             }
             self.nextrelx = tmp_nextrelx
             self.node.create_subscription(CameraInfo, cam + '/color/camera_info', callback=lambda ci_msg, cam=cam: self.update_camera_color(ci_msg, cam), qos_profile=qos)
             self.node.create_subscription(CameraInfo, cam + '/depth/camera_info', callback=lambda ci_msg, cam=cam: self.update_camera_depth(ci_msg, cam), qos_profile=qos)
+            self.node.create_subscription(DetectionMask, cam + '/detections/masks', callback=lambda ci_msg, cam=cam: self.update_camera_detect(ci_msg, cam), qos_profile=qos)
 
         # ALIVE SIGNALS
         self.nextrelx = 37
@@ -144,20 +150,31 @@ class MainForm(npyscreen.TitleForm):
         now = self.node.get_clock().now()
         now_time = time.time()
         for cam in self.cameras.keys():
-            if len(self.cameras[cam]['color']) < 1 or len(self.cameras[cam]['depth']) < 1:
-                continue
-            last_color = self.cameras[cam]['color'][-1]
-            last_depth = self.cameras[cam]['depth'][-1]
-            self.cam_color_list[cam].value = now - last_color < self.MAX_CAMERA_DELAY
-            self.cam_color_list[cam].name = f'/color [{self._count_fps(self.cameras[cam]["color"]):3.01f}]'
-            self.cam_depth_list[cam].value = now - last_depth < self.MAX_CAMERA_DELAY
-            self.cam_depth_list[cam].name = f'/depth [{self._count_fps(self.cameras[cam]["depth"]):3.01f}]'
+            if len(self.cameras[cam]['color']) > 0:
+                last_color = self.cameras[cam]['color'][-1]
+                self.cam_color_list[cam].value = now - last_color < self.MAX_CAMERA_DELAY
+                self.cam_color_list[cam].name = f'/color [{self._count_fps(self.cameras[cam]["color"]):3.01f}]'
+            else:
+                self.cam_color_list[cam].value = False
+            if len(self.cameras[cam]['depth']) > 0:
+                last_depth = self.cameras[cam]['depth'][-1]
+                self.cam_depth_list[cam].value = now - last_depth < self.MAX_CAMERA_DELAY
+                self.cam_depth_list[cam].name = f'/depth [{self._count_fps(self.cameras[cam]["depth"]):3.01f}]'
+            else:
+                self.cam_color_list[cam].value = False
+            if len(self.cameras[cam]['detect']) > 0:
+                last_detect = self.cameras[cam]['detect'][-1]
+                self.cam_detect_list[cam].value = now - last_detect < self.MAX_CAMERA_DELAY
+                self.cam_detect_list[cam].name = f'/detect [{self._count_fps(self.cameras[cam]["detect"]):3.01f}]'
+            else:
+                self.cam_color_list[cam].value = False
             if self.cam_color_list[cam].value and self.cam_depth_list[cam].value:
                 self.cam_name_list[cam].color = 'SAFE'
             else:
                 self.cam_name_list[cam].color = 'DANGER'
                 self._pop_queue(self.cameras[cam]['color'])
                 self._pop_queue(self.cameras[cam]['depth'])
+                self._pop_queue(self.cameras[cam]['detect'])
 
         for p in self.alive_params:
             is_alive = getattr(self.pclient, p)
@@ -277,6 +294,9 @@ class MainForm(npyscreen.TitleForm):
 
     def update_camera_depth(self, ci_msg, camera):
         self.cameras[camera]['depth'].append(rclpy.time.Time.from_msg(ci_msg.header.stamp))
+
+    def update_camera_detect(self, ci_msg, camera):
+        self.cameras[camera]['detect'].append(rclpy.time.Time.from_msg(ci_msg.header.stamp))
 
 
 class Monitor(npyscreen.NPSAppManaged):
