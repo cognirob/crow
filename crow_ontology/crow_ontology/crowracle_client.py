@@ -159,11 +159,12 @@ class CrowtologyClient():
             ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#front_stage> .
             FILTER NOT EXISTS {?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#workspace>}
         }"""
-    _query_get_objects_with_poses_from_front = """SELECT DISTINCT ?obj
+    _query_get_objects_with_poses_from_front = """SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z ?wname
         WHERE {
             ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#front_stage> .
             FILTER NOT EXISTS {?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#workspace>}
             ?obj crow:hasAbsoluteLocation ?loc .
+            ?cls crow:world_name ?wname .
             ?loc crow:x ?x .
             ?loc crow:y ?y .
             ?loc crow:z ?z .
@@ -176,10 +177,11 @@ class CrowtologyClient():
         WHERE {
             ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#back_stage> .
         }"""
-    _query_get_objects_with_poses_from_back = """SELECT DISTINCT ?obj
+    _query_get_objects_with_poses_from_back = """SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z ?wname
         WHERE {
             ?obj crow:insideOf <http://imitrob.ciirc.cvut.cz/ontologies/crow#back_stage> .
             ?obj crow:hasAbsoluteLocation ?loc .
+            ?cls crow:world_name ?wname .
             ?loc crow:x ?x .
             ?loc crow:y ?y .
             ?loc crow:z ?z .
@@ -271,6 +273,17 @@ class CrowtologyClient():
             ?obj crow:hasDetectorName ?detector_name .
             ?obj a ?cls .
             ?cls rdfs:subClassOf* crow:Workpiece .
+        }"""
+    _query_allowed_detector_names = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        SELECT DISTINCT ?detector_name
+        WHERE {
+            ?obj crow:hasDetectorName ?detector_name .
+            ?obj a ?cls .
+            {?cls rdfs:subClassOf* crow:Workpiece} UNION {?cls rdfs:subClassOf* crow:Tool}
         }"""
     _query_filter_properties = """SELECT DISTINCT ?name ?col ?sigma
         WHERE {
@@ -667,6 +680,12 @@ class CrowtologyClient():
         of tangible objects that are workpieces (cube, sphere, etc.)
         """
         res = [cname[0].toPython() for cname in list(self.onto.query(self._query_workpieces_detector_names))]
+        return res
+
+    def getAllowedDetNames(self):
+        """Returns a list of detector names for obj classes that should be detected (i.e., sent forward from detector)
+        """
+        res = [cname[0].toPython() for cname in list(self.onto.query(self._query_allowed_detector_names))]
         return res
 
     def get_obj_of_properties(self, obj_cls, uri_dict, all=False):
@@ -1996,19 +2015,25 @@ class CrowtologyClient():
 
     def get_objects_from_front(self):
         result = self.onto.query(self._query_get_objects_from_front)
-        return [u[0] for u in list(result)]
+        return list(result)
 
     def get_objects_with_poses_from_front(self):
         result = self.onto.query(self._query_get_objects_with_poses_from_front)
-        return [u[0] for u in list(result)]
+        output = []
+        for obj, x, y, z, dx, dy, dz, world_name in result:
+            output.append((obj, *[a.toPython() for a in [x, y, z, dx, dy, dz]], world_name))
+        return output
 
     def get_objects_from_back(self):
         result = self.onto.query(self._query_get_objects_from_back)
-        return [u[0] for u in list(result)]
+        return list(result)
 
     def get_objects_with_poses_from_back(self):
         result = self.onto.query(self._query_get_objects_with_poses_from_back)
-        return [u[0] for u in list(result)]
+        output = []
+        for obj, x, y, z, dx, dy, dz, world_name in result:
+            output.append((obj, *[a.toPython() for a in [x, y, z, dx, dy, dz]], world_name))
+        return output
 
     def get_objects_with_poses_from_area(self, area_name):
         if type(area_name) is URIRef:
@@ -2016,7 +2041,7 @@ class CrowtologyClient():
         else:
             area_name = self.CROW[area_name].n3()
 
-        query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z
+        query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z 
         WHERE {{
             ?obj crow:insideOf {area_name} .
             ?obj crow:hasAbsoluteLocation ?loc .

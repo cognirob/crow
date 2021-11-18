@@ -221,8 +221,11 @@ class ControlLogic(Node):
         try:
             # xyz = np.array([-0.00334, 0.00232, 0.6905])
             if "position" in kwargs or "storage" in kwargs:
-                res = self.crowracle.get_position_target_from_uri(uri)
-                wname, xyz = res
+                if "position" in kwargs:
+                    uri = URIRef(kwargs["position"])
+                elif "storage" in kwargs:
+                    uri = URIRef(kwargs["storage"])
+                wname, xyz = self.crowracle.get_position_target_from_uri(uri)
                 size = [0.0, 0.0, 0.0]
                 typ = ObjectType.POINT
             else:
@@ -670,7 +673,8 @@ class ControlLogic(Node):
         """
         self.get_logger().info("Performing Tidy action")
         try:
-            objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()
+            objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()[0]
+            obj_type = self._extract_obj_type(obj_type)
             self.get_logger().info(f"objects: {objs} @ {x}, {y}, {z} with dims {dx}, {dy}, {dz} of type {obj_type}")
             while objs is not None:
                 # print(f'looping in tidy objects: STATUS {self.status} {self.STATUS_IDLE}')
@@ -680,7 +684,8 @@ class ControlLogic(Node):
 
                     # self._set_status(self.STATUS_EXECUTING)
                     # self.pclient.robot_done = False
-                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()
+                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()[0]
+                    obj_type = self._extract_obj_type(obj_type)
                     print(f'Tidying object {objs} @ {x}, {y}, {z}')
 
 
@@ -692,6 +697,7 @@ class ControlLogic(Node):
                     try:
                         self.sendFetchToAction(target_info=[[x, y, z],[dx, dy, dz], obj_type], location=[0.400, 0.065, 0.0])
                     except BaseException as e:
+                        self.get_logger().error(f"Some error occurred when trying to tidy object {objs}:\n{e}")
                         objs = None
                         continue
                     # print("---", self.status)
