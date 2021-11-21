@@ -34,6 +34,8 @@ TIMER_FREQ = 0.5  # seconds
 CLOSE_THRESHOLD = 3e-2  # 3cm
 MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
 MAX_DELAY_OF_UPDATE = 0.5 # filter updates older than this will be dropped
+MAX_QUERY_UPDATE_DELAY = 0.2
+MAX_QUERY_TIMER_DELAY = 0.1
 
 
 class OntoAdder(Node):
@@ -139,25 +141,11 @@ class OntoAdder(Node):
         query = self.crowracle.generate_en_dis_del_pair_query(tobe_enabled, tobe_disabled, tobe_deleted)
         if query is not None:
             try:
-                self.db_queries_queue.put(query, timeout=0.5)
+                self.db_queries_queue.put(query, timeout=MAX_QUERY_TIMER_DELAY)
             except Full:  # don't add if queue is full - querying is lagging to much, probably
                 self.get_logger().error("Tried to add en/dis/del/pair query but the queue is full!")  # should pop the oldest item instead...
         
         self.get_logger().warn(f"Timer update takes {time.time() - start:0.3f} seconds")
-
-    def run_update(self):
-        """This is a function for the query update thread."""
-        while rclpy.ok():
-            try:
-                query = self.db_queries_queue.get(block=True, timeout=1)
-            except Empty:  # let it spin if queue is empty
-                continue
-            try:
-                # self.get_logger().info("Executing query...")
-                self.crowracle.onto.update(query)
-                # self.get_logger().info("Done.")
-            except BaseException as e:
-                self.get_logger.error(f"Error executing a query!\nE:\n{e}\nQ:\n{query}")
 
     def input_filter_callback(self, pose_array_msg):
         if not pose_array_msg.poses:
@@ -224,11 +212,25 @@ class OntoAdder(Node):
         query = self.crowracle.generate_full_update(objects_to_be_added, objects_to_be_updated)
         if query is not None:
             try:
-                self.db_queries_queue.put(query, timeout=0.5)
+                self.db_queries_queue.put(query, timeout=MAX_QUERY_UPDATE_DELAY)
             except Full:  # don't add if queue is full - querying is lagging to much, probably
                 self.get_logger().error("Tried to add update query but the queue is full!")  # should pop the oldest item instead...
 
         self.get_logger().warn(f"input cb takes {time.time() - start:0.3f} seconds")
+
+    def run_update(self):
+        """This is a function for the query update thread."""
+        while rclpy.ok():
+            try:
+                query = self.db_queries_queue.get(block=True, timeout=1)
+            except Empty:  # let it spin if queue is empty
+                continue
+            try:
+                # self.get_logger().info("Executing query...")
+                self.crowracle.onto.update(query)
+                # self.get_logger().info("Done.")
+            except BaseException as e:
+                self.get_logger.error(f"Error executing a query!\nE:\n{e}\nQ:\n{query}")
 
     def input_action_callback(self, action_array_msg):
         if not action_array_msg.avg_class_name:

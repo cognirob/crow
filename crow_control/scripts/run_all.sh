@@ -101,7 +101,7 @@ if [ "$O_NO_VISION" != true ]; then
     runcmd "ros2 launch crow_vision_ros2 all_cameras.launch.py"
 
     new_tab $WID
-    sleep 15
+    sleep 25
     runcmd "echo -ne '\033]30;Detection\007'"
     runcmd "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/imitrob/TensorRT-7.2.1.6/lib"
     runcmd "ros2 launch crow_vision_ros2 crow_object.launch.py use_pose:=true use_edge:=true"
@@ -185,5 +185,9 @@ fi
 # new_tab $WID
 # runcmd "echo -ne '\033]30;Pose Detector\007'"
 # runcmd "ros2 run crow_vision_ros2 detector_trt"
+
+new_tab $WID
+runcmd "echo -ne '\033]30;Planner\007'"
+runcmd "ros2 run crow_control aplanner"
 
 wmctrl -i -a $WID
