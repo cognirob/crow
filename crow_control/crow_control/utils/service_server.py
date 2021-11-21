@@ -53,7 +53,12 @@ class ServiceServer():
                 continue
             # unpickle and send to callback
             request_dict = cpl.loads(request)
-            response_dict = self._callback(request_dict)
+            try:
+                response_dict = self._callback(request_dict)
+            except BaseException as e:
+                # if the callback rises unhandled error, send empty dict
+                print(f"Error in the service callback:\n{e}")
+                response_dict = {}
             # pickle the response and send back to the caller
             response = cpl.dumps(response_dict)
             self._zmq_socket.send(response)
