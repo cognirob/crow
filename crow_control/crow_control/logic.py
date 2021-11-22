@@ -466,9 +466,9 @@ class ControlLogic(Node):
                 self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_started"] + build_name, say=2)
             else:
                 response = self.guidance_file[self.LANG]["assembly_not_started"] + build_name + ". "
-                if result.response.code == BuildFailReason.C_NOT_FOUND:
+                if result.reason.code == BuildFailReason.C_NOT_FOUND:
                     response += self.guidance_file[self.LANG]["assembly_not_found"]
-                elif result.response.code == BuildFailReason.C_ANOTHER_IN_PROGRESS:
+                elif result.reason.code == BuildFailReason.C_ANOTHER_IN_PROGRESS:
                     response += self.guidance_file[self.LANG]["assembly_in_progress"]
                 self.ui.buffered_say(response, say=2)
             self.wait_then_talk()
