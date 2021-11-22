@@ -1,1 +1,0 @@
-bool stop_robot

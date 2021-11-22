@@ -1,7 +1,0 @@
-int32 type
-
-int32 POINT=0
-int32 CUBE=1
-int32 SPHERE=2
-int32 WHEEL=3
-int32 BUCKET=4

@@ -35,7 +35,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DetectionObject.msg"
   "msg/SegmentedPointcloud.msg"
   "msg/ObjectPointcloud.msg"
-  #"msg/Particles.msg"
   "msg/PclDimensions.msg"
   "msg/FilteredPose.msg"
   "msg/ProcessedSentence.msg"
@@ -44,11 +43,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/StampedString.msg"
   "msg/CommandType.msg"
   "msg/MarkerMsg.msg"
-  #"msg/StopStatus.msg"
-  #"msg/GripperStatus.msg"
-  #"msg/RobotStatus.msg"
-  #"msg/RobotPose.msg"
-  "msg/ObjectType.msg"
   "msg/NlpStatus.msg"
   "msg/Runtime.msg"
   "msg/AssemblyObjectProbability.msg"
@@ -56,8 +50,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BuildFailReason.msg"
   "srv/StartBuild.srv"
   "srv/CancelBuild.srv"
+  "srv/ResetScene.srv"
 
-  #"action/PickNPlace.action"
   DEPENDENCIES builtin_interfaces std_msgs sensor_msgs geometry_msgs
 )
 
