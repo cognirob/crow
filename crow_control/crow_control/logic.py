@@ -7,7 +7,7 @@ from rclpy.executors import MultiThreadedExecutor
 import asyncio
 from crow_msgs.msg import StampedString, CommandType, Runtime, MarkerMsg, BuildFailReason
 from crow_msgs.srv import StartBuild, CancelBuild
-from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus, RobotActionType
+from trio3_ros2_interfaces.msg import RobotStatus, ObjectType, CoreActionPhase, Units, GripperStatus, RobotActionType, ActionResultFlag
 from trio3_ros2_interfaces.srv import GetRobotStatus
 from trio3_ros2_interfaces.action import RobotAction
 from geometry_msgs.msg import Pose
@@ -141,7 +141,7 @@ class ControlLogic(Node):
         self.robot_status_client = self.create_client(GetRobotStatus, self.ROBOT_SERVICE_STATUS, callback_group=reentrant_group)
         self.start_build_client = self.create_client(StartBuild, self.START_BUILD_SERVICE)
         self.cancel_build_client = self.create_client(CancelBuild, self.CANCEL_BUILD_SERVICE)
-        
+
         # self.get_logger().info(f"Connected to robot status service: {self.robot_status_client.wait_for_service()}").call()
 
         self.status = self.STATUS_IDLE
@@ -168,6 +168,11 @@ class ControlLogic(Node):
                              CommandType.BUILD_ASSEMBLY: self.sendBuildAction,
                              CommandType.BUILD_ASSEMBLY_CANCEL: self.sendCancelBuildAction
                              }
+
+        self.translate_action_type = {v: k for k, v in RobotActionType.__dict__.items() if not k.startswith("_") and type(v) is int}
+        self.translate_object_type = {v: k for k, v in ObjectType.__dict__.items() if not k.startswith("_") and type(v) is int}
+        self.translate_result_flag = {v: k for k, v in ActionResultFlag.__dict__.items() if not k.startswith("_") and type(v) is int}
+
         StatTimer.init()
 
     def _extract_obj_type(self, type_str):
@@ -186,10 +191,6 @@ class ControlLogic(Node):
         Returns:
             tuple: (<position>, <size>, <type>) - None where not applicable.
         """
-        # print(target)
-        # print(target_type)
-        # print(target_ph_cls)
-        # print(target_ph_loc)
         if target_type == "xyz":
             return (np.array(target), [1e-9, 1e-9, 1e-9], ObjectType.POINT)
         elif target_type == "onto_id":
@@ -272,28 +273,22 @@ class ControlLogic(Node):
         # return locs
 
     def command_cb(self, msg):
-        StatTimer.enter("command callback")
         # self.get_logger().info("Received command msg!")
         data = json.loads(msg.data)
         if type(data) is dict:
             data = [data]
 
-        self.get_logger().info(f"Received {len(data)} command(s):")
-        self.get_logger().info(f"Received {data}")
+        self.get_logger().info(f"Received {len(data)} command(s):\n{data}")
         self.process_actions(data)
-        StatTimer.exit("command callback")
 
     def command_planner_cb(self, msg):
-        StatTimer.enter("command callback")
-        self.get_logger().info("Received planner command msg!")
+        # self.get_logger().info("Received planner command msg!")
         data = json.loads(msg.data)
         if type(data) is dict:
             data = [data]
         # TODO: priority
-        self.get_logger().info(f"Received {len(data)} command(s):")
-        self.get_logger().info(f"Received {data}")
+        self.get_logger().info(f"Received {len(data)} command(s) from the planner:\n{data}")
         self.process_actions(data)
-        StatTimer.exit("command callback")
 
     def process_actions(self, data):
         for d in data:
@@ -306,14 +301,12 @@ class ControlLogic(Node):
             self.get_logger().info(f"Will perform {op_name}")
 
     def push_actions(self, command_buffer='main', action_type=None, action=None, **kwargs):
-        print(locals())
         if command_buffer == 'meanwhile':
             self.command_meanwhile_buffer.append((action_type, action, kwargs))
         else:
             command_name = str(self.main_buffer_count)#num2words(self.main_buffer_count, lang='cz')
             self.command_main_buffer.append((action_type, action, command_name, kwargs))
             self.main_buffer_count += 1
-        print(self.command_meanwhile_buffer)
         self.pclient.ready_for_next_sentence = True
 
     def prepare_command(self, target=None, target_type=None, **kwargs):
@@ -341,13 +334,8 @@ class ControlLogic(Node):
 
     def update_main_cb(self):
         self.pclient.logic_alive = time.time()
-        # print(self.pclient.logic_alive)
-        # s, n = self.get_clock().now().seconds_nanoseconds()
-        # self.pclient.logic_alive = s + n * 1e-9
-        # if self.status & self.STATUS_IDLE: #replace IDLE by 90%DONE
         if self.status == 0: #replace IDLE by 90%DONE
             self._set_status(self.STATUS_PROCESSING)
-            # print("ready")
             try:
                 disp_name, action, command_name, kwargs = self.command_main_buffer.pop()
                 #TODO the action_type should be send to logic node in the proper language directly! and then this can be removed
@@ -367,7 +355,6 @@ class ControlLogic(Node):
                     if 'location_type' not in kwargs:
                         kwargs['location_type'] = 'xyz'
                     location = self.processLocation(kwargs['location'], kwargs['location_type'])
-                    print('locs', location)
                     kwargs['location'] = location
                 if kwargs.get('target_info') is not None or kwargs.get('location') is not None:
                     try:
@@ -405,7 +392,6 @@ class ControlLogic(Node):
 
     def _set_status(self, status):
         self.status = status
-        # print(self.status)
 
     def command_error(self, disp_name='', **kwargs):
         self.get_logger().info("Command not implemented!")
@@ -445,7 +431,7 @@ class ControlLogic(Node):
         self.marker_storage_publisher.publish(marker_msg)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
         self.wait_then_talk()
-    
+
     def sendBuildAction(self, disp_name='', define_name=None, **kwargs):
         """Marker Detector detects chosen markers, if successful, adds named storage to database
         """
@@ -467,8 +453,6 @@ class ControlLogic(Node):
         self.wait_then_talk()
 
     def receivedBuildResponse(self, handle, target, build_name=None):
-        # print(handle.__dict__)
-        print(handle.result())
         if target == "cancel":
             if handle.result().success:
                 self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_canceled"], say=2)
@@ -511,7 +495,6 @@ class ControlLogic(Node):
         self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Point action")
         self.pclient.robot_done = False
-        print(target_info)
         size = target_info[1]
         if np.any(np.isnan(size)):
             size = [0.0, 0.0, 0.0]
@@ -523,8 +506,6 @@ class ControlLogic(Node):
                 location_xyz=location,
                 action_type=RobotActionType.POINT
             )
-        # print('>>>>')
-        # self._set_status(self.STATUS_EXECUTING)
         self._send_goal_future = self.robot_point_client.send_goal_async(goal_msg, feedback_callback=self.robot_feedback_cb)
         self._send_goal_future.add_done_callback(self.robot_response_cb)
         self.ui.buffered_say(self.guidance_file[self.LANG]["performing"] + disp_name, say=2)
@@ -561,9 +542,6 @@ class ControlLogic(Node):
         """Fetch (give): move to target, pick, move to user, open gripper a bit OR
                          something is already picked, move to user, open gripper a bit
         """
-        # print(kwargs)
-        print(disp_name)
-        print('grrr')
         StatTimer.enter("Sending command")
         self.status |= self.STATUS_SENDING_GOAL
         self.get_logger().info("Performing Fetch action")
@@ -646,10 +624,6 @@ class ControlLogic(Node):
         self.wait_then_talk()
         StatTimer.exit("Sending command")
 
-        # wait for 'touch'
-        # self.sendReleaseAction()
-        # self.sendPointAction(location=[0.53381, 0.18881, 0.22759])  # temporary "robot default" position)
-
     def sendReleaseAction(self, disp_name='', target_info=None, location=None, obj=None, **kwargs):
         """Release: open gripper (if holding something), move to home position
         """
@@ -673,39 +647,34 @@ class ControlLogic(Node):
         """
         self.get_logger().info("Performing Tidy action")
         try:
-            objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()[0]
-            obj_type = self._extract_obj_type(obj_type)
-            self.get_logger().info(f"objects: {objs} @ {x}, {y}, {z} with dims {dx}, {dy}, {dz} of type {obj_type}")
+            objects = self.crowracle.get_objects_with_poses_from_front()
+            if len(objects) == 0:
+                self.get_logger().warn("No objects in the front stage found!")
+                return
+            objs, x, y, z, dx, dy, dz, obj_type = objects[0]
+            # obj_type = self._extract_obj_type(obj_type)
             while objs is not None:
-                # print(f'looping in tidy objects: STATUS {self.status} {self.STATUS_IDLE}')
-                # print("***", self.status)
                 if not(self.status & (self.STATUS_EXECUTING | self.STATUS_SENDING_GOAL)):
-                    print('ready to work in tidy objects')
+                    objects = self.crowracle.get_objects_with_poses_from_front()
+                    if len(objects) == 0:
+                        self.get_logger().warn("No more objects to tidy.")
+                        objs = None
+                        continue
 
-                    # self._set_status(self.STATUS_EXECUTING)
-                    # self.pclient.robot_done = False
-                    objs, x, y, z, dx, dy, dz, obj_type = self.crowracle.get_objects_with_poses_from_front()[0]
+                    objs, x, y, z, dx, dy, dz, obj_type = objects[0]
                     obj_type = self._extract_obj_type(obj_type)
-                    print(f'Tidying object {objs} @ {x}, {y}, {z}')
-
-
-                    #TODO objs list is out of date when the action is sent. The objects are newly detected and get higher index.
-                    # print(f"selected object: {objs[0]}")
-                    # target_info = self.prepare_command(target=objs[0], target_type='onto_uri')
-                    # kwargs['target_info'] = target_info
-                    # self.status = self.status | self.STATUS_EXECUTING
+                    self.get_logger().info(f'Tidying object {objs} @ {x}, {y}, {z}')
                     try:
                         self.sendFetchToAction(target_info=[[x, y, z],[dx, dy, dz], obj_type], location=[0.400, 0.065, 0.0])
                     except BaseException as e:
                         self.get_logger().error(f"Some error occurred when trying to tidy object {objs}:\n{e}")
+                        tb.print_exc()
                         objs = None
                         continue
-                    # print("---", self.status)
-                    #TODO: keep only objs in the workspace area (not in the storage, etc.)
-                    # self._set_status(self.STATUS_IDLE)
-
+        except IndexError:
+            self.get_logger().warn("No more objects to tidy.")
         except BaseException as e:
-            print(f"Error while trying to tidy stuff up: {e}")
+            self.get_logger().error(f"Error while trying to tidy stuff up: {e}")
             tb.print_exc()
         else:
             self.get_logger().info("No more objects to tidy up.")
@@ -732,7 +701,7 @@ class ControlLogic(Node):
                 goal_msg.object_type = ObjectType(type=target_type)
         else:
             pass # @TODO set something, None defaults to 0.0
-        print(np.isnan(goal_msg.size[0]))
+        # print(np.isnan(goal_msg.size[0]))
         if np.isnan(goal_msg.size[0]):
             goal_msg.size = [0, 0, 0]
         if location_xyz is not None:
@@ -741,6 +710,8 @@ class ControlLogic(Node):
             goal_msg.poses.append(place_pose)
         else:
             pass # @TODO set something, None defaults to 0.0
+
+        self.get_logger().info(f"Composed a goal message for {self.translate_action_type[goal_msg.robot_action_type.type]} with target {self.translate_object_type[goal_msg.object_type.type]}.")
         return goal_msg
 
     def get_robot_status(self, robot_id=0) -> UsefullRobotStatus:
@@ -753,31 +724,15 @@ class ControlLogic(Node):
         except BaseException as e:
             self.get_logger().error(f"GetRobotStatus service fail: {e}")
         else:
-            print(res.robot_status.gripper_status)
+            # print(res.robot_status.gripper_status)
             response = UsefullRobotStatus(robot_id=robot_id, robot_ready=res.robot_status.robot_is_ready,
                                             gripper_closed=res.robot_status.gripper_status.status == GripperStatus.GRIPPER_CLOSED)
         return response
 
-    def cancel_current_goal(self, wait=False):
-        """Requests cancellation of the current goal.
-
-        Returns:
-            bool: Returns True, if goal can be canceled
-        """
-        self.get_logger().info("Trying to cancel the current goal.")
-        if self.goal_handle is None:
-            return False
-        # self.get_logger().info(str(dir(self.goal_handle)))
-        if wait:
-            response = self.goal_handle.cancel_goal()
-            print(response)
-        else:
-            future = self.goal_handle.cancel_goal_async()
-            future.add_done_callback(self.robot_canceling_done)
-
-        return True
-
     def robot_response_cb(self, future):
+        """This function is called when the robot responses to the goal request.
+        It can either accept or reject the goal.
+        """
         self.goal_handle = future.result()
         if not self.goal_handle.accepted:
             self.make_robot_fail_to_start()
@@ -795,24 +750,27 @@ class ControlLogic(Node):
         self._get_result_future.add_done_callback(self.robot_done_cb)
 
     def robot_done_cb(self, future):
+        """This function is called when the robot is done executing the set goal.
+        It can be when the action is completed or failed (future.result().done == False).
+        """
         StatTimer.try_exit("robot2action")
         StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
         StatTimer.enter(f"phase {str(self.ROBOT_ACTION_PHASE)}")
         result = future.result().result
-        self.get_logger().info(f'Action done, result: {result.done}')
         if result.done:
+            self.get_logger().info(f'Action done.')
             self.make_robot_done()
         else:
-            self.get_logger().info(f'Action failed because: {result.action_result_flag}')
+            self.get_logger().error(f'Action failed because: {result.action_result_flag} [{self.translate_result_flag[result.action_result_flag]}]')
             self.make_robot_fail()
         self._cleanup_after_action()
         self.get_logger().info(f'Robot action done.')
 
     def robot_feedback_cb(self, feedback_msg):
+        """This function is called repeatedly during execution of the goal by the robot.
+        """
         feedback = feedback_msg.feedback
-        self.get_logger().info(f'Received feedback: {feedback.status}')
-        # self.get_logger().info(f'Received feedback: {feedback_msg}')
-        # self.get_logger().info(f'Received feedback: {[(k, getattr(feedback, k)) for k in feedback.get_fields_and_field_types()]}')
+        self.get_logger().info(f'RobotAction feedback: {feedback.status}')
         try:
             sn = float(feedback.status)
         except ValueError:
@@ -830,7 +788,27 @@ class ControlLogic(Node):
             StatTimer.try_exit("robot2action")
             StatTimer.try_exit("speech2action", severity=Runtime.S_MAIN)
 
+    def cancel_current_goal(self, wait=False):
+        """Requests cancellation of the current goal.
+
+        Returns:
+            bool: Returns True, if goal can be canceled
+        """
+        self.get_logger().info("Trying to cancel the current goal...")
+        if self.goal_handle is None:
+            self.get_logger().warn("Goal handle is None, cannot cancel.")
+            return False
+        if wait:
+            response = self.goal_handle.cancel_goal()
+            self.get_logger().info(f"Response was: {response}")
+        else:
+            future = self.goal_handle.cancel_goal_async()
+            future.add_done_callback(self.robot_canceling_done)
+        return True
+
     def robot_canceling_done(self, future):
+        """This function is called when the robot cancels or rejects to cancel the current action.
+        """
         cancel_response = future.result()
         if len(cancel_response.goals_canceling) > 0:
             self.get_logger().info('Goal successfully canceled')
