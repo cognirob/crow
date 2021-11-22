@@ -141,7 +141,7 @@ class AssemblyPlanner(Node):
         return response
 
     def cancel_service_cb(self, request, response):
-        self.reset_scene()
+        self.reset_scene(20)
         if not self.pclient.building_in_progress:
             self.get_logger().warn("Tried to cancel building but no building was in progress")
             response.success = False
@@ -212,6 +212,7 @@ class AssemblyPlanner(Node):
             #TODO call cancel service
             self.get_logger().info("Finished building, cancelling the current build.")
             self.pclient.building_in_progress = False
+            self.reset_scene(20)
             self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_finished"], say=2)
             self.wait_then_talk()
         [next_node, self.obj_to_add] = self.am.detect_next_state(self.gp, self.max_node)
