@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed May 26 14:56:16 2021
+
+@author: syxtreme
+"""
+
+import zmq
+from threading import Thread
+from warnings import warn
+import cloudpickle as cpl
+from zmq.utils.strtypes import asbytes
+
+
+class ServiceServer():
+
+    def __init__(self, callback, port=242424, addr="127.0.0.1", protocol="tcp"):
+        """Create a service server. Callback should handle the incoming requests.
+        A request will be a dictionary with some data (has to be agreed upon externally).
+        Port should serve as a service identifier (if more services are used).
+
+        Args:
+            callback (function): Request handler.
+            port (int, optional): This is the main service identifier. Defaults to 242424.
+            addr (str, optional): Address of the service server. Defaults to "127.0.0.1".
+            protocol (str, optional): Protocol to use, keep on default. Defaults to "tcp".
+        """
+        self.__context = zmq.Context()
+        self.__addr = f"{protocol}://{addr}:{str(port)}"   # full address ~ sort of like a service name/identifier
+        # bind the ZMQ socket
+        self._connect()
+
+        self._callback = callback
+        self.__active = True
+        # thread to wait for requests
+        self.poller_thread = Thread(target=self.__poll, daemon=True)
+        self.poller_thread.start()
+
+    def _connect(self):
+        self._zmq_socket = self.__context.socket(zmq.REP)
+        self._zmq_socket.bind(self.__addr)
+
+    def destroy(self):
+        self.__active = False
+        self._zmq_socket.close()
+
+    def __poll(self):
+        while self.__active:
+            try:
+                request = self._zmq_socket.recv()  # wait for a request
+            except zmq.Again:
+                continue
+            # unpickle and send to callback
+            request_dict = cpl.loads(request)
+            try:
+                response_dict = self._callback(request_dict)
+            except BaseException as e:
+                # if the callback rises unhandled error, send empty dict
+                print(f"Error in the service callback:\n{e}")
+                response_dict = {}
+            # pickle the response and send back to the caller
+            response = cpl.dumps(response_dict)
+            self._zmq_socket.send(response)

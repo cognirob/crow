@@ -14,7 +14,7 @@ from crow_ontology.crowracle_client import CrowtologyClient
 from rclpy.qos import QoSProfile
 from rclpy.qos import QoSReliabilityPolicy
 from crow_msgs.msg import StampedString, BuildFailReason
-from crow_msgs.srv import StartBuild, CancelBuild
+from crow_msgs.srv import StartBuild, CancelBuild, ResetScene
 
 from crow_nlp.nlp_crow.processing.NLProcessor import NLProcessor
 from crow_nlp.nlp_crow.processing.ProgramRunner import ProgramRunner
@@ -29,6 +29,7 @@ class AssemblyPlanner(Node):
     ASSEMBLY_OBJECT_TOPIC = '/assembly_object'
     START_BUILD_SERVICE = 'assembly_start'
     CANCEL_BUILD_SERVICE = 'assembly_cancel'
+    RESET_OBJECTS_SERVICE = "/reset_tracker_objects"
 
     def __init__(self):
         super().__init__("assembly_planner")
@@ -70,7 +71,6 @@ class AssemblyPlanner(Node):
         self.pclient.define("status", "-")
         self.pclient.define("building_in_progress", False)
 
-        
         self.objects = [o[2:].lower() for o in sorted(dir(AssemblyObjectProbability)) if o.startswith("O_")]
         self.actions = [a[2:].lower() for a in sorted(dir(AssemblyActionProbability)) if a.startswith("A_")]
 
@@ -82,8 +82,10 @@ class AssemblyPlanner(Node):
 
         self.start_build_srv = self.create_service(StartBuild, self.START_BUILD_SERVICE, self.start_service_cb)#, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
         self.start_build_srv = self.create_service(CancelBuild, self.CANCEL_BUILD_SERVICE, self.cancel_service_cb)#, callback_group=rclpy.callback_groups.ReentrantCallbackGroup())
+
+        self.reset_objects_srv_client = self.create_client(ResetScene, self.RESET_OBJECTS_SERVICE)
         self.get_logger().info('Ready')
-    
+
     def start(self, build_name):
         success = False
 
@@ -102,7 +104,7 @@ class AssemblyPlanner(Node):
                 self.gp = self.am.prune_graph(g)        # get object / action dicts
             self.gp = self.am.add_required_order(self.gp)
 
-            #add first most probable object to the workspace  
+            #add first most probable object to the workspace
             self.max_node = self.am.detect_most_probable_state(self.gp)
             [next_node, self.obj_to_add] = self.am.detect_next_state(self.gp, self.max_node)
             self.send_request_to_robot()
@@ -139,6 +141,7 @@ class AssemblyPlanner(Node):
         return response
 
     def cancel_service_cb(self, request, response):
+        self.reset_scene()
         if not self.pclient.building_in_progress:
             self.get_logger().warn("Tried to cancel building but no building was in progress")
             response.success = False
@@ -147,6 +150,21 @@ class AssemblyPlanner(Node):
             self.pclient.building_in_progress = False
             response.success = True
         return response
+
+    def reset_scene(self, n_updates=0):
+        """Calls the filter to reset the tracked objects.
+
+        Args:
+            n_updates (int, optional): Number of setup scene updates.
+                Default 0 means using whatever the tracker is configured to.
+        """
+        self.get_logger().info("Sending request to reset the scene.")
+        request = ResetScene.Request(n_updates=n_updates)
+        future = self.reset_objects_srv_client.call_async(request)
+        future.add_done_callback(self._reset_done_cb)
+
+    def _reset_done_cb(self, handle):
+        self.get_logger().info("Resetting scene was successful")
 
     def _translate_action(self, actions: List[float]) -> Dict[str, float]:
         """Translates a list of action probabilities into a dictionary {action_name: probability}
