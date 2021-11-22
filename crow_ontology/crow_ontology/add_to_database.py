@@ -277,11 +277,12 @@ def main():
         mte = MultiThreadedExecutor(num_threads=n_threads, context=rclpy.get_default_context())
         rclpy.spin(adder, executor=mte)
     except KeyboardInterrupt:
-        adder.destroy_node()
         print("User requested shutdown.")
     except BaseException as e:
         print(f"Some error had occured: {e}")
         tb.print_exc()
+    finally:
+        adder.destroy_node()
 
 
 if __name__ == "__main__":
