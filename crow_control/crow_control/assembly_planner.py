@@ -120,13 +120,13 @@ class AssemblyPlanner(Node):
             response.reason.code = BuildFailReason.C_ANOTHER_IN_PROGRESS
             self.get_logger().error(f"Cannot start build, another build is already in progress!")
             self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_in_progress"] + self.guidance_file[self.LANG]["cancel_assembly"], say = 2)
-            self.ui.buffered_say(flush = True, level=self.pclient.silent_mode)
+            self.wait_then_talk()
         else:
             build_name = request.build_name
             if build_name not in self.builds:
                 response.success = False
                 response.reason.code = BuildFailReason.C_NOT_FOUND
-                self.get_logger().error(f"Cannot start build {build_name}, cannot find the recive!")
+                self.get_logger().error(f"Cannot start build {build_name}, cannot find the recieve!")
             else:
                 try:
                     response.success = self.start(build_name)
@@ -190,6 +190,12 @@ class AssemblyPlanner(Node):
         Po = dict(self._translate_object(objects.probabilities))
         self.am.update_graph(self.gp, Po)
         self.max_node = self.am.detect_most_probable_state(self.gp)
+        if self.am.build_finished:
+            #TODO call cancel service
+            self.get_logger().info("Finished building, cancelling the current build.")
+            self.pclient.building_in_progress = False
+            self.ui.buffered_say(self.guidance_file[self.LANG]["assembly_finished"], say=2)
+            self.wait_then_talk()
         [next_node, self.obj_to_add] = self.am.detect_next_state(self.gp, self.max_node)
         self.send_request_to_robot()
 
