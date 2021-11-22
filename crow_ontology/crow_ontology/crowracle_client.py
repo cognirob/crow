@@ -895,9 +895,24 @@ class CrowtologyClient():
         Returns:
             list of URIRefs: URI color of URI object, 1
         """
-        color = list(self.onto.objects(uri, self.CROW.hasColor))
+        # print(uri)
+        # color = list(self.onto.objects(uri, self.CROW.hasColor))
+        # print('this is in crowracle_client. Color is', color)
+
+
+        query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+            prefix owl: <http://www.w3.org/2002/07/owl#>
+            prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+            SELECT DISTINCT ?value
+            FROM <http://imitrob.ciirc.cvut.cz/ontologies/crow>
+            WHERE {{
+            {uri.n3()} crow:hasColor ?value .
+            }}"""
+        color = list(self.onto.query(query))
         if len(color) > 0:
-            return color  # assume obj has only one color
+            return color[0][0]  # assume obj has only one color
         else:  # this obj does not have color
             return None
 
