@@ -274,6 +274,17 @@ class CrowtologyClient():
             ?obj a ?cls .
             ?cls rdfs:subClassOf* crow:Workpiece .
         }"""
+    _query_affordance_detector_names = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        prefix owl: <http://www.w3.org/2002/07/owl#>
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
+
+        SELECT DISTINCT ?detector_name
+        WHERE {
+            ?obj crow:hasDetectorName ?detector_name .
+            ?obj a ?cls .
+            ?cls rdfs:subClassOf* crow:ObjectPart .
+        }"""
     _query_allowed_detector_names = """PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         prefix owl: <http://www.w3.org/2002/07/owl#>
         prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -680,6 +691,13 @@ class CrowtologyClient():
         of tangible objects that are workpieces (cube, sphere, etc.)
         """
         res = [cname[0].toPython() for cname in list(self.onto.query(self._query_workpieces_detector_names))]
+        return res
+
+    def getAffordanceDetNames(self):
+        """Returns a list of detector names for classes
+        of object parts (ScrewdriverHandle, HammerHead and such.)
+        """
+        res = [cname[0].toPython() for cname in list(self.onto.query(self._query_affordance_detector_names))]
         return res
 
     def getAllowedDetNames(self):
@@ -1312,7 +1330,7 @@ class CrowtologyClient():
             SELECT DISTINCT ?wname ?x ?y ?z
             WHERE {{
                 {{{name} a crow:Position}} UNION {{{name} a crow:StorageSpace}}
-                {name} crow:hasName ?wname .                
+                {name} crow:hasName ?wname .
                 {name} crow:hasAbsoluteLocation ?loc .
                 ?loc crow:x ?x .
                 ?loc crow:y ?y .
@@ -2056,7 +2074,7 @@ class CrowtologyClient():
         else:
             area_name = self.CROW[area_name].n3()
 
-        query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z 
+        query = f"""SELECT DISTINCT ?obj ?x ?y ?z ?pcl_x ?pcl_y ?pcl_z
         WHERE {{
             ?obj crow:insideOf {area_name} .
             ?obj crow:hasAbsoluteLocation ?loc .

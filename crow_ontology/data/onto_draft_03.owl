@@ -1960,7 +1960,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyAffordance -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#AssemblyAffordance">
-        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#FunctionalAffordance"/>
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Affordance"/>
     </owl:Class>
     
 
@@ -2937,6 +2937,22 @@
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">kladivo</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hammer</hasNlpNameEN>
         <world_name>HAMMER</world_name>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#HammerHandle -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#HammerHandle">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#HammerHead -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#HammerHead">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
     </owl:Class>
     
 
@@ -4116,6 +4132,22 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#PliersHandle -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#PliersHandle">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#PliersHead -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#PliersHead">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+    </owl:Class>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#Point -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#Point">
@@ -4518,6 +4550,14 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewHead -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewHead">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+    </owl:Class>
+    
+
+
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewLong -->
 
     <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewLong">
@@ -4552,6 +4592,23 @@
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">šroubovák</hasNlpNameCZ>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">screwdriver</hasNlpNameEN>
         <world_name>SCREWDRIVER</world_name>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewdriverHandle -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewdriverHandle">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <world_name>screwdriver_handle</world_name>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewdriverHead -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewdriverHead">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
     </owl:Class>
     
 
@@ -5342,6 +5399,30 @@
     
 
 
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchHandle -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchHandle">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchOpen -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchOpen">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+    </owl:Class>
+    
+
+
+    <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchRing -->
+
+    <owl:Class rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchRing">
+        <rdfs:subClassOf rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+    </owl:Class>
+    
+
+
     <!-- 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -5445,8 +5526,6 @@
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow#COLOR_DARK_PURPLE">
         <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#NamedColor"/>
         <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">fialová</hasNlpNameCZ>
-        <hasNlpNameCZ rdf:datatype="http://www.w3.org/2001/XMLSchema#string">tmavě fialová</hasNlpNameCZ>
-        <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">dark purple</hasNlpNameEN>
         <hasNlpNameEN rdf:datatype="http://www.w3.org/2001/XMLSchema#string">purple</hasNlpNameEN>
     </owl:NamedIndividual>
     
@@ -6283,7 +6362,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/FlatScrewdriver#handle1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/FlatScrewdriver#handle1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewdriverHandle"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/FlatScrewdriver/handle1#xyzBoxDimensions"/>
@@ -6301,7 +6380,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/FlatScrewdriver#head1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/FlatScrewdriver#head1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewdriverHead"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/FlatScrewdriver/head1#xyzBoxDimensions"/>
@@ -6408,7 +6487,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#handle1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#handle1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#HammerHandle"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/handle1#xyzBoxDimensions"/>
@@ -6426,7 +6505,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#head1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer#head1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#HammerHead"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Hammer/head1#xyzBoxDimensions"/>
@@ -6758,7 +6837,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#handle1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#handle1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#PliersHandle"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/handle1#xyzBoxDimensions"/>
@@ -6776,7 +6855,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#head1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers#head1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#PliersHead"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Pliers/head1#xyzBoxDimensions"/>
@@ -6882,7 +6961,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#head1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#head1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewHead"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/head1#xyzBoxDimensions"/>
@@ -6900,7 +6979,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#thread1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw#thread1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Thread"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#ScrewThread"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Screw/thread1#xyzBoxDimensions"/>
@@ -7365,7 +7444,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#handle1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#handle1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Handle"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchHandle"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/handle1#xyzBoxDimensions"/>
@@ -7383,7 +7462,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head1 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head1">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchOpen"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head1#xyzBoxDimensions"/>
@@ -7402,7 +7481,7 @@
     <!-- http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head2 -->
 
     <owl:NamedIndividual rdf:about="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench#head2">
-        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#Head"/>
+        <rdf:type rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#WrenchRing"/>
         <hasAbsoluteLocation rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteLocation"/>
         <hasAbsoluteVector rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow#xyzAbsoluteVector"/>
         <hasBoxDimensions rdf:resource="http://imitrob.ciirc.cvut.cz/ontologies/crow/Wrench/head2#xyzBoxDimensions"/>
@@ -7490,15 +7569,7 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
-        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
-    </rdf:Description>
-    <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7506,7 +7577,7 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7518,7 +7589,7 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
@@ -7526,11 +7597,19 @@
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
-        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
         <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint3D SubClassOf PathPoint</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
+        <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
+    </rdf:Description>
+    <rdf:Description>
+        <onto:axiom rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PathPoint2D SubClassOf Point2D</onto:axiom>
         <onto:type rdf:datatype="http://www.w3.org/2001/XMLSchema#boolean">true</onto:type>
     </rdf:Description>
     <rdf:Description>
