@@ -538,7 +538,7 @@ batch_update = [tester.add_and_gen_update() for i in range(10)]
 batch_add = [tester.get_no_template() for i in range(10)]
 
 # %% EN DIS DEL PAIR
-nobjs = 5
+nobjs = 10
 
 def gen_objs():
     crw.reset_database()
@@ -579,7 +579,7 @@ if len(enabled_objs) > 0:
         }}
     }}"""
      
-if len(enabled_objs) > 0:
+if len(disabled_objs) > 0:
     tobe_enabled = ""
     for obj in disabled_objs:
     # for obj in disabled_objs[:int(nobjs/2)]:
@@ -623,32 +623,9 @@ print(f"Full query runtine = {time() - start}")
 enabled_objs, disabled_objs = disabled_objs, enabled_objs
      
      
-# %% DELETE
-nobjs = 50
-# tbdel_objs = [tester.add_object() for i in range(nobjs)]
-start = time()
-
-tobe_deleted = ""
-for obj in tbdel_objs:
-# for obj in disabled_objs[:int(nobjs/2)]:
-    tobe_deleted += f"({obj.n3()})\n"
-query = f"""PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-prefix owl: <http://www.w3.org/2002/07/owl#>
-prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-prefix crow: <http://imitrob.ciirc.cvut.cz/ontologies/crow#>
-
-DELETE {{
-    ?individual ?p1 ?o1 .
-    ?s2 ?p2 ?individual .
-}}
-WHERE {{
-  {{?individual ?p1 ?o1}} UNION {{?s2 ?p2 ?individual}}
-  VALUES (?individual) {{
-     {tobe_deleted}
-  }}
-}}"""
-print(query)
 # %%
-
+start = time()
+query = crw.generate_en_dis_del_pair_query(disabled_objs, enabled_objs, tbdel_objs)
+enabled_objs, disabled_objs = disabled_objs, enabled_objs
 onto.update(query)
 print(f"Full query runtine = {time() - start}")
