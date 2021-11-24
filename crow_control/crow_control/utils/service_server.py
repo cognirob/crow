@@ -14,6 +14,8 @@ from zmq.utils.strtypes import asbytes
 
 
 class ServiceServer():
+    SEND_TIMEOUT = 3000  # in ms (how long to wait to send the request - doesn't do much...)
+    RECEIVE_TIMEOUT = 3000  # in ms (how long to wait to receive a response)
 
     def __init__(self, callback, port=242424, addr="127.0.0.1", protocol="tcp"):
         """Create a service server. Callback should handle the incoming requests.
@@ -37,12 +39,22 @@ class ServiceServer():
         self.poller_thread = Thread(target=self.__poll, daemon=True)
         self.poller_thread.start()
 
+    def _reconnect(self):
+        """Reconnect after error (e.g., service timeout) otherwise socket in weird state = will not work
+        """
+        print("Someone messed up and I had to reconnect the ZMQ socket!")
+        self._zmq_socket.close(self.__addr)
+        self._connect()
+
     def _connect(self):
         self._zmq_socket = self.__context.socket(zmq.REP)
+        self._zmq_socket.setsockopt(zmq.SNDTIMEO, self.SEND_TIMEOUT)
+        self._zmq_socket.setsockopt(zmq.RCVTIMEO, self.RECEIVE_TIMEOUT)
         self._zmq_socket.bind(self.__addr)
 
     def destroy(self):
         self.__active = False
+        self.poller_thread.join()
         self._zmq_socket.close()
 
     def __poll(self):
@@ -61,4 +73,7 @@ class ServiceServer():
                 response_dict = {}
             # pickle the response and send back to the caller
             response = cpl.dumps(response_dict)
-            self._zmq_socket.send(response)
+            try:
+                self._zmq_socket.send(response)
+            except zmq.Again:
+                self._reconnect()
