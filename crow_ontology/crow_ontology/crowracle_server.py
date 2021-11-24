@@ -78,6 +78,11 @@ class CrowtologyServer():
             if "fuseki_path" in self.__cfg:
                 self.log("Fuseki server path found in the config, attempting to start the server.")
                 self.fuseki_path = os.path.expanduser(self.__cfg["fuseki_path"])
+                self.fuseki_run_cmd = os.path.join(self.fuseki_path, 'fuseki')
+                if os.path.exists(self.fuseki_run_cmd):
+                    self.log(f'Running fuseki as service from {self.fuseki_run_cmd}...')
+                else:
+                    raise Exception(f'Fuseki executable not found in: {self.fuseki_run_cmd}!')                
                 self.compactify_fuseki()
                 self.start_fuseki()
             else:
@@ -96,6 +101,7 @@ class CrowtologyServer():
 
     def compactify_fuseki(self):
         # fuseki_tool_path = '~/packages/apache-jena-4.2.0/'
+        self.log(f"Trying to compactify fuseki database (this will fail if fuseki is already running)...")
         fuseki_tool_path = self.fuseki_path.replace("fuseki-", "") # try to extract fuseki tools from the fuseki_path
         fuseki_tool_path = os.path.expanduser(fuseki_tool_path)
         compactor_path = os.path.join(fuseki_tool_path, 'bin/tdb2.tdbcompact')
@@ -152,35 +158,28 @@ class CrowtologyServer():
             print(msg)
 
     def start_fuseki(self):
-        self.fuseki_run_cmd = os.path.join(self.fuseki_path, 'fuseki')
         fuseki_env = {
                 "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
-                # "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2"
             }
-        # print(fuseki_env)
-        if os.path.exists(self.fuseki_run_cmd):
-            self.log(f'Running fuseki as service from {self.fuseki_run_cmd}...')
-        else:
-            raise Exception(f'Fuseki executable not found in: {self.fuseki_run_cmd}!')
-        if self.get_fuseki_status():
-            self.log('Fuseki is already running! Trying to kill it first!')
-            ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'stop']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
+        if self.get_fuseki_status():  # if fuseki is running, restart it
+            self.log('Fuseki is already running! Trying to restart it.')
+            ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'restart']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
             if ret.returncode > 0:
                 raise Exception(f"Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-8')}")
             else:
-                if ret.returncode > 0:
-                    raise Exception(f"Trying to stop Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout}")
+                if "fail" in str(ret.stdout):
+                    self.log(f"Fuseki service somehow failed but the returncode was 0 (indicating no error). Read the output of the run command and decide what to do:\n{ret.stdout.decode('utf-8')}")
                 else:
-                    self.log(f"{ret.stdout.decode('utf-8')}\nFuseki service stopped.")
-        else:
+                    self.log(f"{ret.stdout.decode('utf-8')}\nFuseki service restarted on port {self.FUSEKI_PORT}.")
+        else:  # if fuseki is not running, start it
             ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'start']), stdout=subprocess.PIPE, shell=True, check=True, env=fuseki_env)
-        if ret.returncode > 0:
-            raise Exception(f"Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-8')}")
-        else:
-            if "fail" in str(ret.stdout):
-                self.log(f"Fuseki service somehow failed but the returncode was 0 (indicating no error). Read the output of the run command and decide what to do:\n{ret.stdout.decode('utf-8')}")
+            if ret.returncode > 0:
+                raise Exception(f"Fuseki returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout.decode('utf-8')}")
             else:
-                self.log(f"{ret.stdout.decode('utf')}\nFuseki service started on port {self.FUSEKI_PORT}.")
+                if "fail" in str(ret.stdout):
+                    self.log(f"Fuseki service somehow failed but the returncode was 0 (indicating no error). Read the output of the run command and decide what to do:\n{ret.stdout.decode('utf-8')}")
+                else:
+                    self.log(f"{ret.stdout.decode('utf')}\nFuseki service started on port {self.FUSEKI_PORT}.")
 
     def get_fuseki_status(self) -> bool:
         ret = subprocess.run(' '.join([self.fuseki_run_cmd, 'status']), stdout=subprocess.PIPE, shell=True, check=True)
