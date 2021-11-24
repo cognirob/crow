@@ -77,7 +77,9 @@ class CrowtologyServer():
             self.fuseki_run_cmd = ""
             if "fuseki_path" in self.__cfg:
                 self.log("Fuseki server path found in the config, attempting to start the server.")
-                self.start_fuseki(self.__cfg["fuseki_path"])
+                self.fuseki_path = os.path.expanduser(self.__cfg["fuseki_path"])
+                self.compactify_fuseki()
+                self.start_fuseki()
             else:
                 self.log("Fuseki server path NOT found in the config, assuming server was started manually.")
         elif self.__cfg["store"] == "alchemy":
@@ -90,8 +92,6 @@ class CrowtologyServer():
         if self.CLEAR_ON_START:
             self.clear_data()
 
-        if self.__dbconf.store == "fuseki":
-            self.compactify_fuseki()
         self.log("Ontology DB is running.")
 
     def compactify_fuseki(self):
@@ -103,7 +103,7 @@ class CrowtologyServer():
             self.log(f"Could not find Fuseki compactor at '{compactor_path}'")
             return
         try:
-            ret = subprocess.run(' '.join([compactor_path, '--loc=' + os.path.join(self.fuseki_path + 'run/')]), stdout=subprocess.PIPE, shell=True, check=True)
+            ret = subprocess.run(' '.join([compactor_path, '--loc=' + os.path.join(self.fuseki_path + '/run/')]), stdout=subprocess.PIPE, shell=True, check=True)
             if ret.returncode > 0:
                 raise Exception(f"Tried to compactify the Fuseki database returned an error code: {ret.returncode}.\nThe output of the run command: {ret.stdout}")
             else:
@@ -151,8 +151,7 @@ class CrowtologyServer():
         else:
             print(msg)
 
-    def start_fuseki(self, fuseki_path):
-        self.fuseki_path = os.path.expanduser(fuseki_path)
+    def start_fuseki(self):
         self.fuseki_run_cmd = os.path.join(self.fuseki_path, 'fuseki')
         fuseki_env = {
                 "FUSEKI_ARGS": f"--port {self.FUSEKI_PORT} --update --tdb2 --loc run /{self.__dbconf.database}"
