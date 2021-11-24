@@ -7,7 +7,7 @@ Created on Wed May 26 14:56:16 2021
 """
 
 import zmq
-from threading import Thread, RLock
+from threading import Thread, Lock
 from warnings import warn
 import cloudpickle as cpl
 from zmq.utils.strtypes import asbytes
@@ -31,7 +31,7 @@ class SyFuture(object):
         if not self.done:
             return None
         return self.__result
-    
+
     def set_result(self, result=None):
         self.__success = result is not None
         self.__result = result
@@ -46,7 +46,7 @@ class ServiceClient():
         self.__context = zmq.Context()  # ZMQ context
         self.__addr = f"{protocol}://{addr}:{str(port)}"  # full address ~ sort of like a service name/identifier
         self._connect()
-        self.__rlock = RLock()
+        self.__lock = Lock()
 
     def _connect(self):
         """Create a new ZMQ client, connect to the service server and set socket options
@@ -67,7 +67,7 @@ class ServiceClient():
 
     def call(self, request):
         result = None
-        self.__rlock.acquire()
+        self.__lock.acquire()
         try:
             # 1) pickle and send the request
             self._zmq_client.send(cpl.dumps(request))
@@ -80,24 +80,24 @@ class ServiceClient():
             except zmq.Again:  # response did not arrive in time
                 self._reconnect()
         # return the response
-        self.__rlock.release()
+        self.__lock.release()
         return result
 
     def call_async(self, request):
-        self.__rlock.acquire()
+        self.__lock.acquire()
         try:
             # pickle and send the request
             self._zmq_client.send(cpl.dumps(request))
         except zmq.Again:  # timeout when sending (should not happen, unless ZMQ error)
             self._reconnect()
-            self.__rlock.release()
+            self.__lock.release()
             return None
         handle = SyFuture()
-        th = Thread(target=self.__wait_for_response, daemon=True, kwargs={"future": handle})
+        th = Thread(target=self.__wait_for_response, daemon=True, kwargs={"future": handle, "lock": self.__lock})
         th.start()
         return handle
 
-    def __wait_for_response(self, future):
+    def __wait_for_response(self, future, lock):
         result = None
         try:
             # wait and receive the response
@@ -105,5 +105,5 @@ class ServiceClient():
         except zmq.Again:  # response did not arrive in time
             self._reconnect()
         finally:
-            self.__rlock.release()
+            lock.release()
         future.set_result(result)
