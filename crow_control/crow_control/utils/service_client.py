@@ -7,10 +7,35 @@ Created on Wed May 26 14:56:16 2021
 """
 
 import zmq
-from threading import Thread
+from threading import Thread, RLock
 from warnings import warn
 import cloudpickle as cpl
 from zmq.utils.strtypes import asbytes
+
+class SyFuture(object):
+
+    def __init__(self):
+        self.__done = False
+        self.__success = False
+        self.__result = None
+
+    @property
+    def done(self):
+        return self.__done
+
+    @property
+    def success(self):
+        return self.__success
+
+    def get_result(self):
+        if not self.done:
+            return None
+        return self.__result
+    
+    def set_result(self, result=None):
+        self.__success = result is not None
+        self.__result = result
+        self.__done = True
 
 
 class ServiceClient():
@@ -21,6 +46,7 @@ class ServiceClient():
         self.__context = zmq.Context()  # ZMQ context
         self.__addr = f"{protocol}://{addr}:{str(port)}"  # full address ~ sort of like a service name/identifier
         self._connect()
+        self.__rlock = RLock()
 
     def _connect(self):
         """Create a new ZMQ client, connect to the service server and set socket options
@@ -40,17 +66,44 @@ class ServiceClient():
         self._zmq_client.close()
 
     def call(self, request):
+        result = None
+        self.__rlock.acquire()
         try:
             # 1) pickle and send the request
             self._zmq_client.send(cpl.dumps(request))
         except zmq.Again:  # timeout when sending (should not happen, unless ZMQ error)
             self._reconnect()
-            return None
+        else:
+            try:
+                # 2) wait and receive the response and unpickle it
+                result = cpl.loads(self._zmq_client.recv())
+            except zmq.Again:  # response did not arrive in time
+                self._reconnect()
+        # return the response
+        self.__rlock.release()
+        return result
+
+    def call_async(self, request):
+        self.__rlock.acquire()
         try:
-            # 2) wait and receive the response
-            result = self._zmq_client.recv()
+            # pickle and send the request
+            self._zmq_client.send(cpl.dumps(request))
+        except zmq.Again:  # timeout when sending (should not happen, unless ZMQ error)
+            self._reconnect()
+            self.__rlock.release()
+            return None
+        handle = SyFuture()
+        th = Thread(target=self.__wait_for_response, daemon=True, kwargs={"future": handle})
+        th.start()
+        return handle
+
+    def __wait_for_response(self, future):
+        result = None
+        try:
+            # wait and receive the response
+            result = cpl.loads(self._zmq_client.recv())
         except zmq.Again:  # response did not arrive in time
             self._reconnect()
-            return None
-        # unpickle and return the response
-        return cpl.loads(result)
+        finally:
+            self.__rlock.release()
+        future.set_result(result)
