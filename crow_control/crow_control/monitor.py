@@ -178,6 +178,8 @@ class MainForm(npyscreen.TitleForm):
 
         for p in self.alive_params:
             is_alive = getattr(self.pclient, p)
+            if is_alive is None:
+                is_alive = -1
             self.alive_chb[p].value = is_alive > -1
             setattr(self.pclient, p, -1)  # reset the alive indicator
             if is_alive > -1:
@@ -211,6 +213,8 @@ class MainForm(npyscreen.TitleForm):
 
         for p in self.topic_params:
             stamps = getattr(self.pclient, p)
+            if stamps is None:
+                stamps = []
             setattr(self.pclient, p, [])  # reset topic stamps
             if len(stamps) > 0:
                 self.topic_last[p] = stamps[-1]
