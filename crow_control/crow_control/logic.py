@@ -354,6 +354,7 @@ class ControlLogic(Node):
                     # FIXME: make sure location type is sent from NLP! (this is probably missing from templates)
                     if 'location_type' not in kwargs:
                         kwargs['location_type'] = 'xyz'
+                    print(kwargs)
                     location = self.processLocation(kwargs['location'], kwargs['location_type'])
                     kwargs['location'] = location
                 if kwargs.get('target_info') is not None or kwargs.get('location') is not None:
@@ -761,7 +762,7 @@ class ControlLogic(Node):
             self.get_logger().info(f'Action done.')
             self.make_robot_done()
         else:
-            self.get_logger().error(f'Action failed because: {result.action_result_flag} [{self.translate_result_flag[result.action_result_flag]}]')
+            self.get_logger().error(f'Action failed because: {result.action_result_flag} [{self.translate_result_flag[result.action_result_flag.flag]}]')
             self.make_robot_fail()
         self._cleanup_after_action()
         self.get_logger().info(f'Robot action done.')
