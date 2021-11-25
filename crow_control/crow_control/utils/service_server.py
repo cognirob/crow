@@ -28,6 +28,7 @@ class ServiceServer():
         """
         self.__context = zmq.Context()
         self.__addr = f"{protocol}://{addr}:{str(port)}"   # full address ~ sort of like a service name/identifier
+        print(f"Creating service on {self.__addr} (if localhost/loopback address is used, service will be visible to localhost only)")  # use actual ip addr for network visibility
         # bind the ZMQ socket
         self._connect()
 

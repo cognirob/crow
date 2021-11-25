@@ -39,12 +39,13 @@ class SyFuture(object):
 
 
 class ServiceClient():
-    REQUEST_TIMEOUT = 3000  # in ms (how long to wait to send the request - doesn't do much...)
-    RESPONSE_TIMEOUT = 3000  # in ms (how long to wait to receive a response)
+    REQUEST_TIMEOUT = 5000  # in ms (how long to wait to send the request - doesn't do much...)
+    RESPONSE_TIMEOUT = 5000  # in ms (how long to wait to receive a response)
 
     def __init__(self, port=242424, addr="127.0.0.1", protocol="tcp"):
         self.__context = zmq.Context()  # ZMQ context
         self.__addr = f"{protocol}://{addr}:{str(port)}"  # full address ~ sort of like a service name/identifier
+        print(f"Creating service client on {self.__addr}")
         self._connect()
         self.__lock = Lock()
 
