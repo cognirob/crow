@@ -31,7 +31,7 @@ CROW = Namespace(f"{ONTO_IRI}#")
 DELETION_TIME_LIMIT = 12  # seconds
 DISABLING_TIME_LIMIT = 4  # seconds
 TIMER_FREQ = 0.5  # seconds
-CLOSE_THRESHOLD = 3e-2  # 3cm
+CLOSE_THRESHOLD = 2e-2  # 3cm
 MIN_DIST_TO_UPDATE = 5e-3  # if object's position is less than this, object is not updated
 MAX_DELAY_OF_UPDATE = 0.5 # filter updates older than this will be dropped
 MAX_QUERY_UPDATE_DELAY = 0.2
@@ -175,9 +175,9 @@ class OntoAdder(Node):
                 # self.get_logger().info(f"Maybe it was in the input twice?\n{existing_objects}")
                 continue
             up = update_dict[str_uuid]
-            if tracked == up[3] and np.linalg.norm(xyz - up[1]) < MIN_DIST_TO_UPDATE:
-                self.get_logger().warn(f"Skipping object update {obj} with uuid: {uuid}. Object unchanged.")
-                continue
+            # if tracked == up[3] and np.linalg.norm(xyz - up[1]) < MIN_DIST_TO_UPDATE:
+            #     self.get_logger().warn(f"Skipping object update {obj} with uuid: {uuid}. Object unchanged.")
+            #     continue
             self.get_logger().info(f"Updating object {obj} with uuid: {uuid}")
             objects_to_be_updated.append((obj, up[1], up[2], timestamp, up[3]))
             del update_dict[str_uuid]
